@@ -7,7 +7,7 @@
 		<Option compiler="gcc" />
 		<Build>
 			<Target title="Release">
-				<Option output="sudoku_solve" prefix_auto="1" extension_auto="1" />
+				<Option output="sudoku" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
@@ -27,6 +27,7 @@
 		<Unit filename="README.md">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
+		<Unit filename="build.sh" />
 		<Unit filename="grid.cpp" />
 		<Unit filename="grid.h" />
 		<Unit filename="main.cpp" />
