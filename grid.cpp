@@ -1,29 +1,43 @@
 #include "grid.h"
 #include <fstream>
-//#include <utility>
-
-#define PRINT_ALGO_START_0 \
-	{ \
-		if( _verbose ) \
-			std::cout << "START: " << __FUNCTION__ << '\n'; \
-	}
 
 #define PRINT_ALGO_START \
 	{ \
-		if( _verbose ) \
+		if( g_Verbose ) \
+			std::cout << "START: " << __FUNCTION__ << '\n'; \
+	}
+
+/*#define PRINT_ALGO_START \
+	{ \
+		if( g_Verbose ) \
 			std::cout << "START: " << __FUNCTION__  << " with view: " << GetString(orient) << '\n'; \
 	}
+*/
 #define PRINT_MAIN_IDX \
 	{ \
-		if( _verbose ) \
+		if( g_Verbose ) \
 			std::cout << " -main idx=" << i+1 << '\n'; \
 	}
 
+//#define DEBUGMODE
+
+#ifdef DEBUGMODE
+	#define VERBOSE if(1) std::cout
+#else
+	#define VERBOSE if(0) std::cout
+#endif
+
+bool g_LogSteps = false;
+bool g_Verbose  = false;
+int  g_NbSteps  = 0;
+
 //----------------------------------------------------------------------------
-void LogStep( const Cell& cell, std::string msg )
+void
+LogStep( const Cell& cell, std::string msg )
 {
-	static int step;
-	std::cout << "*** step " << ++step << ": CELL " << cell._pos << ": " << msg << '\n';
+	++g_NbSteps;
+	if( g_LogSteps )
+		std::cout << "*** step " << g_NbSteps << ": CELL " << cell._pos << ": " << msg << '\n';
 }
 //----------------------------------------------------------------------------
 std::ostream&
@@ -158,7 +172,7 @@ Grid::PrintCandidates( std::ostream& s, std::string txt ) const
 }
 
 //----------------------------------------------------------------------------
-/// Fills with a simple sample grid
+/// Constructor, fills with a simple sample grid
 Grid::Grid()
 {
 	std::array<std::array<int,9>,9> s = {{
@@ -191,9 +205,6 @@ Grid::Grid()
 bool
 Grid::Check( EN_ORIENTATION orient ) const
 {
-//	if( _verbose )
-//		std::cout << "Checking, orientation:" << GetString(orient) << '\n';
-
 	for( index_t i=0; i<9; i++ )  // for each row/col/block
 	{
 		View_1Dim_c v1d = GetView( orient, i );
@@ -202,7 +213,6 @@ Grid::Check( EN_ORIENTATION orient ) const
 		{
 			const Cell& cell_1 = v1d.GetCell(j);
 			auto val_1 = cell_1.GetValue();
-//			std::cout << "   j=" << j << " val=" << val_1 << "\n";
 			if( val_1 != 0 )
 			{
 				for( index_t k=0; k<9; k++ ) // for each cell in the view
@@ -211,7 +221,7 @@ Grid::Check( EN_ORIENTATION orient ) const
 					auto val_2 = cell_2.GetValue();
 					if( k != j && val_1 == val_2 )
 					{
-						std::cout << "Error, cell at " << cell_1._pos << " and at " << cell_2._pos << " have same value: " << val_1 << '\n';
+						std::cout << "Error, cell at " << cell_1._pos << " and at " << cell_2._pos << " have same value: " << (int)val_1 << '\n';
 						return false;
 					}
 				}
@@ -227,17 +237,17 @@ Grid::Check() const
 {
 	if( !Check( OR_ROW ) )
 	{
-		std::cout << "Error, row invalid\n";
+		std::cout << "Error, invalid row\n";
 		return false;
 	}
 	if( !Check( OR_COL ) )
 	{
-		std::cout << "Error, col invalid\n";
+		std::cout << "Error, invalid col\n";
 		return false;
 	}
 	if( !Check( OR_BLK ) )
 	{
-		std::cout << "Error, block invalid\n";
+		std::cout << "Error, invalid block\n";
 		return false;
 	}
 	return true;
@@ -272,9 +282,8 @@ Grid::Load( std::string fn )
 	std::string line;
 	while( std::getline( infile, line ) )
 	{
-//		std::cout << "line=" << line << "\n";
 		if( !line.empty() )
-			if( ( line[0] >= '0' &&  line[0] <= '9') || line[0]=='.' || line[0]=='_' ) // lines starting with other characters are ignored
+			if( ( line[0] >= '0' &&  line[0] <= '9') || line[0]=='.' || line[0]=='_' || line[0]==' ' ) // lines starting with other characters are ignored
 			{
 
 				if( line.size() != 9  && li < 9 )
@@ -284,8 +293,7 @@ Grid::Load( std::string fn )
 				}
 				for( size_t col=0; col<line.size(); col++ )
 				{
-//					std::cout << "char=" << line[col] << "\n";
-					if( line[col] == '.' || line[col] == '0' || line[col] == '_')
+					if( line[col] == '.' || line[col] == '0' || line[col] == '_' || line[col] == ' ' )
 						_data[li][col].SetValue( 0 );
 					else
 					{
@@ -295,13 +303,11 @@ Grid::Load( std::string fn )
 							return false;
 						}
 						_data[li][col].SetValue( line[col] - '0' );
-//						std::cout << "li=" << li << " col=" << col << " val=" << line[col] - '0' << "\n";
 					}
 				}
 				li++;
 			}
 	}
-//	InitGrid();
 	return true;
 }
 //----------------------------------------------------------------------------
@@ -330,11 +336,14 @@ Grid::GetView( EN_ORIENTATION orient, index_t idx )
 }
 
 //----------------------------------------------------------------------------
-/// check in a view if there is only one value missing. If so, then we can assign a value to it
+/// Check in a 1d view if there is only one value missing. If so, then we can assign the missing value to that cell
 bool
 Grid::SeachForSingleMissing( EN_ORIENTATION orient )
 {
 	PRINT_ALGO_START;
+	if( g_Verbose )
+		std::cout << "view: " << GetString(orient) << '\n'; \
+
 	for( index_t i=0; i<9; i++ )  // for each row/col/block
 	{
 		PRINT_MAIN_IDX;
@@ -372,11 +381,13 @@ Grid::SeachForSingleMissing( EN_ORIENTATION orient )
 	return false;
 }
 //----------------------------------------------------------------------------
-/// remove candidates on rows/cols/blocks that have a value in another cell
+/// Remove candidates on rows/cols/blocks that have a value in another cell
 bool
 Grid::RemoveCandidates( EN_ORIENTATION orient )
 {
 	PRINT_ALGO_START;
+	if( g_Verbose )
+		std::cout << "view: " << GetString(orient) << '\n'; \
 
 	bool res = false;
 	for( index_t i=0; i<9; i++ )  // for each row/col/block
@@ -390,7 +401,6 @@ Grid::RemoveCandidates( EN_ORIENTATION orient )
 			auto currentValue = cell.GetValue();
 			if( currentValue != 0 )
 			{
-//				std::cout << " -found val:"  << currentValue << " at " << cell._pos << "\n";
 				for( index_t k=0; k<9; k++ ) // for each other cell in the view
 					if( v1d.GetCell(k).HasCandidate( currentValue ) )
 						res = v1d.GetCell(k).RemoveCandidate( currentValue );
@@ -400,6 +410,7 @@ Grid::RemoveCandidates( EN_ORIENTATION orient )
 	return res;
 }
 //----------------------------------------------------------------------------
+#if 0
 bool
 Grid::SearchPairs( EN_ORIENTATION orient )
 {
@@ -407,14 +418,14 @@ Grid::SearchPairs( EN_ORIENTATION orient )
 
 	bool res = false;
 
-	for( index_t i=0; i<9; i++ )  // for each row/col
+	for( index_t i=0; i<9; i++ )  // for each row/col/block
 	{
 		PRINT_MAIN_IDX;
 		View_1Dim_nc v1d = GetView( orient, i );
 
 		bool found = false;
 		std::vector<value_t> v_cand_1;
-		int pos_1, pos_2;
+		index_t pos_1, pos_2;
 		for( index_t j=0; j<8 && !found; j++ ) // for each cell in the view
 		{
 			pos_1 = j;
@@ -422,7 +433,6 @@ Grid::SearchPairs( EN_ORIENTATION orient )
 			if( cell_1.NbCandidates() == 2 )
 			{
 				v_cand_1 = cell_1.GetCandidates();
-//				PrintVector( v_cand_1, "Found one 2-cand" );
 				for( index_t k=j+1; k<9; k++ ) // for each other cell in the view
 				{
 					pos_2 = k;
@@ -437,8 +447,6 @@ Grid::SearchPairs( EN_ORIENTATION orient )
 		}
 		if( found )
 		{
-//			if( _verbose )
-//				PrintVector( v_cand_1, "Found pair" );
 			for( index_t j=0; j<9; j++ ) // for each cell in the view
 			{
 				Cell& cell = v1d.GetCell(j);
@@ -450,12 +458,76 @@ Grid::SearchPairs( EN_ORIENTATION orient )
 	}
 	return res;
 }
+#endif
 //----------------------------------------------------------------------------
-/// Search for cells in a row/col/block where a candidate appears in only one cell
+bool
+Grid::SearchPairsTriple( EN_ORIENTATION orient, uint n )
+{
+	PRINT_ALGO_START;
+	if( g_Verbose )
+		std::cout << "view: " << GetString(orient) << " n=" << n << '\n'; \
+
+	assert( n==2 || n==3 );
+
+	bool res = false;
+
+	for( index_t i=0; i<9; i++ )  // for each row/col/block
+	{
+		PRINT_MAIN_IDX;
+		std::vector<index_t> v_pos(1);
+		View_1Dim_nc v1d = GetView( orient, i );
+		std::vector<value_t> v_cand_1;
+
+		for( index_t j=0; j<8 && (v_pos.size()!=n); j++ ) // for each cell in the view (and stop if found 'n' matches)
+		{
+			Cell& cell_1 = v1d.GetCell(j);
+			if( cell_1.NbCandidates() == n )
+			{
+				v_pos[0] = j;
+				v_cand_1 = cell_1.GetCandidates();
+
+				for( index_t k=j+1; k<9 && (v_pos.size()!=n); k++ ) // for each other cell in the view
+				{
+					Cell& cell_2 = v1d.GetCell(k);
+					if( cell_2.NbCandidates() == n )
+					{
+						if( v_cand_1 == cell_2.GetCandidates() ) // if the candidates are the same, then we can remove these from the others cells of the view
+						{
+							if( g_Verbose )
+								std::cout << "-found match of pos " << (int)j+1 << " at pos " << (int)k+1 << '\n';
+							v_pos.push_back( k );
+						}
+					}
+				}
+			}
+		}
+		assert( v_pos.size() <= n );
+		if( v_pos.size() == n )
+		{
+			for( index_t j=0; j<9; j++ ) // for each cell in the view
+			{
+				Cell& cell = v1d.GetCell(j);
+				bool dontremove( false );
+				for( uchar p=0; p<n; p++ )
+					if( j == v_pos[p] )
+						dontremove = true;
+				if( !dontremove )
+					if( cell.RemoveCandidates( v_cand_1 ) )
+						res = true;
+			}
+		}
+	}
+	return res;
+}
+
+//----------------------------------------------------------------------------
+/// Search for cells in a row/col/block where a candidate appears in only one cell. If so, then it has to be the value in that cell
 bool
 Grid::SearchSingleCand( EN_ORIENTATION orient )
 {
 	PRINT_ALGO_START;
+	if( g_Verbose )
+		std::cout << "view: " << GetString(orient) << '\n'; \
 
 	bool res = false;
 	bool stop = false;
@@ -481,7 +553,7 @@ Grid::SearchSingleCand( EN_ORIENTATION orient )
 			auto c = cand_count[val];
 			if( c == 1 )
 			{
-				std::cout << "found single " << val << '\n';
+//				std::cout << "found single " << val << '\n';
                 for( index_t j=0; j<9; j++ ) // for each cell in the view
 				{
 					Cell& cell = v1d.GetCell(j);
@@ -503,7 +575,7 @@ Grid::SearchSingleCand( EN_ORIENTATION orient )
 void
 Grid::PrintAll( std::ostream& s, std::string txt )
 {
-	if( _verbose )
+	if( g_Verbose )
 	{
 		s << "Values: " << txt << "\n" << *this;
 		PrintCandidates( std::cout, txt );
@@ -542,7 +614,7 @@ Grid::GetOtherCells( const Cell& src, int nb, EN_ORIENTATION orient )
 	return out;
 }
 //----------------------------------------------------------------------------
-/// filter vector \c v_pos so that it holds only positions of cells holding only one of the candidates that are in \c v_cand
+/// Filter vector \c v_pos so that it holds only positions of cells holding only one of the candidates that are in \c v_cand
 void
 Grid::FilterByCand( const std::vector<value_t>& v_cand, std::vector<pos_t>& v_pos ) const
 {
@@ -563,8 +635,10 @@ Grid::FilterByCand( const std::vector<value_t>& v_cand, std::vector<pos_t>& v_po
 }
 
 //----------------------------------------------------------------------------
-/// Finds indexes of correspondences betwen 2 vectors holding 2 elements.
-/// Returns value holds \c first: index on first vector, \c second: index on second vector
+/// Helper function for FindSymmetricalMatches()
+/** Finds indexes of correspondences betwen 2 vectors holding 2 elements.
+Returned value holds \c first: index on first vector, \c second: index on second vector
+*/
 std::pair<index_t,index_t>
 FindMatch( const std::vector<index_t>& v_key, const std::vector<index_t>& v_cand )
 {
@@ -585,6 +659,7 @@ FindMatch( const std::vector<index_t>& v_key, const std::vector<index_t>& v_cand
 	return std::pair<index_t,index_t>(0,0); // just there to avoid a compilation warning
 }
 //----------------------------------------------------------------------------
+/// Holds results of FindSymmetricalMatches()
 struct symMatches
 {
 	pos_t pA;
@@ -605,16 +680,16 @@ and the set of cells holds these:
 3: 1,2
 4: 2,4
 \endverbatim
-then we see that we have a match with elems 3 and 4, and the common candidates (that will get removed in further steps) is 4
+then we see that we have a match with elems 3 and 4, and the common candidates (that will get removed in further steps) is 2
 */
 std::vector<symMatches>
 FindSymmetricalMatches(
 	const Grid& grid,
-	const std::vector<value_t>& v_key_cand,   ///< input: vector of 2 values (candidates of key cell)
+	const std::vector<value_t>& v_key_cand,  ///< input: vector of 2 values (candidates of key cell)
 	const std::vector<pos_t>&   v_cells      ///< input: vector of cell positions that are in the range and hold 2 candidates
 )
 {
-	std::cout << "START: " << __FUNCTION__ << '\n';
+//	std::cout << "START: " << __FUNCTION__ << '\n';
 	assert( v_key_cand.size() == 2 );
 
 	std::vector<symMatches> v_out;
@@ -635,12 +710,12 @@ FindSymmetricalMatches(
 			const auto& v_cand_B = cB.GetCandidates();
 			if( v_cand_A != v_cand_B )
 			{
-				PrintVector( v_cand_A, "v_cand_A" ); PrintVector( v_cand_B, "v_cand_B" );
+//				PrintVector( v_cand_A, "v_cand_A" ); PrintVector( v_cand_B, "v_cand_B" );
 
 				auto match_idx_B = FindMatch( v_key_cand, v_cand_B );
 
-				std::cout << "match A: " << match_idx_A.first <<  '-' << match_idx_A.second << '\n';
-				std::cout << "match B: " << match_idx_B.first <<  '-' << match_idx_A.second << '\n';
+//				std::cout << "match A: " << match_idx_A.first <<  '-' << match_idx_A.second << '\n';
+//				std::cout << "match B: " << match_idx_B.first <<  '-' << match_idx_A.second << '\n';
 
 				if( v_cand_A[!match_idx_A.second] == v_cand_B[!match_idx_B.second] )
 				{
@@ -648,7 +723,7 @@ FindSymmetricalMatches(
 					p_out.first  = pA;
 					p_out.second = pB;
 					value_t common_value = v_cand_A[!match_idx_A.second];
-					std::cout << "FOUND: pA=" << pA << " pB=" << pB <<  " common value=" << common_value << '\n';
+//					std::cout << "FOUND: pA=" << pA << " pB=" << pB <<  " common value=" << common_value << '\n';
 					v_out.push_back( symMatches( pA,pB,common_value) );
 				}
 			}
@@ -728,10 +803,11 @@ RemoveCandidatesFromRegion( Grid& grid, const std::vector<pos_t>& v_region, valu
 bool
 Grid::XY_Wing()
 {
-	PRINT_ALGO_START_0;
+	PRINT_ALGO_START;
 
 	for( index_t row=0; row<9; row++ )  // for each row
 	{
+		VERBOSE << "row=" << row << '\n';
 		View_1Dim_nc v1d = GetView( OR_ROW, row );
 		for( index_t col=0; col<9; col++ )   // for each col
 		{
@@ -739,17 +815,18 @@ Grid::XY_Wing()
 			auto v_cand = key.GetCandidates();
 			if( v_cand.size() == 2 )
 			{
+				VERBOSE << " col=" << row <<  " cell has " << v_cand.size() << " candidates\n";
 				auto v_cells   = GetOtherCells( key, 2, OR_ROW );  // get cells on same row that have 2 candidates
 				auto v_cells_b = GetOtherCells( key, 2, OR_COL );  // get cells on same col that have 2 candidates
 				auto v_cells_c = GetOtherCells( key, 2, OR_BLK );  // get cells in same block that have 2 candidates
-				v_cells.insert( v_cells.end(), v_cells_b.begin(), v_cells_b.end() );
-				v_cells.insert( v_cells.end(), v_cells_c.begin(), v_cells_c.end() );
+				AddToVector( v_cells, v_cells_b );
+				AddToVector( v_cells, v_cells_c );
 
 				if( v_cells.size() > 1 )
 				{
-					std::cout << "\n -KEY: " << GetRowLetter(row) << col+1 << '\n'; \
+//					std::cout << "\n -KEY: " << GetRowLetter(row) << col+1 << '\n';
 					FilterByCand( v_cand, v_cells );                 // remove the ones that don't use any of the 2 candidates
-					PrintVector( v_cells, "v_cells: after" );
+//					PrintVector( v_cells, "v_cells: after" );
 
 					if( v_cells.size() > 1 )
 					{
@@ -767,12 +844,34 @@ Grid::XY_Wing()
 	return false;
 }
 //----------------------------------------------------------------------------
+#if 0
 bool
 Grid::SearchPairs()
 {
 	if( !SearchPairs( OR_ROW ) )
 		if( !SearchPairs( OR_COL ) )
 			if( !SearchPairs( OR_BLK ) )
+				return false;
+	return true;
+}
+#endif
+//----------------------------------------------------------------------------
+bool
+Grid::SearchPairs()
+{
+	if( !SearchPairsTriple( OR_ROW, 2 ) )
+		if( !SearchPairsTriple( OR_COL, 2 ) )
+			if( !SearchPairsTriple( OR_BLK, 2 ) )
+				return false;
+	return true;
+}
+//----------------------------------------------------------------------------
+bool
+Grid::SearchTriples()
+{
+	if( !SearchPairsTriple( OR_ROW, 3 ) )
+		if( !SearchPairsTriple( OR_COL, 3 ) )
+			if( !SearchPairsTriple( OR_BLK, 3 ) )
 				return false;
 	return true;
 }
@@ -841,17 +940,17 @@ Grid::NbUnknows2() const
 	}
 	return n;
 }
-
 //----------------------------------------------------------------------------
-/// returns true if something changed
+/// Returns true if something changed
 bool
 Grid::ProcessAlgorithm( EN_ALGO algo )
 {
 	bool res = false;
 	switch( algo )
 	{
-		case ALG_REMOVE_CAND:   res=RemoveCandidates(); break;
-		case ALG_SEARCH_PAIRS:  res=SearchPairs();      break;
+		case ALG_REMOVE_CAND:    res=RemoveCandidates(); break;
+		case ALG_SEARCH_PAIRS:   res=SearchPairs();      break;
+		case ALG_SEARCH_TRIPLES: res=SearchTriples();      break;
 		case ALG_SEARCH_SINGLE_CAND: res=SearchSingleCand(); break;
 		case ALG_SEARCH_MISSING_SINGLE: res=SeachForSingleMissing(); break;
 		case ALG_XY_WING: res = XY_Wing(); break;
@@ -885,7 +984,7 @@ Grid::Solve()
 			nu_after = NbUnknows();
 //			std::cout << "  -loop 2: algo " << algo << "-" << GetString(algo) << ": res=" << res <<  ", nb unknowns left=" << nu_after << "\n";
 
-			if( _verbose )
+			if( g_Verbose )
 				PrintAll( std::cout, "iter " + std::to_string(iter) + ": after algo " + GetString(algo)  );
 
 			if( !res )                                                       // if no changes happened, then switch to next algorithm
@@ -912,7 +1011,7 @@ Grid::Solve()
 //	while( n_before != n_after &&  n_after != 0 );
 	while( !stop );
 
-	std::cout << "nb_unknowns=" << nu_after << "\n";
+//	std::cout << "nb_unknowns=" << nu_after << "\n";
 	if( nu_after == 0 )
 		return true;
 	return false;

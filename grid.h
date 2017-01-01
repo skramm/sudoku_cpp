@@ -9,8 +9,9 @@
 #include <cassert>
 #include <type_traits>
 
-typedef int value_t;
-typedef int index_t;
+typedef unsigned char uchar;
+typedef uchar value_t;
+typedef uchar index_t;
 typedef std::pair<index_t,index_t> pos_t;
 typedef std::map<value_t,bool> cand_map_t;
 
@@ -71,7 +72,7 @@ private:
 		for( value_t i=1; i<10; i++ )
 			if( _cand[i] )
 			{
-				s << i << ",";
+				s << (int)i << ",";
 				found = true;
 			}
 		if( !found )
@@ -125,7 +126,7 @@ private:
 				v.push_back( i );
 		return v;
 	}
-	int NbCandidates() const
+	uchar NbCandidates() const
 	{
 		int n = 0;
 		for( int i=1; i<10; i++ )
@@ -157,7 +158,7 @@ inline
 char
 GetRowLetter( index_t i )
 {
-	char c = i+'A';
+	uchar c = i+'A';
 	if( i==8 )   // so we replace 'I' by 'J' for readability
 		c++;
 	return c;
@@ -202,14 +203,14 @@ typedef View_T<Cell*>       View_1Dim_nc;
 
 typedef std::array<std::array<char,27>,27> Viewtable;
 
-//template<typename T>
 inline
 void
 PrintView( std::ostream& s, View_1Dim_nc& v )
 {
+	s << "values: ";
 	for( index_t i=0; i<9; i++ )
 	{
-		s << v.GetCell(i).GetValue() << "    ";
+		s << (int)v.GetCell(i).GetValue();
 	}
 	s << '\n';
 	for( index_t i=0; i<9; i++ )
@@ -240,6 +241,7 @@ enum EN_ALGO
 {
 	ALG_REMOVE_CAND = 0,
 	ALG_SEARCH_PAIRS,
+	ALG_SEARCH_TRIPLES,
 	ALG_SEARCH_SINGLE_CAND,
 	ALG_SEARCH_MISSING_SINGLE,
 	ALG_XY_WING,
@@ -253,8 +255,9 @@ GetString( EN_ALGO orient )
 {
 	switch( orient )
 	{
-		case ALG_REMOVE_CAND:   return "RemoveCand"; break;
-		case ALG_SEARCH_PAIRS:  return "SearchPairs"; break;
+		case ALG_REMOVE_CAND: return "RemoveCand"; break;
+		case ALG_SEARCH_PAIRS: return "SearchPairs"; break;
+		case ALG_SEARCH_TRIPLES: return "SearchTriples"; break;
 		case ALG_SEARCH_SINGLE_CAND: return "SearchSingleCand"; break;
 		case ALG_SEARCH_MISSING_SINGLE: return "MissingSingle"; break;
 		case ALG_XY_WING: return "XY_Wing"; break;
@@ -279,9 +282,17 @@ void AddToVector( std::vector<T>& v, const T& elem )
 {
 	if( std::find( v.begin(), v.end(), elem ) == v.end() )
 	{
-		std::cout << "  -adding elem " << elem << '\n';
+//		std::cout << "  -adding elem " << elem << '\n';
 		v.push_back( elem );
 	}
+}
+//----------------------------------------------------------------------------
+/// Adds to vector \c v the elements of v2 only if they are not already present
+template<typename T>
+void AddToVector( std::vector<T>& v, const std::vector<T>& v2 )
+{
+	for( const auto& elem: v2 )
+		AddToVector( v, elem );
 }
 //----------------------------------------------------------------------------
 class Grid
@@ -294,7 +305,7 @@ class Grid
 		bool Check() const;
 		bool Solve();
 		void InitCandidates();
-		void SetVerbose(bool b ) { _verbose = b; }
+//		void SetVerbose(bool b ) { _verbose = b; }
 		void PrintCandidates( std::ostream&, std::string=std::string() ) const;
 		void PrintAll( std::ostream&, std::string );
 
@@ -308,7 +319,9 @@ class Grid
 		bool RemoveCandidates();
 
 		bool SearchPairs();
-		bool SearchPairs( EN_ORIENTATION );
+		bool SearchTriples();
+//		bool SearchPairs( EN_ORIENTATION );
+		bool SearchPairsTriple( EN_ORIENTATION, uint );
 
 		bool SearchSingleCand();
 		bool SearchSingleCand( EN_ORIENTATION );
@@ -329,8 +342,8 @@ class Grid
 
 		void FilterByCand( const std::vector<value_t>& v_cand, std::vector<pos_t>& v_pos ) const;
 
-	public:
-		bool _verbose = false;
+//	public:
+//		bool _verbose = false;
 
 	private:
 		std::array<std::array<Cell,9>,9> _data;
@@ -455,6 +468,6 @@ Grid::GetBlock( index_t idx )
 
 	return g;
 }
-
+//----------------------------------------------------------------------------
 
 #endif // GRID_H
