@@ -7,12 +7,6 @@
 			std::cout << "START: " << __FUNCTION__ << '\n'; \
 	}
 
-/*#define PRINT_ALGO_START \
-	{ \
-		if( g_Verbose ) \
-			std::cout << "START: " << __FUNCTION__  << " with view: " << GetString(orient) << '\n'; \
-	}
-*/
 #define PRINT_MAIN_IDX \
 	{ \
 		if( g_Verbose ) \
@@ -22,9 +16,9 @@
 //#define DEBUGMODE
 
 #ifdef DEBUGMODE
-	#define VERBOSE if(1) std::cout
+	#define DEBUG if(1) std::cout
 #else
-	#define VERBOSE if(0) std::cout
+	#define DEBUG if(0) std::cout
 #endif
 
 bool g_LogSteps = false;
@@ -410,56 +404,6 @@ Grid::RemoveCandidates( EN_ORIENTATION orient )
 	return res;
 }
 //----------------------------------------------------------------------------
-#if 0
-bool
-Grid::SearchPairs( EN_ORIENTATION orient )
-{
-	PRINT_ALGO_START;
-
-	bool res = false;
-
-	for( index_t i=0; i<9; i++ )  // for each row/col/block
-	{
-		PRINT_MAIN_IDX;
-		View_1Dim_nc v1d = GetView( orient, i );
-
-		bool found = false;
-		std::vector<value_t> v_cand_1;
-		index_t pos_1, pos_2;
-		for( index_t j=0; j<8 && !found; j++ ) // for each cell in the view
-		{
-			pos_1 = j;
-			Cell& cell_1 = v1d.GetCell(j);
-			if( cell_1.NbCandidates() == 2 )
-			{
-				v_cand_1 = cell_1.GetCandidates();
-				for( index_t k=j+1; k<9; k++ ) // for each other cell in the view
-				{
-					pos_2 = k;
-					Cell& cell_2 = v1d.GetCell(k);
-					if( v_cand_1 == cell_2.GetCandidates() ) // if the candidates are the same, then we can remove these from the others cells of the view
-					{
-						found = true;
-						break;
-					}
-				}
-			}
-		}
-		if( found )
-		{
-			for( index_t j=0; j<9; j++ ) // for each cell in the view
-			{
-				Cell& cell = v1d.GetCell(j);
-				if( j != pos_1 && j != pos_2 )
-					if( cell.RemoveCandidates( v_cand_1 ) )
-						res = true;
-			}
-		}
-	}
-	return res;
-}
-#endif
-//----------------------------------------------------------------------------
 bool
 Grid::SearchPairsTriple( EN_ORIENTATION orient, uint n )
 {
@@ -519,7 +463,75 @@ Grid::SearchPairsTriple( EN_ORIENTATION orient, uint n )
 	}
 	return res;
 }
+//----------------------------------------------------------------------------
+void
+AddToCandidateCount( std::map<value_t,index_t>& m_count, const Cell& cell )
+{
+	auto v_cand = cell.GetCandidates();
+	for( auto c: v_cand )
+		m_count[c]++;
+}
 
+//----------------------------------------------------------------------------
+/// Counts the number of times each candidate is present in a given row/block/col
+std::map<value_t,index_t>
+CoundCandidates( Grid& g, EN_ORIENTATION orient, index_t idx )
+{
+	View_1Dim_nc v1d = g.GetView( orient, idx );
+
+	std::map<value_t,index_t> cand_count; // counts the number of times each candidate is present on the view
+	for( value_t i=0; i<9; i++ )
+		cand_count[i+1]=0;
+
+	for( index_t j=0; j<9; j++ ) // for each cell in the view, count the candidates
+		AddToCandidateCount( cand_count, v1d.GetCell(j) );
+
+	return cand_count;
+}
+//----------------------------------------------------------------------------
+/// Pointing pairs/triples. See http://www.sudokuwiki.org/Intersection_Removal
+bool
+PointingPairsTriples( Grid& g, EN_ORIENTATION orient )
+{
+	PRINT_ALGO_START;
+	if( g_Verbose )
+		std::cout << "view: " << GetString(orient) << '\n'; \
+
+	assert( orient == OR_ROW || orient == OR_COL );
+
+	bool ret_val(false);
+	for( index_t i=0; i<9; i++ )  // for each row/col
+	{
+		DEBUG << "elem=" << (int)i+1 << '\n';
+
+		View_1Dim_nc v1d = g.GetView( orient, i );
+
+		for( index_t b=0; b<3; b++ ) // for each of the 3 blocks dividing the view
+		{
+			DEBUG << " block=" << (int)b+1 << '\n';
+			const Cell& first = v1d.GetCell(b*3); // get first cell of block
+			auto bl_idx = GetBlockIndex( first._pos );
+			auto cc1 = CoundCandidates( g, OR_BLK, bl_idx ); // number of candidates in that block
+			std::map<value_t,index_t> cc2;
+			for( index_t c=0; c<3; c++ )  // count candidates in the 3 cells of that block limit
+				AddToCandidateCount( cc2, v1d.GetCell( b*3+c ) );
+
+			for( value_t v=1; v<10; v++ )          // for each candidate value,
+				if( cc2[v] > 1 && cc1[v] == cc2[v] )  // if we have 2 or 3 identical candidates, AND no other in the others cells of the same block
+				{
+					DEBUG << "remove candidate " << (int)v << '\n'; // in the same row/col in the 2 other blocks
+					for( index_t j=0; j<9; j++ )  // for each cell of the view
+					{
+						Cell& cell = v1d.GetCell(j);
+						if( j/3 != b )
+							if( cell.RemoveCandidate( v ) )
+								ret_val = true;
+					}
+				}
+		}
+	}
+	return ret_val;
+}
 //----------------------------------------------------------------------------
 /// Search for cells in a row/col/block where a candidate appears in only one cell. If so, then it has to be the value in that cell
 bool
@@ -536,17 +548,7 @@ Grid::SearchSingleCand( EN_ORIENTATION orient )
 		PRINT_MAIN_IDX;
 		View_1Dim_nc v1d = GetView( orient, i );
 
-		std::map<value_t,index_t> cand_count; // counts the number of times each candidate is present on the view (and also holds the cell's positions)
-		for( value_t i=0; i<9; i++ )
-			cand_count[i+1]=0;
-
-		for( index_t j=0; j<9; j++ ) // for each cell in the view, count the candidates
-		{
-			Cell& cell = v1d.GetCell(j);
-			auto v_cand = cell.GetCandidates();
-			for( auto c: v_cand )
-				cand_count[c]++;
-		}
+		auto cand_count = CoundCandidates( *this, orient, i );
 
 		for( index_t val=1; val<10; val++ )  // analyse results
 		{
@@ -618,7 +620,6 @@ Grid::GetOtherCells( const Cell& src, int nb, EN_ORIENTATION orient )
 void
 Grid::FilterByCand( const std::vector<value_t>& v_cand, std::vector<pos_t>& v_pos ) const
 {
-//PRINT_ALGO_START_0;
 	std::vector<pos_t> v_out;
 	assert( v_cand.size() == 2 );
 	for( auto& pos : v_pos )
@@ -689,7 +690,6 @@ FindSymmetricalMatches(
 	const std::vector<pos_t>&   v_cells      ///< input: vector of cell positions that are in the range and hold 2 candidates
 )
 {
-//	std::cout << "START: " << __FUNCTION__ << '\n';
 	assert( v_key_cand.size() == 2 );
 
 	std::vector<symMatches> v_out;
@@ -799,42 +799,42 @@ RemoveCandidatesFromRegion( Grid& grid, const std::vector<pos_t>& v_region, valu
 			grid.GetCellByPos(pos).RemoveCandidate( cand );
 }
 //----------------------------------------------------------------------------
-/// check in a view if there is only one value missing. If so, then we can assign a value to it
+/// XY Wing algorithm
 bool
-Grid::XY_Wing()
+XY_Wing( Grid& g )
 {
 	PRINT_ALGO_START;
 
 	for( index_t row=0; row<9; row++ )  // for each row
 	{
-		VERBOSE << "row=" << row << '\n';
-		View_1Dim_nc v1d = GetView( OR_ROW, row );
+		DEBUG << "row=" << (int)row+1 << '\n';
+		View_1Dim_nc v1d = g.GetView( OR_ROW, row );
 		for( index_t col=0; col<9; col++ )   // for each col
 		{
 			Cell& key = v1d.GetCell(col);
 			auto v_cand = key.GetCandidates();
 			if( v_cand.size() == 2 )
 			{
-				VERBOSE << " col=" << row <<  " cell has " << v_cand.size() << " candidates\n";
-				auto v_cells   = GetOtherCells( key, 2, OR_ROW );  // get cells on same row that have 2 candidates
-				auto v_cells_b = GetOtherCells( key, 2, OR_COL );  // get cells on same col that have 2 candidates
-				auto v_cells_c = GetOtherCells( key, 2, OR_BLK );  // get cells in same block that have 2 candidates
+				DEBUG << " col=" << (int)col+1 <<  " cell has " << v_cand.size() << " candidates\n";
+				auto v_cells   = g.GetOtherCells( key, 2, OR_ROW );  // get cells on same row that have 2 candidates
+				auto v_cells_b = g.GetOtherCells( key, 2, OR_COL );  // get cells on same col that have 2 candidates
+				auto v_cells_c = g.GetOtherCells( key, 2, OR_BLK );  // get cells in same block that have 2 candidates
 				AddToVector( v_cells, v_cells_b );
 				AddToVector( v_cells, v_cells_c );
 
 				if( v_cells.size() > 1 )
 				{
 //					std::cout << "\n -KEY: " << GetRowLetter(row) << col+1 << '\n';
-					FilterByCand( v_cand, v_cells );                 // remove the ones that don't use any of the 2 candidates
+					g.FilterByCand( v_cand, v_cells );                 // remove the ones that don't use any of the 2 candidates
 //					PrintVector( v_cells, "v_cells: after" );
 
 					if( v_cells.size() > 1 )
 					{
-						std::vector<symMatches> v_matches = FindSymmetricalMatches( *this, v_cand, v_cells );
+						std::vector<symMatches> v_matches = FindSymmetricalMatches( g, v_cand, v_cells );
 						for( const auto& p_match: v_matches )
 						{
 							auto v_region = FindCommonRegion( p_match.pA, p_match.pB );
-							RemoveCandidatesFromRegion( *this, v_region, p_match.value, key );
+							RemoveCandidatesFromRegion( g, v_region, p_match.value, key );
 						}
 					}
 				}
@@ -844,17 +844,15 @@ Grid::XY_Wing()
 	return false;
 }
 //----------------------------------------------------------------------------
-#if 0
+/// Pointing pairs/triples. See http://www.sudokuwiki.org/Intersection_Removal
 bool
-Grid::SearchPairs()
+PointingPairsTriples( Grid& g )
 {
-	if( !SearchPairs( OR_ROW ) )
-		if( !SearchPairs( OR_COL ) )
-			if( !SearchPairs( OR_BLK ) )
-				return false;
+	if( !PointingPairsTriples( g, OR_ROW ) )
+		if( !PointingPairsTriples( g, OR_COL ) )
+			return false;
 	return true;
 }
-#endif
 //----------------------------------------------------------------------------
 bool
 Grid::SearchPairs()
@@ -953,7 +951,8 @@ Grid::ProcessAlgorithm( EN_ALGO algo )
 		case ALG_SEARCH_TRIPLES: res=SearchTriples();      break;
 		case ALG_SEARCH_SINGLE_CAND: res=SearchSingleCand(); break;
 		case ALG_SEARCH_MISSING_SINGLE: res=SeachForSingleMissing(); break;
-		case ALG_XY_WING: res = XY_Wing(); break;
+		case ALG_POINTING_PT:    res=PointingPairsTriples( *this ); break;
+		case ALG_XY_WING:        res = XY_Wing( *this ); break;
 		default: assert(0);
 	}
 //	SearchSingles();

@@ -39,7 +39,20 @@ InitCandMap( cand_map_t& cmap )
 	for( value_t i=1; i<10; i++ )
 		cmap[i]=true;
 }
-
+//----------------------------------------------------------------------------
+/// Helper function
+inline
+index_t
+GetBlockIndex( index_t row, index_t col )
+{
+	return row/3*3 + col/3;
+}
+inline
+index_t
+GetBlockIndex( pos_t p )
+{
+	return GetBlockIndex( p.first, p.second );
+}
 //----------------------------------------------------------------------------
 /// Holds a cell, has either a value, either a set of candidates (in which case the value is 0)
 struct Cell
@@ -152,6 +165,10 @@ private:
 		assert(0);
 		return 0; // to avoid warning
 	}
+	bool IsInBlock( index_t bl ) const
+	{
+		return bl == GetBlockIndex( _pos );
+	}
 };
 //----------------------------------------------------------------------------
 inline
@@ -171,27 +188,32 @@ std::ostream& operator << ( std::ostream& s, const pos_t& p )
 	return s;
 }
 
-//----------------------------------------------------------------------------
+/*
+/// Return real block index from index on a view (row/col) and an index on a block \in {0,1,2}
 inline
 index_t
-GetBlockIndex( index_t row, index_t col )
+GetRealBlockIndex( index_t idx, EN_ORIENTATION orient, index_t b_012 )
 {
-	return row/3*3 + col/3;
-}
-inline
-index_t
-GetBlockIndex( pos_t p )
-{
-	return GetBlockIndex( p.first, p.second );
-}
+	assert( orient == OR_ROW || orient == OR_COL );
+	if( orient == OR_ROW )
+		return
+}*/
+
 //----------------------------------------------------------------------------
 /// holds pointers on one element (column, row or block) of the grid
 template<typename T>
 struct View_T
 {
 	std::array<T,9> _viewData;
+
 	typename std::add_lvalue_reference< typename std::remove_pointer<T>::type >::type
 	GetCell( int i )
+	{
+		assert( i<9 );
+		return *_viewData[i];
+	}
+	const typename std::add_lvalue_reference< typename std::remove_pointer<T>::type >::type
+	GetCell( int i ) const
 	{
 		assert( i<9 );
 		return *_viewData[i];
@@ -244,6 +266,7 @@ enum EN_ALGO
 	ALG_SEARCH_TRIPLES,
 	ALG_SEARCH_SINGLE_CAND,
 	ALG_SEARCH_MISSING_SINGLE,
+	ALG_POINTING_PT,
 	ALG_XY_WING,
 
 	ALG_END
@@ -260,6 +283,7 @@ GetString( EN_ALGO orient )
 		case ALG_SEARCH_TRIPLES: return "SearchTriples"; break;
 		case ALG_SEARCH_SINGLE_CAND: return "SearchSingleCand"; break;
 		case ALG_SEARCH_MISSING_SINGLE: return "MissingSingle"; break;
+		case ALG_POINTING_PT: return "PointingPairs/Triples"; break;
 		case ALG_XY_WING: return "XY_Wing"; break;
 		default: assert(0);
 	}
@@ -312,6 +336,12 @@ class Grid
 		Cell&       GetCellByPos( pos_t );
 		const Cell& GetCellByPos( pos_t ) const;
 
+		View_1Dim_c  GetView( EN_ORIENTATION, index_t ) const;
+		View_1Dim_nc GetView( EN_ORIENTATION, index_t );
+
+		std::vector<pos_t> GetOtherCells( const Cell& c, int nb, EN_ORIENTATION );
+		void FilterByCand( const std::vector<value_t>& v_cand, std::vector<pos_t>& v_pos ) const;
+
 	private:
 		bool Check( EN_ORIENTATION ) const;
 
@@ -329,21 +359,11 @@ class Grid
 		bool SeachForSingleMissing();
 		bool SeachForSingleMissing( EN_ORIENTATION );
 
-		bool XY_Wing();
-
-		View_1Dim_c  GetView( EN_ORIENTATION, index_t ) const;
-		View_1Dim_nc GetView( EN_ORIENTATION, index_t );
+//		bool XY_Wing();
 
 		int  NbUnknows() const;
 		int  NbUnknows2() const;
 		bool ProcessAlgorithm( EN_ALGO );
-
-		std::vector<pos_t> GetOtherCells( const Cell& c, int nb, EN_ORIENTATION );
-
-		void FilterByCand( const std::vector<value_t>& v_cand, std::vector<pos_t>& v_pos ) const;
-
-//	public:
-//		bool _verbose = false;
 
 	private:
 		std::array<std::array<Cell,9>,9> _data;

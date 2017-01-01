@@ -10,6 +10,9 @@ Ouput: the solved grid. Or more if verbose flag (-v) is given.
 
 Uses basic strategies, and one more advanced one (XY-Wings).
 
+Requirements: a C++11 compiler
+
 Licence: GPL v3
+
 
 Author: S. Kramm
