@@ -4,7 +4,7 @@ Just a small weekend side project...
 
 A sudoku C++ solver
 
-Input: a file name (see in samples)
+Input: a file name (see in samples folder for examples)
 
 Ouput: the solved grid. Or more if verbose flag (-v) is given.
 
