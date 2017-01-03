@@ -1,13 +1,13 @@
+/**
+This file is part of https://github.com/skramm/sudoku_cpp
+Licence: GPLv3
+*/
 
 #include <iostream>
 
 #include "grid.h"
 
 using namespace std;
-
-extern bool g_LogSteps;
-extern bool g_Verbose;
-extern int  g_NbSteps;
 
 int main( int argc, const char** argv )
 {
@@ -25,16 +25,16 @@ int main( int argc, const char** argv )
 		for( int i=0; i<argc-1; i++ )
 		{
 			if( std::string( argv[i+1] ) == std::string( "-v" ) )
-				g_Verbose = true;
+				g_data.Verbose = true;
 			if( std::string( argv[i+1] ) == std::string( "-s" ) )
-				g_LogSteps = true;
+				g_data.LogSteps = true;
 		}
 
 	}
 	grid.InitCandidates();
 
     cout << "Starting grid:\n" << grid << endl;
-    if( g_Verbose )
+    if( g_data.Verbose )
 		grid.PrintCandidates( cout, "start" );
     if( !grid.Check() )
     {
@@ -42,10 +42,10 @@ int main( int argc, const char** argv )
 		return 1;
     }
     if( grid.Solve() )
-		cout << "-solved with " << g_NbSteps << " steps\n";
+		cout << "-solved with " << g_data.NbSteps << " steps\n";
 	else
 	{
-		cout << "failure, used " << g_NbSteps << " steps\n";
+		cout << "failure, used " << g_data.NbSteps << " steps\n";
 		grid.PrintCandidates( cout, "final" );
 	}
 	cout << grid;

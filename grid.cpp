@@ -1,15 +1,20 @@
+/**
+This file is part of https://github.com/skramm/sudoku_cpp
+Licence: GPLv3
+*/
+
 #include "grid.h"
 #include <fstream>
 
 #define PRINT_ALGO_START \
 	{ \
-		if( g_Verbose ) \
+		if( g_data.Verbose ) \
 			std::cout << "START: " << __FUNCTION__ << '\n'; \
 	}
 
 #define PRINT_MAIN_IDX( o ) \
 	{ \
-		if( g_Verbose ) \
+		if( g_data.Verbose ) \
 			std::cout << " -" << (o==OR_ROW ? "row" : (o==OR_COL?"col":"block") ) << '=' << (int)i+1 << '\n'; \
 	}
 
@@ -21,17 +26,15 @@
 	#define DEBUG if(0) std::cout
 #endif
 
-bool g_LogSteps = false;
-bool g_Verbose  = false;
-int  g_NbSteps  = 0;
+GlobData g_data;
 
 //----------------------------------------------------------------------------
 void
 LogStep( const Cell& cell, std::string msg )
 {
-	++g_NbSteps;
-	if( g_LogSteps )
-		std::cout << "*** step " << g_NbSteps << ": CELL " << cell._pos << ": " << msg << '\n';
+	++g_data.NbSteps;
+	if( g_data.LogSteps )
+		std::cout << "*** step " << g_data.NbSteps << ": CELL " << cell._pos << ": " << msg << '\n';
 }
 //----------------------------------------------------------------------------
 std::ostream&
@@ -282,7 +285,7 @@ Grid::Load( std::string fn )
 
 				if( line.size() != 9  && li < 9 )
 				{
-					std::cout << "Error: line " << li<< " has a length of " << line.size() << '\n';
+					std::cout << "Error: line " << li<< " has a length of " << line.size() << ": -" << line << "-\n";;
 					return false;
 				}
 				for( size_t col=0; col<line.size(); col++ )
@@ -335,7 +338,7 @@ bool
 Grid::SeachForSingleMissing( EN_ORIENTATION orient )
 {
 	PRINT_ALGO_START;
-	if( g_Verbose )
+	if( g_data.Verbose )
 		std::cout << "view: " << GetString(orient) << '\n'; \
 
 	for( index_t i=0; i<9; i++ )  // for each row/col/block
@@ -380,7 +383,7 @@ bool
 Grid::RemoveCandidates( EN_ORIENTATION orient )
 {
 	PRINT_ALGO_START;
-	if( g_Verbose )
+	if( g_data.Verbose )
 		std::cout << "view: " << GetString(orient) << '\n'; \
 
 	bool res = false;
@@ -408,7 +411,7 @@ bool
 Grid::SearchPairsTriple( EN_ORIENTATION orient, uint n )
 {
 	PRINT_ALGO_START;
-	if( g_Verbose )
+	if( g_data.Verbose )
 		std::cout << "view: " << GetString(orient) << " n=" << n << '\n'; \
 
 	assert( n==2 || n==3 );
@@ -437,7 +440,7 @@ Grid::SearchPairsTriple( EN_ORIENTATION orient, uint n )
 					{
 						if( v_cand_1 == cell_2.GetCandidates() ) // if the candidates are the same, then we can remove these from the others cells of the view
 						{
-//							if( g_Verbose )
+//							if( g_data.Verbose )
 //								std::cout << "  -found match of pos " << (int)j+1 << " at pos " << (int)k+1 << '\n';
 							v_pos.push_back( k );
 						}
@@ -463,7 +466,7 @@ Grid::SearchPairsTriple( EN_ORIENTATION orient, uint n )
 						Nb++;
 					}
 			}
-			if( g_Verbose && Nb )
+			if( g_data.Verbose && Nb )
 				std::cout << " - found a " << (n==2 ? "pair" : "triple") << ", removed " << (int)Nb << " candidates from others cells in same view\n";
 		}
 	}
@@ -500,7 +503,7 @@ bool
 PointingPairsTriples( Grid& g, EN_ORIENTATION orient )
 {
 	PRINT_ALGO_START;
-	if( g_Verbose )
+	if( g_data.Verbose )
 		std::cout << "view: " << GetString(orient) << '\n'; \
 
 	assert( orient == OR_ROW || orient == OR_COL );
@@ -524,7 +527,7 @@ PointingPairsTriples( Grid& g, EN_ORIENTATION orient )
 			for( value_t v=1; v<10; v++ )          // for each candidate value,
 				if( cc2[v] > 1 && cc1[v] == cc2[v] )  // if we have 2 or 3 identical candidates, AND no other in the others cells of the same block
 				{
-					if( g_Verbose )
+					if( g_data.Verbose )
 						std::cout << " - value: " << (int)v << " : found " << (cc2[v]==2 ? '2' : '3') << " alone in block " << (int)b+1 << '\n';
 					for( index_t j=0; j<9; j++ )  // for each cell of the view
 					{
@@ -544,7 +547,7 @@ bool
 Grid::SearchSingleCand( EN_ORIENTATION orient )
 {
 	PRINT_ALGO_START;
-	if( g_Verbose )
+	if( g_data.Verbose )
 		std::cout << "view: " << GetString(orient) << '\n'; \
 
 	bool res = false;
@@ -561,7 +564,7 @@ Grid::SearchSingleCand( EN_ORIENTATION orient )
 			auto c = cand_count[val];
 			if( c == 1 )
 			{
-				if( g_Verbose )
+				if( g_data.Verbose )
 					std::cout << "found single: " << (int)val << '\n';
                 for( index_t j=0; j<9; j++ ) // for each cell in the view
 				{
@@ -584,7 +587,7 @@ Grid::SearchSingleCand( EN_ORIENTATION orient )
 void
 Grid::PrintAll( std::ostream& s, std::string txt )
 {
-	if( g_Verbose )
+	if( g_data.Verbose )
 	{
 		s << "Values: " << txt << "\n" << *this;
 		PrintCandidates( std::cout, txt );
@@ -853,8 +856,11 @@ XY_Wing( Grid& g )
 					if( v_cells.size() > 1 )
 					{
 						std::vector<symMatches> v_matches = FindSymmetricalMatches( g, v_cand, v_cells );
-						if( g_Verbose && v_matches.size() > 0 )
+						if( g_data.Verbose && v_matches.size() > 0 )
+						{
+							std::cout << "key cell: " << key._pos << '\n';
 							PrintVector( v_matches, "Symmetric matches" );
+						}
 						for( const auto& p_match: v_matches )
 						{
 							auto v_region = FindCommonRegion( p_match.pA, p_match.pB );
@@ -1008,7 +1014,7 @@ Grid::Solve()
 			nu_after = NbUnknows();
 //			std::cout << "  -loop 2: algo " << algo << "-" << GetString(algo) << ": res=" << res <<  ", nb unknowns left=" << nu_after << "\n";
 
-			if( g_Verbose )
+			if( g_data.Verbose )
 				PrintAll( std::cout, "iter " + std::to_string(iter) + ": after algo " + GetString(algo)  );
 
 			if( !res )                                                       // if no changes happened, then switch to next algorithm

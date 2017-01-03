@@ -4,15 +4,20 @@ Just a small weekend side project...
 
 A sudoku C++ solver
 
-Input: a file name (see in samples folder for examples)
+* I/O is text only
+ * Input: a file name, holding the puzzle as a 9x9 character grid (see in samples folder for examples)
+ * Ouput: the solved grid. Or more if verbose flag (-v) is given.
+* Uses basic strategies, and one more advanced one (XY-Wings).
+* Requirements: a C++11 compiler
+* Licence: GPL v3
+* Author: S. Kramm
 
-Ouput: the solved grid. Or more if verbose flag (-v) is given.
+** Instructions **
 
-Uses basic strategies, and one more advanced one (XY-Wings).
+1. Build with `$ ./build.sh`
+2. Run with `$ sudoku samples/grid2.sud`
 
-Requirements: a C++11 compiler
+Options:
 
-Licence: GPL v3
-
-
-Author: S. Kramm
+* `-v`: verbose, will print out the mains steps and algorithms used
+* `-s`: will print the steps (elminating a candidate in a cell)

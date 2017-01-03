@@ -1,3 +1,8 @@
+/**
+This file is part of https://github.com/skramm/sudoku_cpp
+Licence: GPLv3
+*/
+
 #ifndef GRID_H
 #define GRID_H
 
@@ -18,6 +23,7 @@ typedef std::map<value_t,bool> cand_map_t;
 struct Cell;
 void LogStep( const Cell& cell, std::string msg );
 
+
 #ifdef NDEBUG
 	#define ASSERT_1( a, b ) ;
 #else
@@ -30,6 +36,16 @@ void LogStep( const Cell& cell, std::string msg );
 		} \
 	}
 #endif
+
+//----------------------------------------------------------------------------
+/// holds some global vars
+struct GlobData
+{
+	bool LogSteps = false;
+	bool Verbose  = false;
+	int  NbSteps  = 0;
+};
+extern GlobData g_data;
 
 //----------------------------------------------------------------------------
 inline
