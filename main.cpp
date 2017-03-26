@@ -18,7 +18,7 @@ int main( int argc, const char** argv )
 		if( !grid.Load( argv[argc-1] ) )
 		{
 			cout << ": failure\n";
-			return 1;
+			return 2;
 		}
 		cout << ": success\n";
 
@@ -29,7 +29,6 @@ int main( int argc, const char** argv )
 			if( std::string( argv[i+1] ) == std::string( "-s" ) )
 				g_data.LogSteps = true;
 		}
-
 	}
 	grid.InitCandidates();
 
@@ -39,15 +38,17 @@ int main( int argc, const char** argv )
     if( !grid.Check() )
     {
 		std::cout << "Grid is invalid\n";
-		return 1;
+		return 3;
     }
+    int ret = 0;
     if( grid.Solve() )
 		cout << "-solved with " << g_data.NbSteps << " steps\n";
 	else
 	{
 		cout << "failure, used " << g_data.NbSteps << " steps\n";
 		grid.PrintCandidates( cout, "final" );
+		ret = 1;
 	}
 	cout << grid;
-    return 0;
+    return ret;
 }

@@ -356,7 +356,6 @@ class Grid
 		View_1Dim_nc GetView( EN_ORIENTATION, index_t );
 
 		std::vector<pos_t> GetOtherCells( const Cell& c, int nb, EN_ORIENTATION );
-		void FilterByCand( const std::vector<value_t>& v_cand, std::vector<pos_t>& v_pos ) const;
 
 	private:
 		bool Check( EN_ORIENTATION ) const;
@@ -378,7 +377,7 @@ class Grid
 //		bool XY_Wing();
 
 		int  NbUnknows() const;
-		int  NbUnknows2() const;
+//		int  NbUnknows2() const;
 		bool ProcessAlgorithm( EN_ALGO );
 
 	private:

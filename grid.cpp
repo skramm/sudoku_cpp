@@ -3,8 +3,6 @@ This file is part of https://github.com/skramm/sudoku_cpp
 Licence: GPLv3
 */
 
-#include "grid.h"
-#include <fstream>
 
 #define PRINT_ALGO_START \
 	{ \
@@ -14,10 +12,17 @@ Licence: GPLv3
 
 #define PRINT_MAIN_IDX( o ) \
 	{ \
-		if( g_data.Verbose ) \
-			std::cout << " -" << (o==OR_ROW ? "row" : (o==OR_COL?"col":"block") ) << '=' << (int)i+1 << '\n'; \
+		if( g_data.Verbose ) {\
+			std::cout << " -" << (o==OR_ROW ? "row" : (o==OR_COL?"col":"block") ) << '='; \
+			if( o==OR_ROW ) \
+				std::cout << GetRowLetter(i); \
+			else \
+				std::cout << (int)i+1; \
+			std::cout << '\n'; \
+		} \
 	}
 
+// some optionnal symbols ('til I write a makefile...)
 //#define DEBUGMODE
 
 #ifdef DEBUGMODE
@@ -25,6 +30,11 @@ Licence: GPLv3
 #else
 	#define DEBUG if(0) std::cout
 #endif
+
+
+#include "grid.h"
+#include <fstream>
+
 
 GlobData g_data;
 
@@ -100,8 +110,8 @@ PrintLineNumbers( std::ostream& s, int before, int after )
 std::ostream&
 operator << ( std::ostream& s, const Grid& g )
 {
-	s << "nb unknowns (cand) " << g.NbUnknows() << "\n";
-	s << "nb unknowns (values) " << g.NbUnknows2() << "\n";
+	s << "nb unknowns cells " << g.NbUnknows() << "\n";
+//	s << "nb unknowns (values) " << g.NbUnknows2() << "\n";
 //	s << "res:\n";
 
 	PrintLineNumbers( s, 3, 0 );
@@ -133,7 +143,7 @@ Grid::PrintCandidates( std::ostream& s, std::string txt ) const
 {
 	s << "Candidates: " << txt << '\n';
 	s << " -nb unknowns (cand) " << NbUnknows() << "\n";
-	s << " -nb unknowns (values) " << NbUnknows2() << "\n";
+//	s << " -nb unknowns (values) " << NbUnknows2() << "\n";
 
 	Viewtable vt = BuildViewtable();
 
@@ -626,15 +636,20 @@ Grid::GetOtherCells( const Cell& src, int nb, EN_ORIENTATION orient )
 	return out;
 }
 //----------------------------------------------------------------------------
-/// Filter vector \c v_pos so that it holds only positions of cells holding only one of the candidates that are in \c v_cand
+/// Filter vector \c v_pos so that it holds only positions of cells holding only one of the candidates that are in \c v_cand.
+/**
+T is a container holding elements of type \c pos_t (example: \c std::vector<pos_t> )
+*/
+template<typename T>
 void
-Grid::FilterByCand( const std::vector<value_t>& v_cand, std::vector<pos_t>& v_pos ) const
+FilterByCand( Grid& g, const std::vector<value_t>& v_cand, T& v_pos )
 {
-	std::vector<pos_t> v_out;
+	T v_out;
+//	std::vector<pos_t> v_out;
 	assert( v_cand.size() == 2 );
 	for( auto& pos : v_pos )
 	{
-		const Cell& c = GetCellByPos( pos );
+		const Cell& c = g.GetCellByPos( pos );
 		if(
 			( c.HasCandidate( v_cand[0] ) && !c.HasCandidate( v_cand[1] ) )
 			||
@@ -644,7 +659,6 @@ Grid::FilterByCand( const std::vector<value_t>& v_cand, std::vector<pos_t>& v_po
 	}
 	std::swap( v_out, v_pos );
 }
-
 //----------------------------------------------------------------------------
 /// Helper function for FindSymmetricalMatches()
 /** Finds indexes of correspondences betwen 2 vectors holding 2 elements.
@@ -802,7 +816,8 @@ FindCommonRegion( pos_t p1, pos_t p2 )
 				AddToVector( v_out, p_c2 );
 		}
     }
-//    PrintVector( v_out, "region to clear" );
+    if( g_data.Verbose )
+		PrintVector( v_out, "Common region" );
 	return v_out;
 }
 //----------------------------------------------------------------------------
@@ -819,11 +834,6 @@ RemoveCandidatesFromRegion( Grid& grid, const std::vector<pos_t>& v_region, valu
 }
 //----------------------------------------------------------------------------
 /// XY Wing algorithm
-/**
-\bug here, checkout with file sc50_8_59.sud
-
-
-*/
 bool
 XY_Wing( Grid& g )
 {
@@ -849,10 +859,7 @@ XY_Wing( Grid& g )
 
 				if( v_cells.size() > 1 )
 				{
-//					std::cout << "\n -KEY: " << GetRowLetter(row) << col+1 << '\n';
-					g.FilterByCand( v_cand, v_cells );                 // remove the ones that don't use any of the 2 candidates
-//					PrintVector( v_cells, "v_cells: after" );
-
+					FilterByCand( g, v_cand, v_cells );                 // remove the ones that don't use any of the 2 candidates
 					if( v_cells.size() > 1 )
 					{
 						std::vector<symMatches> v_matches = FindSymmetricalMatches( g, v_cand, v_cells );
@@ -866,6 +873,11 @@ XY_Wing( Grid& g )
 							auto v_region = FindCommonRegion( p_match.pA, p_match.pB );
 							if( RemoveCandidatesFromRegion( g, v_region, p_match.value, key ) )
 								retval = true;
+							else
+							{
+								if(g_data.Verbose )
+									std::cout << "No removals\n";
+							}
 						}
 					}
 				}
@@ -954,6 +966,7 @@ Grid::NbUnknows() const
 	return n;
 }
 //----------------------------------------------------------------------------
+#if 0
 int
 Grid::NbUnknows2() const
 {
@@ -969,6 +982,7 @@ Grid::NbUnknows2() const
 	}
 	return n;
 }
+#endif
 //----------------------------------------------------------------------------
 /// Returns true if something changed
 bool
@@ -988,7 +1002,7 @@ Grid::ProcessAlgorithm( EN_ALGO algo )
 	}
 //	SearchSingles();
 //	PrintAll( std::cout, std::string( "after algo " + std::string( GetString(algo) ) ) );
-	assert( NbUnknows() == NbUnknows2() );
+//	assert( NbUnknows() == NbUnknows2() );
 	return res;
 }
 //----------------------------------------------------------------------------

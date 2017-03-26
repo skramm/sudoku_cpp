@@ -21,3 +21,10 @@ Options:
 
 * `-v`: verbose, will print out the mains steps and algorithms used
 * `-s`: will print the steps (elminating a candidate in a cell)
+
+Return values:
+
+* 0: success (solved)
+* 1 : failed to solve puzzle
+* 2 : failed to read input file
+* 3 : invalid puzzle
