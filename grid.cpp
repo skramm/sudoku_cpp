@@ -609,9 +609,9 @@ Grid::PrintAll( std::ostream& s, std::string txt )
 	}
 }
 //----------------------------------------------------------------------------
-/// Returns a set of cell positions that are on same row/col/block as \c c and have \c nb candidates
+/// Returns a set of cell positions that are on same row/col/block as \c src and have \c nb candidates
 std::vector<pos_t>
-Grid::GetOtherCells( const Cell& src, int nb, EN_ORIENTATION orient )
+Grid::GetOtherCells( const Cell& src, int arg, EN_ORIENTATION orient, EN_GOCMODE goc_mode )
 {
 	std::vector<pos_t> out;
 	auto row = src._pos.first;
@@ -630,10 +630,35 @@ Grid::GetOtherCells( const Cell& src, int nb, EN_ORIENTATION orient )
 	{
 		const Cell& c = v1d.GetCell( i );
 		if( c._pos != src._pos )
-			if( c.NbCandidates() == nb )
-				out.push_back( c._pos );
+		{
+			if( goc_mode == GOCM_NB_CAND )
+			{
+				if( c.NbCandidates() == arg )
+					out.push_back( c._pos );
+			}
+			else
+			{
+				if( c.HasCandidate( arg ) )
+					out.push_back( c._pos );
+			}
+		}
 	}
 	return out;
+}
+
+//----------------------------------------------------------------------------
+/// Returns a set of cell positions that are on same row/col/block as \c src and have candidate \c cand
+std::vector<pos_t>
+Grid::GetOtherCells_cand( const Cell& src, int cand, EN_ORIENTATION orient )
+{
+	return GetOtherCells( src, cand, orient, GOCM_CAND_VALUE );
+}
+//----------------------------------------------------------------------------
+/// Returns a set of cell positions that are on same row/col/block as \c src and have \c nb candidates
+std::vector<pos_t>
+Grid::GetOtherCells_nbc( const Cell& src, int nbc, EN_ORIENTATION orient )
+{
+	return GetOtherCells( src, nbc, orient, GOCM_NB_CAND );
 }
 //----------------------------------------------------------------------------
 /// Filter vector \c v_pos so that it holds only positions of cells holding only one of the candidates that are in \c v_cand.
@@ -851,9 +876,9 @@ XY_Wing( Grid& g )
 			if( v_cand.size() == 2 )
 			{
 				DEBUG << " col=" << (int)col+1 <<  " cell has " << v_cand.size() << " candidates\n";
-				auto v_cells   = g.GetOtherCells( key, 2, OR_ROW );  // get cells on same row that have 2 candidates
-				auto v_cells_b = g.GetOtherCells( key, 2, OR_COL );  // get cells on same col that have 2 candidates
-				auto v_cells_c = g.GetOtherCells( key, 2, OR_BLK );  // get cells in same block that have 2 candidates
+				auto v_cells   = g.GetOtherCells_nbc( key, 2, OR_ROW );  // get cells on same row that have 2 candidates
+				auto v_cells_b = g.GetOtherCells_nbc( key, 2, OR_COL );  // get cells on same col that have 2 candidates
+				auto v_cells_c = g.GetOtherCells_nbc( key, 2, OR_BLK );  // get cells in same block that have 2 candidates
 				AddToVector( v_cells, v_cells_b );
 				AddToVector( v_cells, v_cells_c );
 
@@ -885,6 +910,61 @@ XY_Wing( Grid& g )
 		}
 	}
 	return retval;
+}
+//----------------------------------------------------------------------------
+struct StrongLinks
+{
+	pos_t p1, p2;
+};
+
+//----------------------------------------------------------------------------
+void
+GetStrongLinks( EN_ORIENTATION or, std::vector<StrongLinks>, const Grid& g )
+{
+	for( index_t i=0; i<9; i++ )  // for each row/col
+	{
+		PRINT_MAIN_IDX(OR_ROW);
+		View_1Dim_nc v1d = g.GetView( ot, i );
+		for( index_t col=0; col<9; col++ )   // for each col/row
+		{
+			Cell& key = v1d.GetCell(col);
+			auto v_cand = key.GetCandidates();
+			if( v_cand.size() == 2 )
+			{
+				CheckForOther( v_cand[0] );
+			}
+
+
+}
+//----------------------------------------------------------------------------
+std::vector<StrongLinks>
+FindStrongLinks( const Grid& g )
+{
+	std::vector<StrongLinks> v_out;
+	GetStrongLinks( OR_ROW, v_out, g );
+	GetStrongLinks( OR_COL, v_out, g );
+
+
+	return v_out;
+}
+//----------------------------------------------------------------------------
+/// X Cycles algorithm
+/**
+This enables removing some candidates
+
+See http://www.sudokuwiki.org/X_Cycles
+*/
+bool
+X_Cycles( Grid& g )
+{
+// 1 - first, get for strong links
+	auto v_strong_links = FindStrongLinks( g );
+	if( v_strong_links.size() < 2 )                // need at least 2
+		return false;
+
+// 2 - then, check if they can form a cycle
+
+	return false;
 }
 //----------------------------------------------------------------------------
 /// Pointing pairs/triples. See http://www.sudokuwiki.org/Intersection_Removal
@@ -998,6 +1078,7 @@ Grid::ProcessAlgorithm( EN_ALGO algo )
 		case ALG_SEARCH_MISSING_SINGLE: res=SeachForSingleMissing(); break;
 		case ALG_POINTING_PT:    res=PointingPairsTriples( *this ); break;
 		case ALG_XY_WING:        res = XY_Wing( *this ); break;
+		case ALG_X_CYCLES:       res = X_Cycles( *this ); break;
 		default: assert(0);
 	}
 //	SearchSingles();

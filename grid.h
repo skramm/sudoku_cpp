@@ -260,6 +260,10 @@ PrintView( std::ostream& s, View_1Dim_nc& v )
 	s << '\n';
 }
 
+/// used in Grid::GetOtherCells()
+enum EN_GOCMODE { GOCM_NB_CAND, GOCM_CAND_VALUE };
+
+/// orientation : column, row or block
 enum EN_ORIENTATION { OR_COL=0, OR_ROW, OR_BLK };
 
 inline
@@ -284,6 +288,7 @@ enum EN_ALGO
 	ALG_SEARCH_MISSING_SINGLE,
 	ALG_POINTING_PT,
 	ALG_XY_WING,
+	ALG_X_CYCLES,
 
 	ALG_END
 };
@@ -355,7 +360,11 @@ class Grid
 		View_1Dim_c  GetView( EN_ORIENTATION, index_t ) const;
 		View_1Dim_nc GetView( EN_ORIENTATION, index_t );
 
-		std::vector<pos_t> GetOtherCells( const Cell& c, int nb, EN_ORIENTATION );
+		std::vector<pos_t> GetOtherCells_nbc(  const Cell&, int nb, EN_ORIENTATION );
+		std::vector<pos_t> GetOtherCells_cand( const Cell&, int cand, EN_ORIENTATION );
+
+	private:
+		std::vector<pos_t> GetOtherCells( const Cell&, int, EN_ORIENTATION, EN_GOCMODE );
 
 	private:
 		bool Check( EN_ORIENTATION ) const;

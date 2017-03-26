@@ -10,16 +10,20 @@ A sudoku C++ solver
 * Uses basic strategies, and one more advanced one (XY-Wings).
 * Requirements: a C++11 compiler
 * Licence: GPL v3
-* Author: S. Kramm
+* Author: Sebastien Kramm (firstname.lastname@univ-rouen.fr)  
+In case of any bug, thanks for mailing (or open an issue).
 
 ** Instructions **
 
 1. Build with `$ ./build.sh`
-2. Run with `$ sudoku samples/grid2.sud`
+2. Run with (for example) `$ ./sudoku samples/grid2.sud`
+
+** Usage and options **
+
+`$ sudoku [options] file`
 
 Options:
-
-* `-v`: verbose, will print out the mains steps and algorithms used
+* `-v`: verbose, will print out the mains steps and algorithms used. You'd better redirect in a file with that one, lots of output.
 * `-s`: will print the steps (elminating a candidate in a cell)
 
 Return values:
