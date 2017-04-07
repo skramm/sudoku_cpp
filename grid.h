@@ -15,9 +15,17 @@ Licence: GPLv3
 #include <type_traits>
 
 typedef unsigned char uchar;
+
+/// The values in the cells
 typedef uchar value_t;
+
+/// index type
 typedef uchar index_t;
+
+/// a position in the grid
 typedef std::pair<index_t,index_t> pos_t;
+
+/// each cell has such a map with 9 values, to hold candidates with true/false value
 typedef std::map<value_t,bool> cand_map_t;
 
 struct Cell;
@@ -55,6 +63,25 @@ InitCandMap( cand_map_t& cmap )
 	for( value_t i=1; i<10; i++ )
 		cmap[i]=true;
 }
+//----------------------------------------------------------------------------
+struct CandMap
+{
+	CandMap()
+	{
+		InitCandMap( cmap );
+	}
+	bool Has( value_t cand )
+	{
+		return cmap[cand];
+	}
+	void Remove( value_t cand )
+	{
+		cmap[cand] = false;
+	}
+	private:
+		cand_map_t cmap;
+
+};
 //----------------------------------------------------------------------------
 /// Helper function
 inline
@@ -94,6 +121,7 @@ private:
 		_pos.first  = i;
 		_pos.second = j;
 	}
+	pos_t GetPos() const { return _pos; }
 
 	void PrintCellCandidates( std::ostream& s )
 	{
@@ -306,16 +334,30 @@ GetString( EN_ALGO orient )
 		case ALG_SEARCH_MISSING_SINGLE: return "MissingSingle"; break;
 		case ALG_POINTING_PT: return "PointingPairs/Triples"; break;
 		case ALG_XY_WING: return "XY_Wing"; break;
+		case ALG_X_CYCLES: return "X_cycles"; break;
 		default: assert(0);
 	}
 }
 
 //----------------------------------------------------------------------------
 template<typename T>
+std::vector<T>
+VectorRemoveDupes( std::vector<T>& vin )
+{
+	std::vector<T> vout;
+	for( const auto& elem: vin )
+	{
+		if( std::find( std::begin(vout), std::end(vout), elem ) ==  std::end(vout) )
+			vout.push_back( elem );
+	}
+	return vout;
+}
+//----------------------------------------------------------------------------
+template<typename T>
 void
 PrintVector( const std::vector<T>& v, std::string s )
 {
-	std::cout <<  s << ": ";
+	std::cout <<  s << ":\n";
 	for( auto p: v )
 		std::cout << p << ' ';
 	std::cout << '\n';
@@ -360,11 +402,11 @@ class Grid
 		View_1Dim_c  GetView( EN_ORIENTATION, index_t ) const;
 		View_1Dim_nc GetView( EN_ORIENTATION, index_t );
 
-		std::vector<pos_t> GetOtherCells_nbc(  const Cell&, int nb, EN_ORIENTATION );
-		std::vector<pos_t> GetOtherCells_cand( const Cell&, int cand, EN_ORIENTATION );
+		std::vector<pos_t> GetOtherCells_nbc(  const Cell&, int nb, EN_ORIENTATION )   const;
+		std::vector<pos_t> GetOtherCells_cand( const Cell&, int cand, EN_ORIENTATION ) const;
 
 	private:
-		std::vector<pos_t> GetOtherCells( const Cell&, int, EN_ORIENTATION, EN_GOCMODE );
+		std::vector<pos_t> GetOtherCells( const Cell&, int, EN_ORIENTATION, EN_GOCMODE ) const;
 
 	private:
 		bool Check( EN_ORIENTATION ) const;

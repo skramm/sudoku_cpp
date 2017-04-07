@@ -2,7 +2,7 @@
 This file is part of https://github.com/skramm/sudoku_cpp
 Licence: GPLv3
 */
-
+#include <set>
 
 #define PRINT_ALGO_START \
 	{ \
@@ -609,15 +609,21 @@ Grid::PrintAll( std::ostream& s, std::string txt )
 	}
 }
 //----------------------------------------------------------------------------
-/// Returns a set of cell positions that are on same row/col/block as \c src and have \c nb candidates
+/// Returns a set of cell positions that are on same row/col/block as \c src and share some common properties
+/**
+See:
+- EN_GOCMODE
+- Grid::GetOtherCells_cand()
+- Grid::GetOtherCells_nbc()
+*/
 std::vector<pos_t>
-Grid::GetOtherCells( const Cell& src, int arg, EN_ORIENTATION orient, EN_GOCMODE goc_mode )
+Grid::GetOtherCells( const Cell& src, int arg, EN_ORIENTATION orient, EN_GOCMODE goc_mode ) const
 {
 	std::vector<pos_t> out;
 	auto row = src._pos.first;
 	auto col = src._pos.second;
 
-	View_1Dim_nc v1d;
+	View_1Dim_c v1d;
 	switch( orient )
 	{
 		case OR_ROW: v1d = GetView( OR_ROW, row ); break;
@@ -631,15 +637,17 @@ Grid::GetOtherCells( const Cell& src, int arg, EN_ORIENTATION orient, EN_GOCMODE
 		const Cell& c = v1d.GetCell( i );
 		if( c._pos != src._pos )
 		{
-			if( goc_mode == GOCM_NB_CAND )
+			switch( goc_mode )
 			{
-				if( c.NbCandidates() == arg )
-					out.push_back( c._pos );
-			}
-			else
-			{
-				if( c.HasCandidate( arg ) )
-					out.push_back( c._pos );
+				case GOCM_NB_CAND:
+					if( c.NbCandidates() == arg )
+						out.push_back( c._pos );
+				break;
+				case GOCM_CAND_VALUE:
+					if( c.HasCandidate( arg ) )
+						out.push_back( c._pos );
+				break;
+				default: assert(0);
 			}
 		}
 	}
@@ -649,14 +657,14 @@ Grid::GetOtherCells( const Cell& src, int arg, EN_ORIENTATION orient, EN_GOCMODE
 //----------------------------------------------------------------------------
 /// Returns a set of cell positions that are on same row/col/block as \c src and have candidate \c cand
 std::vector<pos_t>
-Grid::GetOtherCells_cand( const Cell& src, int cand, EN_ORIENTATION orient )
+Grid::GetOtherCells_cand( const Cell& src, int cand, EN_ORIENTATION orient ) const
 {
 	return GetOtherCells( src, cand, orient, GOCM_CAND_VALUE );
 }
 //----------------------------------------------------------------------------
 /// Returns a set of cell positions that are on same row/col/block as \c src and have \c nb candidates
 std::vector<pos_t>
-Grid::GetOtherCells_nbc( const Cell& src, int nbc, EN_ORIENTATION orient )
+Grid::GetOtherCells_nbc( const Cell& src, int nbc, EN_ORIENTATION orient ) const
 {
 	return GetOtherCells( src, nbc, orient, GOCM_NB_CAND );
 }
@@ -912,43 +920,101 @@ XY_Wing( Grid& g )
 	return retval;
 }
 //----------------------------------------------------------------------------
-struct StrongLinks
+struct StrongLink
 {
+	value_t linkValue;
 	pos_t p1, p2;
+/*	StrongLink( value_t v, pos_t pa, pos_t pb ) : linkValue(v)
+	{
+		if( )
+	}*/
+	friend bool operator == ( const StrongLink& sl1, const StrongLink& sl2 )
+	{
+		if( sl1.linkValue != sl2.linkValue )
+			return false;
+		if( sl1.p1 == sl2.p1 && sl1.p2 == sl2.p2 )
+			return true;
+		if( sl1.p1 == sl2.p2 && sl1.p2 == sl2.p1 )
+			return true;
+		return false;
+	}
+	friend std::ostream& operator << ( std::ostream& s, const StrongLink& sl )
+	{
+		s << '{' << (int)sl.linkValue << ": " << sl.p1 << "-" << sl.p2 << '}';
+		return s;
+	}
 };
 
 //----------------------------------------------------------------------------
 void
-GetStrongLinks( EN_ORIENTATION or, std::vector<StrongLinks>, const Grid& g )
+GetStrongLinks( EN_ORIENTATION orient, std::vector<StrongLink>& v_out, const Grid& g )
 {
-	for( index_t i=0; i<9; i++ )  // for each row/col
+//	std::set<StrongLink> s_out;
+	for( index_t i=0; i<9; i++ )  // for each row/col/block
 	{
-		PRINT_MAIN_IDX(OR_ROW);
-		View_1Dim_nc v1d = g.GetView( ot, i );
-		for( index_t col=0; col<9; col++ )   // for each col/row
+		PRINT_MAIN_IDX(orient);
+		View_1Dim_c v1d = g.GetView( orient, i );
+		CandMap candMap;
+		for( index_t col1=0; col1<8; col1++ )   // for each cell in the view
 		{
-			Cell& key = v1d.GetCell(col);
-			auto v_cand = key.GetCandidates();
-			if( v_cand.size() == 2 )
+			const Cell& cell1 = v1d.GetCell(col1);
+			auto v_cand = cell1.GetCandidates();
+			assert( v_cand.empty() || v_cand.size() > 1 );
+			if( v_cand.size() > 1 )
 			{
-				CheckForOther( v_cand[0] );
+				for( auto cand: v_cand )
+				{
+					if( candMap.Has( cand ) )
+					{
+						uchar c = 0;
+						index_t pos = 0;
+						for( index_t col2=col1+1; col2<9; col2++ )   // for each OTHER cell in the view
+						{
+							const Cell& cell2 = v1d.GetCell(col2);
+							if( cell2.HasCandidate( cand ) )
+							{
+								c++;
+								pos = col2;
+							}
+						}
+						if( c == 1 ) // means we have ONLY 1 other cell with that candidate
+							v_out.push_back( StrongLink{ cand, cell1.GetPos(), v1d.GetCell(pos).GetPos() } );
+						if( c > 1 )
+							candMap.Remove( cand );
+					}
+				}
 			}
-
-
+		}
+	}
 }
 //----------------------------------------------------------------------------
-std::vector<StrongLinks>
+/// Finds all the strong links
+/**
+see:
+- http://www.sudokuwiki.org/X_Cycles
+- http://www.sudokuwiki.org/X_Cycles_Part_2
+*/
+std::vector<StrongLink>
 FindStrongLinks( const Grid& g )
 {
-	std::vector<StrongLinks> v_out;
+	std::vector<StrongLink> v_out;
+
 	GetStrongLinks( OR_ROW, v_out, g );
+	PrintVector( v_out, "ROW: Strong Links" );
+
 	GetStrongLinks( OR_COL, v_out, g );
+	PrintVector( v_out, "COL: Strong Links" );
 
+	GetStrongLinks( OR_BLK, v_out, g );
+	PrintVector( v_out, "BLK: Strong Links" );
 
-	return v_out;
+	auto v_out2 = VectorRemoveDupes( v_out );
+	PrintVector( v_out2, "Removed dupes" );
+
+	return v_out2;
 }
 //----------------------------------------------------------------------------
-/// X Cycles algorithm
+/// X Cycles algorithm (WIP)
 /**
 This enables removing some candidates
 
