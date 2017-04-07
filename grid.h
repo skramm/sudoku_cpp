@@ -25,6 +25,9 @@ typedef uchar index_t;
 /// a position in the grid
 typedef std::pair<index_t,index_t> pos_t;
 
+/// a pair of (linked) positions
+typedef std::pair<pos_t,pos_t> pospair_t;
+
 /// each cell has such a map with 9 values, to hold candidates with true/false value
 typedef std::map<value_t,bool> cand_map_t;
 

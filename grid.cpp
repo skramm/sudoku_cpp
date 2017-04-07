@@ -922,12 +922,12 @@ XY_Wing( Grid& g )
 /// A strong link is when on same line/col/block, a candidate is only in two cells
 struct StrongLink
 {
-	value_t linkValue;
+	EN_ORIENTATION orient;
 	pos_t p1, p2;
+	StrongLink( EN_ORIENTATION o, pos_t pA, pos_t pB ) : orient(o), p1(pA), p2(pB)
+	{}
 	friend bool operator == ( const StrongLink& sl1, const StrongLink& sl2 )
 	{
-		if( sl1.linkValue != sl2.linkValue )
-			return false;
 		if( sl1.p1 == sl2.p1 && sl1.p2 == sl2.p2 )
 			return true;
 		if( sl1.p1 == sl2.p2 && sl1.p2 == sl2.p1 )
@@ -935,6 +935,27 @@ struct StrongLink
 		return false;
 	}
 	friend std::ostream& operator << ( std::ostream& s, const StrongLink& sl )
+	{
+		s << '{' << sl.p1 << "-" << sl.p2 << '}';
+		return s;
+	}
+};
+//----------------------------------------------------------------------------
+/// A strong link with value
+struct StrongLink_V : public StrongLink
+{
+	value_t linkValue;
+
+	StrongLink_V( value_t v, EN_ORIENTATION o, pos_t pA, pos_t pB ) : StrongLink(o, pA, pB), linkValue(v)
+	{
+	}
+	friend bool operator == ( const StrongLink_V& sl1, const StrongLink_V& sl2 )
+	{
+		if( sl1.linkValue != sl2.linkValue )
+			return false;
+		return (StrongLink)sl1 == (StrongLink)sl2;
+	}
+	friend std::ostream& operator << ( std::ostream& s, const StrongLink_V& sl )
 	{
 		s << '{' << (int)sl.linkValue << ": " << sl.p1 << "-" << sl.p2 << '}';
 		return s;
@@ -945,28 +966,47 @@ struct StrongLink
 struct MappedStrongLinks
 {
 	private:
-		std::map<value_t,std::vector<std::pair<pos_t,pos_t>>> _map;
+		std::map<value_t,std::vector<StrongLink>> _map;
 	public:
 
 		MappedStrongLinks()
 		{
 			for( value_t i=1; i<10; i++ )
-				_map[i] = std::vector<std::pair<pos_t,pos_t>>();
+				_map[i] = std::vector<StrongLink>();
 		}
-		void AddLink( value_t val, pos_t p1, pos_t p2 )
+		void AddLink( value_t val, StrongLink sl ) // value_t val, pos_t p1, pos_t p2 )
 		{
-			_map[val].push_back( std::make_pair(p1,p2) );
+			_map[val].push_back( sl );
 		}
+
+		size_t size() const
+		{
+			return _map.size();
+		}
+
+		std::vector<StrongLink> GetSLvect(value_t v)
+		{
+			return _map[v];
+		}
+
 	friend std::ostream& operator << ( std::ostream& s, const MappedStrongLinks& sl )
 	{
 		s <<  "MappedStrongLinks:\n";
 		for( value_t i=1; i<10; i++ )
 		{
+#if 1
 			s << (int)i << ": " << sl._map.at(i).size() << " links: ";
-			for( const auto& v: sl._map.at(i) )
-			{
-				s << v.first << '-' << v.second << ", ";
-			}
+#else
+			int nb = 0;
+			if( sl._map.find(i) )
+				nb = sl._map.at(i).size()
+			s << (int)i << ": " << nb << " links: ";
+			if( nb )
+#endif
+				for( const auto& v: sl._map.at(i) )
+				{
+					s << v << ","; //v.first << '-' << v.second << ", ";
+				}
 			s << '\n';
 		}
 		return s;
@@ -974,18 +1014,16 @@ struct MappedStrongLinks
 };
 //----------------------------------------------------------------------------
 MappedStrongLinks
-Convert2MappedSL( const std::vector<StrongLink>& vin )
+Convert2MappedSL( const std::vector<StrongLink_V>& vin )
 {
 	MappedStrongLinks msl;
 	for( const auto& elem: vin )
-	{
-		msl.AddLink( elem.linkValue, elem.p1, elem.p2 );
-	}
+		msl.AddLink( elem.linkValue, elem ); //.linkValue, elem.p1, elem.p2 );
 	return msl;
 }
 //----------------------------------------------------------------------------
 void
-GetStrongLinks( EN_ORIENTATION orient, std::vector<StrongLink>& v_out, const Grid& g )
+GetStrongLinks( EN_ORIENTATION orient, std::vector<StrongLink_V>& v_out, const Grid& g )
 {
 	for( index_t i=0; i<9; i++ )  // for each row/col/block
 	{
@@ -1015,7 +1053,7 @@ GetStrongLinks( EN_ORIENTATION orient, std::vector<StrongLink>& v_out, const Gri
 							}
 						}
 						if( c == 1 )                    // means we have ONLY 1 other cell with that candidate
-							v_out.push_back( StrongLink{ cand, cell1.GetPos(), v1d.GetCell(pos).GetPos() } );
+							v_out.push_back( StrongLink_V( cand, orient, cell1.GetPos(), v1d.GetCell(pos).GetPos() ) );
 
 						if( c > 1 )                    // if we find more than 1 other, then
 							candMap.Remove( cand );    // don't consider this candidate any more
@@ -1032,10 +1070,10 @@ see:
 - http://www.sudokuwiki.org/X_Cycles
 - http://www.sudokuwiki.org/X_Cycles_Part_2
 */
-std::vector<StrongLink>
+MappedStrongLinks
 FindStrongLinks( const Grid& g )
 {
-	std::vector<StrongLink> v_out;
+	std::vector<StrongLink_V> v_out;
 
 	GetStrongLinks( OR_ROW, v_out, g );
 	PrintVector( v_out, "ROW: Strong Links" );
@@ -1049,11 +1087,33 @@ FindStrongLinks( const Grid& g )
 	auto v_out2 = VectorRemoveDupes( v_out );
 	PrintVector( v_out2, "Removed dupes" );
 
-	auto msl = Convert2MappedSL( v_out2 );
-
-	std::cout << "msl:\n" << msl;
-	return v_out2;
+	return Convert2MappedSL( v_out2 );
 }
+//----------------------------------------------------------------------------
+/// ? Needs to be defined
+struct Cycle
+{
+};
+//----------------------------------------------------------------------------
+/// Helper function for X_Cycles()
+/**
+Iterates through the strong links for the given value and sees if a cycle to the initial position can be found
+*/
+Cycle
+FindCycle( value_t v, const std::vector<StrongLink>& sl_vect )
+{
+	assert( sl_vect.size() > 1 );
+	pos_t initial_pos = sl_vect[0].p1;
+	pos_t current = sl_vect[0].p2;
+	do
+	{
+//		if( FoundStrongLink( idx, sl_vect ) )
+
+	}
+	while(0);
+
+}
+
 //----------------------------------------------------------------------------
 /// X Cycles algorithm (WIP)
 /**
@@ -1061,17 +1121,27 @@ This enables removing some candidates
 
 See http://www.sudokuwiki.org/X_Cycles
 
-
 */
 bool
 X_Cycles( Grid& g )
 {
-// 1 - first, get for strong links
-	auto v_strong_links = FindStrongLinks( g );
-	if( v_strong_links.size() < 2 )                // need at least 2
-		return false;
+// 1 - first, get strong links
+	auto msl = FindStrongLinks( g );
+	std::cout << "msl:\n" << msl;
 
 // 2 - then, check if they can form a cycle
+	for( value_t v=1; v<10; v++ )
+	{
+		const auto& sl_vect = msl.GetSLvect(v);
+		std::cout << "considering value " << v << ", vector has " << sl_vect.size() << " values\n";
+		if( sl_vect.size() > 1 )
+			Cycle cyc = FindCycle( v, sl_vect );
+			for( const auto& sl: sl_vect )
+			{
+
+			}
+
+	}
 
 	return false;
 }
