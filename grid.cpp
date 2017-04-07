@@ -2,7 +2,6 @@
 This file is part of https://github.com/skramm/sudoku_cpp
 Licence: GPLv3
 */
-#include <set>
 
 #define PRINT_ALGO_START \
 	{ \
@@ -920,14 +919,11 @@ XY_Wing( Grid& g )
 	return retval;
 }
 //----------------------------------------------------------------------------
+/// A strong link is when on same line/col/block, a candidate is only in two cells
 struct StrongLink
 {
 	value_t linkValue;
 	pos_t p1, p2;
-/*	StrongLink( value_t v, pos_t pa, pos_t pb ) : linkValue(v)
-	{
-		if( )
-	}*/
 	friend bool operator == ( const StrongLink& sl1, const StrongLink& sl2 )
 	{
 		if( sl1.linkValue != sl2.linkValue )
@@ -944,12 +940,53 @@ struct StrongLink
 		return s;
 	}
 };
+//----------------------------------------------------------------------------
+/// Holds for each value the set of associated strong links
+struct MappedStrongLinks
+{
+	private:
+		std::map<value_t,std::vector<std::pair<pos_t,pos_t>>> _map;
+	public:
 
+		MappedStrongLinks()
+		{
+			for( value_t i=1; i<10; i++ )
+				_map[i] = std::vector<std::pair<pos_t,pos_t>>();
+		}
+		void AddLink( value_t val, pos_t p1, pos_t p2 )
+		{
+			_map[val].push_back( std::make_pair(p1,p2) );
+		}
+	friend std::ostream& operator << ( std::ostream& s, const MappedStrongLinks& sl )
+	{
+		s <<  "MappedStrongLinks:\n";
+		for( value_t i=1; i<10; i++ )
+		{
+			s << (int)i << ": " << sl._map.at(i).size() << " links: ";
+			for( const auto& v: sl._map.at(i) )
+			{
+				s << v.first << '-' << v.second << ", ";
+			}
+			s << '\n';
+		}
+		return s;
+	}
+};
+//----------------------------------------------------------------------------
+MappedStrongLinks
+Convert2MappedSL( const std::vector<StrongLink>& vin )
+{
+	MappedStrongLinks msl;
+	for( const auto& elem: vin )
+	{
+		msl.AddLink( elem.linkValue, elem.p1, elem.p2 );
+	}
+	return msl;
+}
 //----------------------------------------------------------------------------
 void
 GetStrongLinks( EN_ORIENTATION orient, std::vector<StrongLink>& v_out, const Grid& g )
 {
-//	std::set<StrongLink> s_out;
 	for( index_t i=0; i<9; i++ )  // for each row/col/block
 	{
 		PRINT_MAIN_IDX(orient);
@@ -977,10 +1014,11 @@ GetStrongLinks( EN_ORIENTATION orient, std::vector<StrongLink>& v_out, const Gri
 								pos = col2;
 							}
 						}
-						if( c == 1 ) // means we have ONLY 1 other cell with that candidate
+						if( c == 1 )                    // means we have ONLY 1 other cell with that candidate
 							v_out.push_back( StrongLink{ cand, cell1.GetPos(), v1d.GetCell(pos).GetPos() } );
-						if( c > 1 )
-							candMap.Remove( cand );
+
+						if( c > 1 )                    // if we find more than 1 other, then
+							candMap.Remove( cand );    // don't consider this candidate any more
 					}
 				}
 			}
@@ -1011,6 +1049,9 @@ FindStrongLinks( const Grid& g )
 	auto v_out2 = VectorRemoveDupes( v_out );
 	PrintVector( v_out2, "Removed dupes" );
 
+	auto msl = Convert2MappedSL( v_out2 );
+
+	std::cout << "msl:\n" << msl;
 	return v_out2;
 }
 //----------------------------------------------------------------------------
@@ -1019,6 +1060,8 @@ FindStrongLinks( const Grid& g )
 This enables removing some candidates
 
 See http://www.sudokuwiki.org/X_Cycles
+
+
 */
 bool
 X_Cycles( Grid& g )
