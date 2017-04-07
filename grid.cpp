@@ -936,7 +936,14 @@ struct StrongLink
 	}
 	friend std::ostream& operator << ( std::ostream& s, const StrongLink& sl )
 	{
-		s << '{' << sl.p1 << "-" << sl.p2 << '}';
+		char c = 'R';
+		switch( sl.orient )
+		{
+//			case OR_ROW: c = 'R'; break;
+			case OR_COL: c = 'C'; break;
+			case OR_BLK: c = 'B'; break;
+		}
+		s << '{' << c << ": " << sl.p1 << "-" << sl.p2 << '}';
 		return s;
 	}
 };
@@ -1133,14 +1140,9 @@ X_Cycles( Grid& g )
 	for( value_t v=1; v<10; v++ )
 	{
 		const auto& sl_vect = msl.GetSLvect(v);
-		std::cout << "considering value " << v << ", vector has " << sl_vect.size() << " values\n";
+		std::cout << "considering value " << (int)v << ", vector has " << sl_vect.size() << " values\n";
 		if( sl_vect.size() > 1 )
 			Cycle cyc = FindCycle( v, sl_vect );
-			for( const auto& sl: sl_vect )
-			{
-
-			}
-
 	}
 
 	return false;
