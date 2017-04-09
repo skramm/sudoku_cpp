@@ -24,6 +24,7 @@
 			<Add option="-std=c++11" />
 			<Add option="-fexceptions" />
 		</Compiler>
+		<Unit filename="Makefile" />
 		<Unit filename="README.md">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
@@ -31,6 +32,7 @@
 		<Unit filename="grid.cpp" />
 		<Unit filename="grid.h" />
 		<Unit filename="main.cpp" />
+		<Unit filename="x_cycles.cpp" />
 		<Extensions>
 			<envvars />
 			<code_completion />
