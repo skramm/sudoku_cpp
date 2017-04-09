@@ -234,18 +234,6 @@ std::ostream& operator << ( std::ostream& s, const pos_t& p )
 	s << GetRowLetter(p.first) << p.second+1;
 	return s;
 }
-
-/*
-/// Return real block index from index on a view (row/col) and an index on a block \in {0,1,2}
-inline
-index_t
-GetRealBlockIndex( index_t idx, EN_ORIENTATION orient, index_t b_012 )
-{
-	assert( orient == OR_ROW || orient == OR_COL );
-	if( orient == OR_ROW )
-		return
-}*/
-
 //----------------------------------------------------------------------------
 /// holds pointers on one element (column, row or block) of the grid
 template<typename T>
@@ -326,9 +314,9 @@ enum EN_ALGO
 
 inline
 const char*
-GetString( EN_ALGO orient )
+GetString( EN_ALGO algo )
 {
-	switch( orient )
+	switch( algo )
 	{
 		case ALG_REMOVE_CAND: return "RemoveCand"; break;
 		case ALG_SEARCH_PAIRS: return "SearchPairs"; break;
@@ -428,8 +416,6 @@ class Grid
 		bool SeachForSingleMissing();
 		bool SeachForSingleMissing( EN_ORIENTATION );
 
-//		bool XY_Wing();
-
 		int  NbUnknows() const;
 //		int  NbUnknows2() const;
 		bool ProcessAlgorithm( EN_ALGO );
@@ -438,7 +424,6 @@ class Grid
 		std::array<std::array<Cell,9>,9> _data;
 
 		Viewtable  BuildViewtable() const;
-
 
 		View_1Dim_c   GetCol(index_t) const;
 		View_1Dim_nc  GetCol(index_t);

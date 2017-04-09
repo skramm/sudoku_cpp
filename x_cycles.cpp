@@ -199,18 +199,28 @@ struct Cycle
 {
 };
 //----------------------------------------------------------------------------
-struct WeakLink
-{
-};
-//----------------------------------------------------------------------------
 /// Searches from pos \c pos for all the weak links based on value \c val. Result is added to \c v_wl
 void
-FindWeakLinks( const Grid& g, value_t val, pos_t current_pos, EN_ORIENTATION orient, std::vector<WeakLink>& v_wl )
+FindWeakLinks( const Grid& g, value_t val, pos_t current_pos, EN_ORIENTATION orient, std::vector<pos_t>& v_wl )
 {
-	auto row = current_pos.first;
-	auto col = current_pos.second;
-	auto bidx = GetBlockIndex( current_pos );
+	auto idx = current_pos.first;
+	switch( orient )
+	{
+		case OR_COL: idx = current_pos.second;            break;
+		case OR_BLK: idx =  GetBlockIndex( current_pos ); break;
+		default: assert(0);
+	}
 
+	View_1Dim_c v1d = g.GetView( orient, idx );
+
+	for( index_t i=0; i<9; i++ )
+	{
+		const Cell& c = v1d.GetCell( i );
+		if( c.HasCandidate( val ) && c.GetPos() != current_pos )
+			v_wl.push_back( c.GetPos() );
+	}
+	std::cout << "after WeakLink search from pos " << current_pos << " with value -" << (int)val << "- with orientation " << GetString( orient ) << '\n';
+	PrintVector( v_wl, "WeakLink positions" );
 }
 //----------------------------------------------------------------------------
 /// Helper function for X_Cycles()
@@ -224,18 +234,22 @@ FindCycle( const Grid& g, value_t val, const std::vector<StrongLink>& sl_vect )
 	pos_t          initial_pos = sl_vect[0].p1;
 	pos_t          current_pos = sl_vect[0].p2;
 	EN_ORIENTATION current_or  = sl_vect[0].orient;
-	std::vector<WeakLink> v_wl;
+
+	std::vector<pos_t> v_wl;
+	std::cout << "start Cycle Search with SL: " << initial_pos << " - " << current_pos <<'\n';
 
 	size_t idx = 1;
 	do
 	{
-		auto co = current_or;
+		std::cout << "start loop: current pos=" << current_pos <<'\n';
 		if( current_or != OR_ROW )
 			FindWeakLinks( g, val, current_pos, OR_ROW, v_wl );
 		if( current_or != OR_COL )
 			FindWeakLinks( g, val, current_pos, OR_COL, v_wl );
 		if( current_or != OR_BLK )
 			FindWeakLinks( g, val, current_pos, OR_BLK, v_wl );
+		auto v_wl2 = VectorRemoveDupes( v_wl );
+		PrintVector( v_wl2, "List of weak link positions with dupes Removed" );
 
 
 
