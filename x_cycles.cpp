@@ -5,6 +5,7 @@
 
 #include "grid.h"
 #include "header.h"
+#include <boost/graph/adjacency_list.hpp>
 
 //----------------------------------------------------------------------------
 /// A strong link is when on same line/col/block, a candidate is only in two cells
@@ -223,6 +224,60 @@ FindWeakLinks( const Grid& g, value_t val, pos_t current_pos, EN_ORIENTATION ori
 	PrintVector( v_wl, "WeakLink positions" );
 }
 //----------------------------------------------------------------------------
+std::vector<pos_t>
+FindAllWeakLinks( const Grid& g, value_t val, pos_t current_pos, EN_ORIENTATION current_or )
+{
+	std::vector<pos_t> v_wl;
+	if( current_or != OR_ROW )
+		FindWeakLinks( g, val, current_pos, OR_ROW, v_wl );
+	if( current_or != OR_COL )
+		FindWeakLinks( g, val, current_pos, OR_COL, v_wl );
+	if( current_or != OR_BLK )
+		FindWeakLinks( g, val, current_pos, OR_BLK, v_wl );
+	return VectorRemoveDupes( v_wl );
+}
+
+
+//----------------------------------------------------------------------------
+
+/// Vertex datatype for the MULTIGRID algorithm, with BGL
+struct GraphNode
+{
+	pos_t pos;
+};
+
+struct GraphEdge
+{
+	bool isStrong = true;
+};
+
+//-------------------------------------------------------------------
+/// A graph datatype for the MULTIGRID algorithm, with BGL
+typedef boost::adjacency_list<
+	boost::vecS,
+	boost::vecS,
+	boost::bidirectionalS,
+	GraphNode,
+	GraphEdge
+	> graph_t;
+
+//----------------------------------------------------------------------------
+/// recursive function
+bool
+FindNodes(
+	const Grid& g,
+	value_t val,
+	pos_t initial_pos,   ///< initial pos, needed because if we find it, then we have a cycle
+	pos_t current_pos,
+	EN_ORIENTATION current_or,
+	graph_t& graph
+)
+{
+	auto v_wl = FindAllWeakLinks( g, val, current_pos, OR_ROW );
+
+//	PrintVector( v_wl, "List of weak link positions with dupes Removed" );
+}
+//----------------------------------------------------------------------------
 /// Helper function for X_Cycles()
 /**
 Iterates through the strong links for the given value and sees if a cycle to the initial position can be found
@@ -237,26 +292,26 @@ FindCycle( const Grid& g, value_t val, const std::vector<StrongLink>& sl_vect )
 
 	std::vector<pos_t> v_wl;
 	std::cout << "start Cycle Search with SL: " << initial_pos << " - " << current_pos <<'\n';
-
+	bool LastOneStrong = true;
 	size_t idx = 1;
+	graph_t graph;
+
+	auto v_init = boost::add_vertex( graph );
+	graph[v_init].pos = initial_pos;
+
+	auto v_curr = boost::add_vertex( graph );
+	graph[v_curr].pos = current_pos;
+
+	auto ed = boost::add_edge( v_init, v_curr, graph ).first;
+	graph[ed].isStrong = true;
+
+	bool endflag = true;
 	do
 	{
-		std::cout << "start loop: current pos=" << current_pos <<'\n';
-		if( current_or != OR_ROW )
-			FindWeakLinks( g, val, current_pos, OR_ROW, v_wl );
-		if( current_or != OR_COL )
-			FindWeakLinks( g, val, current_pos, OR_COL, v_wl );
-		if( current_or != OR_BLK )
-			FindWeakLinks( g, val, current_pos, OR_BLK, v_wl );
-		auto v_wl2 = VectorRemoveDupes( v_wl );
-		PrintVector( v_wl2, "List of weak link positions with dupes Removed" );
-
-
-
-//		if( FindStrongLink( idx, sl_vect ) )
-
+		endflag = FindNodes( g, val, initial_pos, current_pos, current_or, graph );
 	}
-	while(0);
+	while( !endflag );
+
 
 }
 
