@@ -417,6 +417,7 @@ FindNodes(
 )
 {
 	static int iter;
+	auto current_pos = graph[current_node].pos;
 	std::cout << "FindNodes start: val=" << (int)val << " initial-pos=" << initial_pos << " current-pos=" << graph[current_node].pos << " iter " << iter++ << '\n';
 
 	auto v_links = FindAllWeakLinks( g, val, graph[current_node].pos, current_or );
@@ -435,7 +436,9 @@ FindNodes(
 	for( const auto& link: v_links )
 	{
 		std::cout << "FindNodes: considering link: " << link << '\n';
-		if( link.p1 == initial_pos || link.p2 == initial_pos )
+		if( link.p1 == initial_pos && link.p2 == current_pos
+			||
+			link.p2 == initial_pos && link.p1 == current_pos )
 		{
 			std::cout << " target=initial, found cycle !\n";
 			AddNewCycle( g, val, graph, link, v_cycles );
