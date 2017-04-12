@@ -1,3 +1,10 @@
+/**
+\file
+
+
+This file is part of https://github.com/skramm/sudoku_cpp
+Licence: GPLv3
+*/
 
 #include "grid.h"
 bool X_Cycles( Grid& g );

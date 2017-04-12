@@ -1,4 +1,7 @@
 /**
+\file grid.h
+
+
 This file is part of https://github.com/skramm/sudoku_cpp
 Licence: GPLv3
 */

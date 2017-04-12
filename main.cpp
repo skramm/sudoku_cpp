@@ -1,9 +1,12 @@
 /**
+\file main.cpp
+\brief main
+
 This file is part of https://github.com/skramm/sudoku_cpp
 Licence: GPLv3
 */
 
-#include <iostream>
+//#include <iostream>
 
 #include "grid.h"
 
