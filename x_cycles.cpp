@@ -1,6 +1,11 @@
 /**
 \file x_cycles.cpp
 \brief X cycles
+
+See:
+- http://www.sudokuwiki.org/X_Cycles
+- http://www.sudokuwiki.org/X_Cycles_Part_2
+
 */
 
 #include "grid.h"
@@ -197,7 +202,7 @@ FindStrongLinks( const Grid& g )
 }
 #endif
 //----------------------------------------------------------------------------
-/// Related do X_Cycles()
+// Related do X_Cycles()
 /*
 enum En_CycleType
 {
@@ -212,16 +217,32 @@ enum En_LinkType
 	LT_Strong, LT_Weak
 };
 //----------------------------------------------------------------------------
-/// A cycle is associated with a value and a set of links. We store this as a vector of positions associated with a link type
-struct Cycle
+struct Link
 {
-	value_t cycle_value;
-	std::vector<std::pair<pos_t,En_LinkType>> v_links;
+	pos_t p1, p2;
+//	pos_t pos_target;
+	En_LinkType link_type;
+	EN_ORIENTATION orient;
+
+	friend bool operator == ( const Link& lA, const Link& lB )
+	{
+		if( lA.p1 == lB.p1 && lA.p2 == lB.p2 )
+			return true;
+		if( lA.p1 == lB.p2 && lA.p2 == lB.p1 )
+			return true;
+		return false;
+	}
+
+	friend std::ostream& operator << ( std::ostream& s, const Link& l )
+	{
+		s << '{' << (l.link_type==LT_Strong ? 'S' : 'W') << ": " << l.p1 << "-" << l.p2 << ": " << GetString( l.orient ) <<  '}';
+		return s;
+	}
 };
 //----------------------------------------------------------------------------
 /// Searches from pos \c pos for all the weak links based on value \c val. Result is added to \c v_wl
 void
-FindWeakLinks( const Grid& g, value_t val, pos_t current_pos, EN_ORIENTATION orient, std::vector<pos_t>& v_wl )
+FindWeakLinks( const Grid& g, value_t val, pos_t current_pos, EN_ORIENTATION orient, std::vector<Link>& v_wl )
 {
 	index_t idx = 0;
 	switch( orient )
@@ -234,55 +255,40 @@ FindWeakLinks( const Grid& g, value_t val, pos_t current_pos, EN_ORIENTATION ori
 
 	View_1Dim_c v1d = g.GetView( orient, idx );
 
+	std::vector<index_t> v_temp;
 	for( index_t i=0; i<9; i++ )
 	{
 		const Cell& c = v1d.GetCell( i );
 		if( c.HasCandidate( val ) && c.GetPos() != current_pos )
-			v_wl.push_back( c.GetPos() );
+			v_temp.push_back( i );
 	}
-	std::cout << "after WeakLink search from pos " << current_pos << " with value -" << (int)val << "- with orientation " << GetString( orient ) << '\n';
-	PrintVector( v_wl, "WeakLink positions" );
+
+	if( v_temp.size() > 2 )               // to be a weak link, we must have more than 2 cells with that value as candidates
+		for( const auto& i: v_temp )
+		{
+			const Cell& c = v1d.GetCell( i );
+			v_wl.push_back( Link{ current_pos, c.GetPos(), LT_Weak, orient } );
+		}
+
+//	std::cout << "after WeakLink search from pos " << current_pos << " with value -" << (int)val << "- with orientation " << GetString( orient ) << '\n';
+//	PrintVector( v_wl, "WeakLink positions" );
 }
 //----------------------------------------------------------------------------
-std::vector<pos_t>
+std::vector<Link>
 FindAllWeakLinks( const Grid& g, value_t val, pos_t current_pos, EN_ORIENTATION current_or )
 {
-	std::vector<pos_t> v_wl;
+	std::vector<Link> v_wl;
 	if( current_or != OR_ROW )
 		FindWeakLinks( g, val, current_pos, OR_ROW, v_wl );
 	if( current_or != OR_COL )
 		FindWeakLinks( g, val, current_pos, OR_COL, v_wl );
 	if( current_or != OR_BLK )
 		FindWeakLinks( g, val, current_pos, OR_BLK, v_wl );
-	return VectorRemoveDupes( v_wl );
+	auto v_wl2 = VectorRemoveDupes( v_wl );
+
+	PrintVector( v_wl2, "FindAllWeakLinks" );
+	return v_wl2;
 }
-//----------------------------------------------------------------------------
-struct Link
-{
-	pos_t pos_source;
-	pos_t pos_target;
-	En_LinkType link_type;
-	EN_ORIENTATION orient;
-
-	friend bool operator == ( const Link& l1, const Link& l2 )
-	{
-		if( l1.pos_source != l2.pos_source )
-			return false;
-		if( l1.pos_target != l2.pos_target )
-			return false;
-		if( l1.link_type != l2.link_type )
-			return false;
-//		if( l1.orient != l2.orient )
-//			return false;
-		return true;
-	}
-
-	friend std::ostream& operator << ( std::ostream& s, const Link& l )
-	{
-		s << '{' << (l.link_type==LT_Strong ? 'S' : 'W') << ": " << l.pos_source << "-" << l.pos_target << ": " << GetString( l.orient ) <<  '}';
-		return s;
-	}
-};
 //----------------------------------------------------------------------------
 /// Finds in the grid \c g all the strong links for value \c val and orientation \c orient
 void
@@ -327,22 +333,10 @@ FindStrongLinks( value_t val, const Grid& g )
 	FindStrongLinks( val, OR_ROW, g, v_link );
 	FindStrongLinks( val, OR_COL, g, v_link );
 	FindStrongLinks( val, OR_BLK, g, v_link );
-	PrintVector( v_link, "strong links BEFORE REMOVE DUPES" );
+//	PrintVector( v_link, "strong links BEFORE REMOVE DUPES" );
 	auto v_link2 =  VectorRemoveDupes( v_link );
-	PrintVector( v_link2, "strong links AFTER REMOVE DUPES" );
+//	PrintVector( v_link2, "strong links AFTER REMOVE DUPES" );
 	return v_link2;
-}
-//----------------------------------------------------------------------------
-std::vector<Link>
-FindAllLinks( const Grid& g, value_t val, pos_t pos, EN_ORIENTATION current_or )
-{
-
-	std::vector<Link> v_out;
-	auto v_wl = FindAllWeakLinks( g, val, pos, current_or );
-	for( const auto& wl: v_wl )
-		v_out.push_back( Link{ pos, wl, LT_Weak, current_or } );
-
-	return v_out;
 }
 //----------------------------------------------------------------------------
 /// Vertex datatype for the MULTIGRID algorithm, with BGL
@@ -369,24 +363,47 @@ typedef boost::adjacency_list<
 typedef typename boost::graph_traits<graph_t>::vertex_descriptor vertex_t;
 
 //----------------------------------------------------------------------------
+/// A cycle is associated with a value and a set of links. We store this as a vector of positions associated with a link type
+struct Cycle
+{
+	value_t cycle_value;
+	std::vector<std::pair<pos_t,En_LinkType>> v_links;
+};
+//----------------------------------------------------------------------------
 /// Called when we have found a cycle, the link \c wl holds as target the initial position
 void
-AddNewCycle( const Grid& g, const graph_t& graph, const Link& wl, std::vector<Cycle>& v_cycles )
+AddNewCycle( const Grid& g, value_t val, const graph_t& graph, const Link& wl, std::vector<Cycle>& v_cycles )
 {
-
+	Cycle c;
+	c.cycle_value = val;
+	std::cout << "NEW CYCLE: val=" << (int)val << " origin pos=" << wl.p2 << '\n';
+//	c.v_links.push_back( )
+	v_cycles.push_back( c );
 }
 //----------------------------------------------------------------------------
 vertex_t
 AddLink2Graph( graph_t& graph, vertex_t current_node, const Link& wl )
 {
 	auto new_vertex = boost::add_vertex( graph );
-	graph[new_vertex].pos = wl.pos_target;
+	graph[new_vertex].pos = wl.p2;
 	auto edge = boost::add_edge( current_node, new_vertex, graph ).first;
 	graph[edge].link_type = wl.link_type;
 	return new_vertex;
 }
 //----------------------------------------------------------------------------
-/// recursive function. Returns true if nodes have been added
+#if 0
+/// remove from \c v_links all the links that are found in \c v_StrongLinks
+void
+FilterOut( std::vector<Link>& v_links, const std::vector<Link>& v_StrongLinks )
+{
+	for( auto& sl: v_StrongLinks )
+	{
+		v_links.erase( std::remove( v_links.begin(), v_links.end(), sl ), v_links.end() );
+	}
+}
+#endif
+//----------------------------------------------------------------------------
+/// recursive function
 void
 FindNodes(
 	const Grid&              g,
@@ -400,29 +417,36 @@ FindNodes(
 )
 {
 	static int iter;
-	iter++;
-	std::cout << "FindNodes: val=" << (int)val << " current pos=" << graph[current_node].pos << " iter " << iter++ << '\n';
+	std::cout << "FindNodes start: val=" << (int)val << " initial-pos=" << initial_pos << " current-pos=" << graph[current_node].pos << " iter " << iter++ << '\n';
 
-	auto v_links = FindAllLinks( g, val, graph[current_node].pos, current_or );
+	auto v_links = FindAllWeakLinks( g, val, graph[current_node].pos, current_or );
+	std::cout << "we have " << v_links.size() << " weak links\n";
+//	FilterOut( v_links, v_StrongLinks );
+//	std::cout << "After FilterOut, we have " << v_links.size() << " weak links\n";
+
 	for( const auto& sl: v_StrongLinks )
-		if( sl.pos_source == graph[current_node].pos )
+		if( sl.p1 == graph[current_node].pos || sl.p2 == graph[current_node].pos  )
 		{
 			std::cout << "adding Strong link: " << sl << '\n';
 			v_links.push_back( sl );
 		}
 
+	PrintVector( v_links, "before enumerating" );
 	for( const auto& link: v_links )
-		if( link.pos_target == initial_pos )
+	{
+		std::cout << "FindNodes: considering link: " << link << '\n';
+		if( link.p1 == initial_pos || link.p2 == initial_pos )
 		{
-			std::cout << " found cycle !\n";
-			AddNewCycle( g, graph, link, v_cycles );
+			std::cout << " target=initial, found cycle !\n";
+			AddNewCycle( g, val, graph, link, v_cycles );
 		}
 		else
 		{
+			std::cout << " target!=initial, new node!\n";
 			auto new_node = AddLink2Graph( graph, current_node, link );
             FindNodes( g, val, initial_pos, new_node, current_or, graph, v_StrongLinks, v_cycles );
 		}
-
+	}
 
 //	PrintVector( v_wl, "List of weak link positions with dupes Removed" );
 }
@@ -441,8 +465,8 @@ FindCycles(
 	assert( v_StrongLinks.size() > 1 );
 	assert( v_StrongLinks[0].link_type == LT_Strong );
 
-	pos_t          initial_pos = v_StrongLinks[0].pos_source;
-	pos_t          current_pos = v_StrongLinks[0].pos_target;
+	pos_t          initial_pos = v_StrongLinks[0].p1;
+	pos_t          current_pos = v_StrongLinks[0].p2;
 	EN_ORIENTATION current_or  = v_StrongLinks[0].orient;
 
 	std::vector<Cycle> v_cycles;
@@ -487,6 +511,7 @@ X_Cycles( Grid& g )
 	{
 		std::cout << "X_Cycles: process value " << (int)v << '\n';
 		auto v_sl = FindStrongLinks( v, g );
+		PrintVector( v_sl, "Strong Links set" );
 //		const auto& sl_vect = msl.GetSLvect(v);
 //		std::cout << "considering value " << (int)v << ", vector has " << sl_vect.size() << " values\n";
 		if( v_sl.size() > 1 )
