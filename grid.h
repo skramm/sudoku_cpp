@@ -351,7 +351,7 @@ template<typename T>
 void
 PrintVector( const std::vector<T>& v, std::string s )
 {
-	std::cout <<  s << ":\n";
+	std::cout <<  s << ": " << v.size() << " elems\n";
 	for( auto p: v )
 		std::cout << p << ' ';
 	std::cout << '\n';
