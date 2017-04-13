@@ -260,7 +260,15 @@ FindWeakLinks( const Grid& g, value_t val, pos_t current_pos, EN_ORIENTATION ori
 	{
 		const Cell& c = v1d.GetCell( i );
 		if( c.HasCandidate( val ) && c.GetPos() != current_pos )
-			v_temp.push_back( i );
+		{
+			if( orient == OR_BLK )                                  // if BLK, then we must make sure it is not on same row/col
+			{
+				if( current_pos.first != c.GetPos().first && current_pos.second != c.GetPos().second )
+					v_temp.push_back( i );
+			}
+			else
+				v_temp.push_back( i );                              // if not, just add it
+		}
 	}
 
 	if( v_temp.size() > 2 )               // to be a weak link, we must have more than 2 cells with that value as candidates
@@ -385,7 +393,12 @@ vertex_t
 AddLink2Graph( graph_t& graph, vertex_t current_node, const Link& wl )
 {
 	auto new_vertex = boost::add_vertex( graph );
-	graph[new_vertex].pos = wl.p2;
+
+	if( graph[current_node].pos == wl.p1 )
+		graph[new_vertex].pos = wl.p2;
+	else
+		graph[new_vertex].pos = wl.p1;
+
 	auto edge = boost::add_edge( current_node, new_vertex, graph ).first;
 	graph[edge].link_type = wl.link_type;
 	return new_vertex;
@@ -422,11 +435,19 @@ FindNodes(
 
 	auto v_links = FindAllWeakLinks( g, val, graph[current_node].pos, current_or );
 	std::cout << "we have " << v_links.size() << " weak links\n";
-//	FilterOut( v_links, v_StrongLinks );
-//	std::cout << "After FilterOut, we have " << v_links.size() << " weak links\n";
+
+	// get previous position
+	auto pair_edge_it = boost::in_edges( current_node, graph );
+	assert( pair_edge_it.second - pair_edge_it.first == 1 );
+	auto previous_node = boost::source( *pair_edge_it.first, graph );
+	std::cout << "PREVIOUS="<< graph[previous_node].pos << '\n';
 
 	for( const auto& sl: v_StrongLinks )
-		if( sl.p1 == graph[current_node].pos || sl.p2 == graph[current_node].pos  )
+		if(
+			( sl.p1 == graph[current_node].pos && sl.p2 != graph[previous_node].pos )
+			||
+			( sl.p2 == graph[current_node].pos && sl.p1 != graph[previous_node].pos )
+		)
 		{
 			std::cout << "adding Strong link: " << sl << '\n';
 			v_links.push_back( sl );
