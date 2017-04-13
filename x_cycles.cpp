@@ -12,195 +12,6 @@ See:
 #include "header.h"
 #include <boost/graph/adjacency_list.hpp>
 
-#if 0
-//----------------------------------------------------------------------------
-/// A strong link is when on same line/col/block, a candidate is only in two cells
-struct StrongLink
-{
-	EN_ORIENTATION orient;
-	pos_t p1, p2;
-	StrongLink( EN_ORIENTATION o, pos_t pA, pos_t pB ) : orient(o), p1(pA), p2(pB)
-	{}
-	friend bool operator == ( const StrongLink& sl1, const StrongLink& sl2 )
-	{
-		if( sl1.p1 == sl2.p1 && sl1.p2 == sl2.p2 )
-			return true;
-		if( sl1.p1 == sl2.p2 && sl1.p2 == sl2.p1 )
-			return true;
-		return false;
-	}
-	friend std::ostream& operator << ( std::ostream& s, const StrongLink& sl )
-	{
-		char c = 'R';
-		switch( sl.orient )
-		{
-//			case OR_ROW: c = 'R'; break;
-			case OR_COL: c = 'C'; break;
-			case OR_BLK: c = 'B'; break;
-		}
-		s << '{' << c << ": " << sl.p1 << "-" << sl.p2 << '}';
-		return s;
-	}
-};
-//----------------------------------------------------------------------------
-/// A strong link with the  correspondant value that is linked together
-struct StrongLink_V : public StrongLink
-{
-	value_t linkValue;
-
-	StrongLink_V( value_t v, EN_ORIENTATION o, pos_t pA, pos_t pB ) : StrongLink(o, pA, pB), linkValue(v)
-	{
-	}
-	friend bool operator == ( const StrongLink_V& sl1, const StrongLink_V& sl2 )
-	{
-		if( sl1.linkValue != sl2.linkValue )
-			return false;
-		return (StrongLink)sl1 == (StrongLink)sl2;
-	}
-	friend std::ostream& operator << ( std::ostream& s, const StrongLink_V& sl )
-	{
-		s << '{' << (int)sl.linkValue << ": " << sl.p1 << "-" << sl.p2 << '}';
-		return s;
-	}
-};
-#endif
-
-#if 0
-//----------------------------------------------------------------------------
-/// Holds for each value the set of associated strong links
-struct MappedStrongLinks
-{
-	private:
-		std::map<value_t,std::vector<StrongLink>> _map;
-	public:
-		/// Constructor. Fills the map with empty vector
-		MappedStrongLinks()
-		{
-			for( value_t i=1; i<10; i++ )
-				_map[i] = std::vector<StrongLink>();
-		}
-		void AddLink( value_t val, StrongLink sl ) // value_t val, pos_t p1, pos_t p2 )
-		{
-			_map[val].push_back( sl );
-		}
-
-		size_t size() const
-		{
-			return _map.size();
-		}
-
-		std::vector<StrongLink> GetSLvect(value_t v)
-		{
-			return _map[v];
-		}
-
-	friend std::ostream& operator << ( std::ostream& s, const MappedStrongLinks& sl )
-	{
-		s <<  "MappedStrongLinks:\n";
-		for( value_t i=1; i<10; i++ )
-		{
-#if 1
-			s << (int)i << ": " << sl._map.at(i).size() << " links: ";
-#else
-			int nb = 0;
-			if( sl._map.find(i) )
-				nb = sl._map.at(i).size()
-			s << (int)i << ": " << nb << " links: ";
-			if( nb )
-#endif
-				for( const auto& v: sl._map.at(i) )
-				{
-					s << v << ","; //v.first << '-' << v.second << ", ";
-				}
-			s << '\n';
-		}
-		return s;
-	}
-};
-#endif
-
-#if 0
-//----------------------------------------------------------------------------
-MappedStrongLinks
-Convert2MappedSL( const std::vector<StrongLink_V>& vin )
-{
-	MappedStrongLinks msl;
-	for( const auto& elem: vin )
-		msl.AddLink( elem.linkValue, elem );
-	return msl;
-}
-//----------------------------------------------------------------------------
-/// Searches the grid \c g by orientation \c orient and adds to \c v_out the strong links that are found
-void
-GetStrongLinks( EN_ORIENTATION orient, std::vector<StrongLink_V>& v_out, const Grid& g )
-{
-	for( index_t i=0; i<9; i++ )  // for each row/col/block
-	{
-		PRINT_MAIN_IDX(orient);
-		View_1Dim_c v1d = g.GetView( orient, i );
-		CandMap candMap;
-		for( index_t col1=0; col1<8; col1++ )   // for each cell in the view
-		{
-			const Cell& cell1 = v1d.GetCell(col1);
-			auto v_cand = cell1.GetCandidates();
-			assert( v_cand.empty() || v_cand.size() > 1 );
-			if( v_cand.size() > 1 )
-			{
-				for( auto cand: v_cand )
-				{
-					if( candMap.Has( cand ) )
-					{
-						uchar c = 0;
-						index_t pos = 0;
-						for( index_t col2=col1+1; col2<9; col2++ )   // for each OTHER cell in the view
-						{
-							const Cell& cell2 = v1d.GetCell(col2);
-							if( cell2.HasCandidate( cand ) )
-							{
-								c++;
-								pos = col2;
-							}
-						}
-						if( c == 1 )                    // means we have ONLY 1 other cell with that candidate
-							v_out.push_back( StrongLink_V( cand, orient, cell1.GetPos(), v1d.GetCell(pos).GetPos() ) );
-
-						if( c > 1 )                    // if we find more than 1 other, then
-							candMap.Remove( cand );    // don't consider this candidate any more
-					}
-				}
-			}
-		}
-	}
-}
-#endif
-//----------------------------------------------------------------------------
-#if 0
-/// Finds all the strong links
-/**
-see:
-- http://www.sudokuwiki.org/X_Cycles
-- http://www.sudokuwiki.org/X_Cycles_Part_2
-*/
-MappedStrongLinks
-FindStrongLinks( const Grid& g )
-{
-	std::vector<StrongLink_V> v_out;
-
-	GetStrongLinks( OR_ROW, v_out, g );
-	PrintVector( v_out, "ROW: Strong Links" );
-
-	GetStrongLinks( OR_COL, v_out, g );
-	PrintVector( v_out, "COL: Strong Links" );
-
-	GetStrongLinks( OR_BLK, v_out, g );
-	PrintVector( v_out, "BLK: Strong Links" );
-
-	auto v_out2 = VectorRemoveDupes( v_out );
-	PrintVector( v_out2, "Removed dupes" );
-
-	return Convert2MappedSL( v_out2 );
-}
-#endif
 //----------------------------------------------------------------------------
 // Related do X_Cycles()
 /*
@@ -220,7 +31,6 @@ enum En_LinkType
 struct Link
 {
 	pos_t p1, p2;
-//	pos_t pos_target;
 	En_LinkType link_type;
 	EN_ORIENTATION orient;
 
@@ -378,10 +188,16 @@ struct Cycle
 	std::vector<std::pair<pos_t,En_LinkType>> v_links;
 };
 //----------------------------------------------------------------------------
+/// Used to store, when we find a cycle, in which position of the link is the original position
+enum En_FoundCycleLink { FCL_NoCycle, FCL_p1, FCL_p2 };
+
+//----------------------------------------------------------------------------
 /// Called when we have found a cycle, the link \c wl holds as target the initial position
 void
-AddNewCycle( const Grid& g, value_t val, const graph_t& graph, const Link& wl, std::vector<Cycle>& v_cycles )
+AddNewCycle( const Grid& g, value_t val, const graph_t& graph, const Link& wl, En_FoundCycleLink fcl, std::vector<Cycle>& v_cycles )
 {
+	assert( fcl != FCL_NoCycle );
+
 	Cycle c;
 	c.cycle_value = val;
 	std::cout << "NEW CYCLE: val=" << (int)val << " origin pos=" << wl.p2 << '\n';
@@ -416,6 +232,28 @@ FilterOut( std::vector<Link>& v_links, const std::vector<Link>& v_StrongLinks )
 }
 #endif
 //----------------------------------------------------------------------------
+/// Returns true if \c link can be found in \c graph
+bool
+LinkIsInGraph( const graph_t& graph, const Link& link )
+{
+	auto edges = boost::edges( graph );                  // get all the edges of the tree
+	for( ;edges.first != edges.second; edges.first++ )   // iterate
+	{
+		auto e = *edges.first;
+		auto n_s = boost::source( e, graph );
+		auto n_t = boost::target( e, graph );
+		auto pos_s = graph[n_s].pos;
+		auto pos_t = graph[n_t].pos;
+		if(
+			( pos_s == link.p1 && pos_t == link.p2 )
+			||
+			( pos_s == link.p2 && pos_t == link.p1 )
+		)
+			return true;
+	}
+	return false;
+}
+//----------------------------------------------------------------------------
 /// recursive function
 void
 FindNodes(
@@ -430,6 +268,8 @@ FindNodes(
 )
 {
 	static int iter;
+	static int Nb_SL;
+	static int Nb_WL;
 	auto current_pos = graph[current_node].pos;
 	std::cout << "FindNodes start: val=" << (int)val << " initial-pos=" << initial_pos << " current-pos=" << graph[current_node].pos << " iter " << iter++ << '\n';
 
@@ -457,18 +297,26 @@ FindNodes(
 	for( const auto& link: v_links )
 	{
 		std::cout << "FindNodes: considering link: " << link << '\n';
-		if( link.p1 == initial_pos && link.p2 == current_pos
-			||
-			link.p2 == initial_pos && link.p1 == current_pos )
-		{
+
+		En_FoundCycleLink fcl = FCL_NoCycle;
+		if( link.p1 == initial_pos && link.p2 == current_pos )
+			fcl = FCL_p1;
+		if( link.p2 == initial_pos && link.p1 == current_pos )
+			fcl = FCL_p2;
+
+		if( fcl != FCL_NoCycle )                                  // if we find the initial node
+		{                                                         // in the link, then this
 			std::cout << " target=initial, found cycle !\n";
-			AddNewCycle( g, val, graph, link, v_cycles );
+			AddNewCycle( g, val, graph, link, fcl, v_cycles );         // means that we have found a cycle !
 		}
 		else
 		{
-			std::cout << " target!=initial, new node!\n";
-			auto new_node = AddLink2Graph( graph, current_node, link );
-            FindNodes( g, val, initial_pos, new_node, current_or, graph, v_StrongLinks, v_cycles );
+			std::cout << " target!=initial\n";
+			if( !LinkIsInGraph( graph, link ) )
+			{
+				auto new_node = AddLink2Graph( graph, current_node, link );
+				FindNodes( g, val, initial_pos, new_node, current_or, graph, v_StrongLinks, v_cycles );
+			}
 		}
 	}
 
@@ -495,10 +343,8 @@ FindCycles(
 
 	std::vector<Cycle> v_cycles;
 	std::cout << "VALUE " << (int)val << ": start Cycle Search with SL: " << initial_pos << " - " << current_pos <<'\n';
-//	bool LastOneStrong = true;
-//	size_t idx = 1;
-	graph_t graph;
 
+	graph_t graph;
 	auto init_vertex = boost::add_vertex( graph );
 	graph[init_vertex].pos = initial_pos;
 
@@ -524,16 +370,9 @@ TODO: we only explore the first strong link! But other cycles could be found by 
 bool
 X_Cycles( Grid& g )
 {
-// 1 - first, get strong links
-//	auto msl = FindStrongLinks( g );
-//	std::cout << "msl:\n" << msl;
-
-// 2 - then, check if they can form a cycle
-
-// for each possible value, get strong links, then search cycles
-	for( value_t v=1; v<10; v++ )
+	for( value_t v=1; v<10; v++ )             // for each possible value, get strong links, then search cycles
 	{
-		std::cout << "X_Cycles: process value " << (int)v << '\n';
+		std::cout << "\nX_Cycles: process value " << (int)v << '\n';
 		auto v_sl = FindStrongLinks( v, g );
 		PrintVector( v_sl, "Strong Links set" );
 //		const auto& sl_vect = msl.GetSLvect(v);
