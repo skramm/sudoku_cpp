@@ -281,7 +281,8 @@ LinkIsInGraph( const graph_t& graph, const Link& link )
 	return false;
 }
 //----------------------------------------------------------------------------
-/// recursive function
+/// recursive function. Explores the \c current_node, coming from a link of orientation \c current_or.
+/// Stops when an encountered link holds the \c initial_pos
 void
 FindNodes(
 	const Grid&              g,
@@ -354,6 +355,26 @@ FindNodes(
 //	PrintVector( v_wl, "List of weak link positions with dupes Removed" );
 }
 //----------------------------------------------------------------------------
+/// Searches all the graphs we have build to make sure that all the strong links have been considered.
+/// Returns true if the link is found in one of the graphs.
+bool
+ExploreOtherGraphs( const std::vector<Link>& v_StrongLinks, size_t& idx, const std::vector<graph_t>& v_graph )
+{
+	bool Found = false;
+	do
+	{
+		Found = false;
+		idx++;
+		std::cout << "ExploreOtherGraphs: idx= "<<idx << '\n';
+		for( const graph_t g: v_graph )              // we check for all the previous graphs
+			if( LinkIsInGraph( g, v_StrongLinks[idx] ) ) // and see if they hold the link
+				Found = true;
+		std::cout << "found=" << Found << '\n';
+	}
+	while( Found == false && idx+2 < v_StrongLinks.size() );
+	return Found;
+}
+//----------------------------------------------------------------------------
 /// Helper function for X_Cycles()
 /**
 Iterates through the strong links for the given value and sees if a cycle to the initial position can be found
@@ -368,25 +389,43 @@ FindCycles(
 	assert( v_StrongLinks.size() > 1 );
 	assert( v_StrongLinks[0].type == LT_Strong );
 
-	pos_t          initial_pos = v_StrongLinks[0].p1;
-	pos_t          current_pos = v_StrongLinks[0].p2;
-	EN_ORIENTATION current_or  = v_StrongLinks[0].orient;
-
 	std::vector<Cycle> v_cycles;
-	std::cout << "VALUE " << (int)val << ": start Cycle Search with SL: " << initial_pos << " - " << current_pos <<'\n';
+	std::vector<graph_t> v_graph;
+	size_t idx = 0;
+	bool done = false;
+	do
+	{
+		done = false;
 
-	graph_t graph;
-	auto init_vertex = boost::add_vertex( graph );
-	graph[init_vertex].pos = initial_pos;
+		auto current_link = v_StrongLinks[idx];
+		pos_t          initial_pos = current_link.p1;
+		pos_t          current_pos = current_link.p2;
+		EN_ORIENTATION current_or  = current_link.orient;
 
-	auto curr_vertex = boost::add_vertex( graph );
-	graph[curr_vertex].pos = current_pos;
+		std::cout << "VALUE " << (int)val << ": start Cycle Search with SL: " << initial_pos << " - " << current_pos <<'\n';
 
-	auto ed = boost::add_edge( init_vertex, curr_vertex, graph ).first;
-	graph[ed].link_type = LT_Strong;
+		graph_t graph;
+		auto init_vertex = boost::add_vertex( graph );
+		graph[init_vertex].pos = initial_pos;
 
-	FindNodes( g, val, initial_pos, curr_vertex, current_or, graph, v_StrongLinks, v_cycles );
-	PrintVector( v_cycles, "v_cycles" );
+		auto curr_vertex = boost::add_vertex( graph );
+		graph[curr_vertex].pos = current_pos;
+
+		auto ed = boost::add_edge( init_vertex, curr_vertex, graph ).first;
+		graph[ed].link_type = LT_Strong;
+
+		FindNodes( g, val, initial_pos, curr_vertex, current_or, graph, v_StrongLinks, v_cycles );
+		PrintVector( v_cycles, "v_cycles" );
+
+		std::cout << "adding graph to vector, size=" << v_graph.size()+1 << '\n';
+		v_graph.push_back( graph );
+		if( idx+1 >= v_StrongLinks.size() )
+			done = true;
+		else
+			done = ExploreOtherGraphs( v_StrongLinks, idx, v_graph );
+	}
+	while( !done );
+
 	return v_cycles;
 }
 //----------------------------------------------------------------------------
