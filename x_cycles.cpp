@@ -34,7 +34,8 @@ struct Link
 	pos_t p1, p2;
 	En_LinkType type;
 	EN_ORIENTATION orient;
-
+//	Link( pos_t pa, pos_t pb ): p1(pa), p2(pb), type(LT_Weak),orient(OR_ROW)
+//	{}
 	friend bool operator == ( const Link& lA, const Link& lB )
 	{
 		if( lA.p1 == lB.p1 && lA.p2 == lB.p2 )
@@ -46,7 +47,7 @@ struct Link
 
 	friend std::ostream& operator << ( std::ostream& s, const Link& l )
 	{
-		s << '{' << (l.type==LT_Strong ? 'S' : 'W') << ": " << l.p1 << "-" << l.p2 << ": " << GetString( l.orient ) <<  '}';
+		s << '{' << (l.type==LT_Strong ? 'S' : 'W') << ',' << l.p1 << "-" << l.p2 << ',' << GetString( l.orient ) <<  '}';
 		return s;
 	}
 };
@@ -70,6 +71,7 @@ FindWeakLinks( const Grid& g, value_t val, pos_t current_pos, EN_ORIENTATION ori
 	for( index_t i=0; i<9; i++ )
 	{
 		const Cell& c = v1d.GetCell( i );
+		std::cout << "i=" << (int)i << " pos=" << c.GetPos() << '\n';
 		if( c.HasCandidate( val ) && c.GetPos() != current_pos )
 		{
 			if( orient == OR_BLK )                                  // if BLK, then we must make sure it is not on same row/col
@@ -81,6 +83,7 @@ FindWeakLinks( const Grid& g, value_t val, pos_t current_pos, EN_ORIENTATION ori
 				v_temp.push_back( i );                              // if not, just add it
 		}
 	}
+	std::cout << "or=" << GetString(orient) << " v_temp size="<<v_temp.size() << '\n';
 
 	if( v_temp.size() > 2 )               // to be a weak link, we must have more than 2 cells with that value as candidates
 		for( const auto& i: v_temp )
@@ -90,7 +93,7 @@ FindWeakLinks( const Grid& g, value_t val, pos_t current_pos, EN_ORIENTATION ori
 		}
 
 //	std::cout << "after WeakLink search from pos " << current_pos << " with value -" << (int)val << "- with orientation " << GetString( orient ) << '\n';
-//	PrintVector( v_wl, "WeakLink positions" );
+	PrintVector( v_wl, "WeakLink positions" );
 }
 //----------------------------------------------------------------------------
 std::vector<Link>
@@ -198,22 +201,22 @@ struct Cycle
 
 };
 //----------------------------------------------------------------------------
-/// Used to store, when we find a cycle, in which position of the link is the original position
-enum En_FoundCycleLink { FCL_NoCycle, FCL_p1, FCL_p2 };
+// Used to store, when we find a cycle, in which position of the link is the original position
+// enum En_FoundCycleLink { FCL_NoCycle, FCL_p1, FCL_p2 };
 
 //----------------------------------------------------------------------------
 /// Called when we have found a cycle, the link \c wl holds the initial position, \c fcl tells us which end
 void
-AddNewCycle( const Grid& g, vertex_t current_node, const graph_t& graph, const Link& wl, En_FoundCycleLink fcl, std::vector<Cycle>& v_cycles )
+AddNewCycle( const Grid& g, vertex_t current_node, const graph_t& graph, const Link& link, std::vector<Cycle>& v_cycles )
 {
-	assert( fcl != FCL_NoCycle );
+//	assert( fcl != FCL_NoCycle );
 
 	Cycle c;
 //	c.cycle_value = val;
-	std::cout << "NEW CYCLE: link:" << wl << '\n';
+	std::cout << "NEW CYCLE: link:" << link << '\n';
 	std::cout << "current node=" << graph[current_node].pos << '\n';
 
-	c.v_links.push_back( std::make_pair( graph[current_node].pos, wl.type ) );
+	c.v_links.push_back( std::make_pair( graph[current_node].pos, link.type ) );
 
 	bool stop_loop = true;
 	do
@@ -222,12 +225,11 @@ AddNewCycle( const Grid& g, vertex_t current_node, const graph_t& graph, const L
 		auto in_ed = boost::in_edges( current_node, graph );
 		assert( in_ed.second - in_ed.first < 2 );                     // just to make sure we have 0 or 1 input edge
 
-		if( in_ed.second - in_ed.first == 1 )
-		{
+		if( in_ed.second - in_ed.first == 1 )                         // if one input edge only
+		{                                                             // then we add the previous node
 			auto edge = *in_ed.first;
 			auto prev_node = boost::source( edge, graph );
-			std::cout << "prev = "<< graph[prev_node].pos << '\n';
-			c.v_links.push_back( std::make_pair( graph[current_node].pos, graph[edge].link_type )) ;
+			c.v_links.push_back( std::make_pair( graph[prev_node].pos, graph[edge].link_type )) ;
 			current_node = prev_node;
 			stop_loop = false;
 		}
@@ -238,8 +240,7 @@ AddNewCycle( const Grid& g, vertex_t current_node, const graph_t& graph, const L
 	while( !stop_loop );
 
 
-
-//	c.v_links.push_back( )
+	std::cout << "cycle added: " << c;
 
 	v_cycles.push_back( c );
 }
@@ -296,8 +297,8 @@ FindNodes(
 )
 {
 	static int iter;
-	static int Nb_SL;
-	static int Nb_WL;
+//	static int Nb_SL;
+//	static int Nb_WL;
 	auto current_pos = graph[current_node].pos;
 	std::cout << "\n* FindNodes start: val=" << (int)val << " initial-pos=" << initial_pos << " current-pos=" << graph[current_node].pos << " iter " << iter++ << '\n';
 
@@ -326,26 +327,27 @@ FindNodes(
 	{
 		std::cout << "FindNodes: considering link: " << link << '\n';
 
-		En_FoundCycleLink fcl = FCL_NoCycle;
+/*		En_FoundCycleLink fcl = FCL_NoCycle;
 		if( link.p1 == initial_pos && link.p2 == current_pos )
 			fcl = FCL_p1;
 		if( link.p2 == initial_pos && link.p1 == current_pos )
-			fcl = FCL_p2;
+			fcl = FCL_p2;*/
 
-		if( fcl != FCL_NoCycle )                                  // if we find the initial node
+//		if( fcl != FCL_NoCycle )                                  // if we find the initial node
+		if( link == Link{ initial_pos,current_pos } )             // if we find the initial node
 		{                                                         // in the link, then this
 			std::cout << " target=initial, found cycle !\n";
-			AddNewCycle( g, current_node, graph, link, fcl, v_cycles );         // means that we have found a cycle !
+			AddNewCycle( g, current_node, graph, link, v_cycles );         // means that we have found a cycle !
 		}
 		else
 		{
 			std::cout << " target!=initial\n";
 			if( !LinkIsInGraph( graph, link ) )
 			{
-				if( link.type == LT_Weak )
+/*				if( link.type == LT_Weak )
 					Nb_WL++;
 				else
-					Nb_SL++;
+					Nb_SL++;*/
 				auto new_node = AddLink2Graph( graph, current_node, link );
 				FindNodes( g, current_node, initial_pos, new_node, current_or, graph, v_StrongLinks, v_cycles );
 			}
@@ -451,6 +453,8 @@ X_Cycles( Grid& g )
 		if( v_sl.size() > 1 )
 		{
 			auto v_cyc = FindCycles( g, v, v_sl );
+			std::cout << "VALUE=" << (int)v << " cycles:\n";
+			PrintVector( v_cyc, "v_cyc" );
 		}
 	}
 
