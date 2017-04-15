@@ -56,6 +56,7 @@ struct Link
 void
 FindWeakLinks( const Grid& g, value_t val, pos_t current_pos, EN_ORIENTATION orient, std::vector<Link>& v_wl )
 {
+std::cout << "FindWeakLinks: val=" << (int)val << '\n';
 	index_t idx = 0;
 	switch( orient )
 	{
@@ -71,8 +72,8 @@ FindWeakLinks( const Grid& g, value_t val, pos_t current_pos, EN_ORIENTATION ori
 	for( index_t i=0; i<9; i++ )
 	{
 		const Cell& c = v1d.GetCell( i );
-		std::cout << "i=" << (int)i << " pos=" << c.GetPos() << '\n';
-		if( c.HasCandidate( val ) && c.GetPos() != current_pos )
+		std::cout << "i=" << (int)i << " pos=" << c.GetPos() << " c.HasCandidate( val )=" << c.HasCandidate( val ) << '\n';
+		if( c.HasCandidate( val ) ) //&& c.GetPos() != current_pos )
 		{
 			if( orient == OR_BLK )                                  // if BLK, then we must make sure it is not on same row/col
 			{
@@ -317,6 +318,7 @@ FindNodes(
 			||
 			( sl.p2 == graph[current_node].pos && sl.p1 != graph[previous_node].pos )
 		)
+//		if( !(sl == Link{ graph[current_node].pos, graph[previous_node].pos } ) )
 		{
 			std::cout << "adding Strong link: " << sl << '\n';
 			v_links.push_back( sl );
@@ -325,31 +327,27 @@ FindNodes(
 	PrintVector( v_links, "before enumerating" );
 	for( const auto& link: v_links )
 	{
-		std::cout << "FindNodes: considering link: " << link << '\n';
-
-/*		En_FoundCycleLink fcl = FCL_NoCycle;
-		if( link.p1 == initial_pos && link.p2 == current_pos )
-			fcl = FCL_p1;
-		if( link.p2 == initial_pos && link.p1 == current_pos )
-			fcl = FCL_p2;*/
-
-//		if( fcl != FCL_NoCycle )                                  // if we find the initial node
-		if( link == Link{ initial_pos,current_pos } )             // if we find the initial node
-		{                                                         // in the link, then this
-			std::cout << " target=initial, found cycle !\n";
-			AddNewCycle( g, current_node, graph, link, v_cycles );         // means that we have found a cycle !
-		}
-		else
+//		if( graph[previous_node].pos != initial_pos ) // to avoid considering the initial link
 		{
-			std::cout << " target!=initial\n";
-			if( !LinkIsInGraph( graph, link ) )
+
+			std::cout << "FindNodes: considering link: " << link << '\n';
+			if( link == Link{ initial_pos,current_pos } )                // if we find the initial node
+			{                                                            // in the link, then this
+				std::cout << " target=initial, found cycle !\n";
+				AddNewCycle( g, current_node, graph, link, v_cycles );   // means that we have found a cycle !
+			}
+			else
 			{
-/*				if( link.type == LT_Weak )
-					Nb_WL++;
-				else
-					Nb_SL++;*/
-				auto new_node = AddLink2Graph( graph, current_node, link );
-				FindNodes( g, current_node, initial_pos, new_node, current_or, graph, v_StrongLinks, v_cycles );
+				std::cout << " target!=initial\n";
+				if( !LinkIsInGraph( graph, link ) )
+				{
+	/*				if( link.type == LT_Weak )
+						Nb_WL++;
+					else
+						Nb_SL++;*/
+					auto new_node = AddLink2Graph( graph, current_node, link );
+					FindNodes( g, val, initial_pos, new_node, link.orient, graph, v_StrongLinks, v_cycles );
+				}
 			}
 		}
 	}
