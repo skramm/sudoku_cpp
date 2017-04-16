@@ -11,6 +11,11 @@ See:
 #include "grid.h"
 #include "header.h"
 #include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/graphviz.hpp>
+
+#include "udgcd.hpp"
+
+#define GENERATE_DOT_FILES
 
 //----------------------------------------------------------------------------
 // Related do X_Cycles()
@@ -56,7 +61,7 @@ struct Link
 void
 FindWeakLinks( const Grid& g, value_t val, pos_t current_pos, EN_ORIENTATION orient, std::vector<Link>& v_wl )
 {
-std::cout << "FindWeakLinks: val=" << (int)val << '\n';
+//std::cout << "FindWeakLinks: val=" << (int)val << '\n';
 	index_t idx = 0;
 	switch( orient )
 	{
@@ -72,21 +77,21 @@ std::cout << "FindWeakLinks: val=" << (int)val << '\n';
 	for( index_t i=0; i<9; i++ )
 	{
 		const Cell& c = v1d.GetCell( i );
-		std::cout << "i=" << (int)i << " pos=" << c.GetPos() << " c.HasCandidate( val )=" << c.HasCandidate( val ) << '\n';
-		if( c.HasCandidate( val ) ) //&& c.GetPos() != current_pos )
+//		std::cout << "i=" << (int)i << " pos=" << c.GetPos() << " c.HasCandidate( val )=" << c.HasCandidate( val ) << '\n';
+		if( c.HasCandidate( val ) && c.GetPos() != current_pos )
 		{
-			if( orient == OR_BLK )                                  // if BLK, then we must make sure it is not on same row/col
+			if( orient == OR_ROW || orient == OR_COL )           // if ROW/COL, then make sure it is not in same block
 			{
-				if( current_pos.first != c.GetPos().first && current_pos.second != c.GetPos().second )
+				if( GetBlockIndex( c.GetPos() ) !=  GetBlockIndex( current_pos ) )
 					v_temp.push_back( i );
 			}
 			else
 				v_temp.push_back( i );                              // if not, just add it
 		}
 	}
-	std::cout << "or=" << GetString(orient) << " v_temp size="<<v_temp.size() << '\n';
+//	std::cout << "or=" << GetString(orient) << " v_temp size="<<v_temp.size() << '\n';
 
-	if( v_temp.size() > 2 )               // to be a weak link, we must have more than 2 cells with that value as candidates
+	if( v_temp.size() > 1 )               // to be a weak link, we must have more than 2 cells with that value as candidates
 		for( const auto& i: v_temp )
 		{
 			const Cell& c = v1d.GetCell( i );
@@ -94,11 +99,11 @@ std::cout << "FindWeakLinks: val=" << (int)val << '\n';
 		}
 
 //	std::cout << "after WeakLink search from pos " << current_pos << " with value -" << (int)val << "- with orientation " << GetString( orient ) << '\n';
-	PrintVector( v_wl, "WeakLink positions" );
+//	PrintVector( v_wl, "WeakLink positions" );
 }
 //----------------------------------------------------------------------------
 std::vector<Link>
-FindAllWeakLinks( const Grid& g, value_t val, pos_t current_pos, EN_ORIENTATION current_or )
+FindAllWeakLinks_or( const Grid& g, value_t val, pos_t current_pos, EN_ORIENTATION current_or )
 {
 	std::vector<Link> v_wl;
 	if( current_or != OR_ROW )
@@ -110,6 +115,21 @@ FindAllWeakLinks( const Grid& g, value_t val, pos_t current_pos, EN_ORIENTATION 
 	auto v_wl2 = VectorRemoveDupes( v_wl );
 
 	PrintVector( v_wl2, "FindAllWeakLinks" );
+	return v_wl2;
+}
+//----------------------------------------------------------------------------
+std::vector<Link>
+FindAllWeakLinks( const Grid& g, value_t val, pos_t current_pos )
+{
+	std::vector<Link> v_wl;
+	FindWeakLinks( g, val, current_pos, OR_ROW, v_wl );
+	FindWeakLinks( g, val, current_pos, OR_COL, v_wl );
+	FindWeakLinks( g, val, current_pos, OR_BLK, v_wl );
+
+//	PrintVector( v_wl, "FindAllWeakLinks BEFORE dupes removal" );
+	auto v_wl2 = VectorRemoveDupes( v_wl );
+
+//	PrintVector( v_wl2, "FindAllWeakLinks after dupes removal" );
 	return v_wl2;
 }
 //----------------------------------------------------------------------------
@@ -171,18 +191,93 @@ struct GraphNode
 struct GraphEdge
 {
 	En_LinkType link_type;
+	EN_ORIENTATION link_orient;
 };
+//-------------------------------------------------------------------
+/// used to printout the properties of the edges
+template <class T1,class T2>
+class edge_writer_2
+{
+	public:
+		edge_writer_2(T1 v1, T2 v2) : _v1(v1),_v2(v2) {}
+		template <class Edge>
+		void operator()( std::ostream &out, const Edge& e ) const
+		{
+#if 0
+			out << "[label=\"" << (_v1[e]==LT_Strong?'S':'W') << '\n' << GetString(_v2[e]) << "\"]";
+#else
+			out << "[label=\"" << GetString(_v2[e]) << "\"";
+			if( _v1[e]==LT_Strong )
+				out << ",style=\"bold\"";
+			out << "]";
+#endif
+		}
+	private:
+		T1 _v1;
+		T2 _v2;
+};
+//-------------------------------------------------------------------
+/// A functor class to printout the hierarchical graph, see \c hgraph_t and \c HGraph_SaveDot()
+template <class T1>
+class node_writer
+{
+	public:
+		node_writer(T1 v1) : _v1(v1) {}
+		template <class Vertex>
+		void operator()( std::ostream &out, const Vertex& v ) const
+		{
+			out << "[label=\"" << _v1[v] << "\"]";
+		}
+	private:
+		T1 _v1;
+};
+//-------------------------------------------------------------------
+template <class T1>
+inline
+node_writer<T1>
+make_node_writer( T1 v1 )
+{
+	return node_writer<T1>(v1);
+}
+//-------------------------------------------------------------------
+template <class T1,class T2>
+inline
+edge_writer_2<T1,T2>
+make_edge_writer( T1 v1, T2 v2 )
+{
+	return edge_writer_2<T1,T2>(v1,v2);
+}
 //-------------------------------------------------------------------
 /// A graph datatype, with BGL
 typedef boost::adjacency_list<
 	boost::vecS,
 	boost::vecS,
-	boost::bidirectionalS,
+	boost::undirectedS,
 	GraphNode,
 	GraphEdge
 	> graph_t;
 
 typedef typename boost::graph_traits<graph_t>::vertex_descriptor vertex_t;
+
+//----------------------------------------------------------------------------
+/// find vertex (get iterator on the vertex that we are searching), given its position \c pos
+vertex_t
+FindVertex( pos_t pos, const graph_t& g )
+{
+    auto it_pair = boost::vertices(g);
+
+    auto it_v = std::find_if(
+		it_pair.first,           // begin
+		it_pair.second,          // end
+		[&g,pos]                             // lambda: what we are capturing from outside
+		(vertex_t v)                         // lambda: argument (the dereferenced iterator)
+		{ return (g[v].pos) == pos; }  // lambda: what we do here: return true if Id of current vertex is equal to what we are searching
+	);
+
+    if( it_v == it_pair.second )                    // if not found,
+		return -1;
+	return *it_v;
+}
 
 //----------------------------------------------------------------------------
 /// A cycle is associated with a value and a set of links. We store this as a vector of positions associated with a link type
@@ -206,6 +301,7 @@ struct Cycle
 // enum En_FoundCycleLink { FCL_NoCycle, FCL_p1, FCL_p2 };
 
 //----------------------------------------------------------------------------
+#if 0
 /// Called when we have found a cycle, the link \c wl holds the initial position, \c fcl tells us which end
 void
 AddNewCycle( const Grid& g, vertex_t current_node, const graph_t& graph, const Link& link, std::vector<Cycle>& v_cycles )
@@ -283,6 +379,12 @@ LinkIsInGraph( const graph_t& graph, const Link& link )
 	return false;
 }
 //----------------------------------------------------------------------------
+bool
+PosIsInGraph( const graph_t& graph, vertex_t current_node )
+{
+
+}
+//----------------------------------------------------------------------------
 /// recursive function. Explores the \c current_node, coming from a link of orientation \c current_or.
 /// Stops when an encountered link holds the \c initial_pos
 void
@@ -303,8 +405,8 @@ FindNodes(
 	auto current_pos = graph[current_node].pos;
 	std::cout << "\n* FindNodes start: val=" << (int)val << " initial-pos=" << initial_pos << " current-pos=" << graph[current_node].pos << " iter " << iter++ << '\n';
 
-	auto v_links = FindAllWeakLinks( g, val, graph[current_node].pos, current_or );
-	std::cout << "we have " << v_links.size() << " weak links\n";
+	auto v_links = FindAllWeakLinks_or( g, val, graph[current_node].pos, current_or );
+//	std::cout << "we have " << v_links.size() << " weak links\n";
 
 	// get previous position
 	auto pair_edge_it = boost::in_edges( current_node, graph );
@@ -318,19 +420,19 @@ FindNodes(
 			||
 			( sl.p2 == graph[current_node].pos && sl.p1 != graph[previous_node].pos )
 		)
-//		if( !(sl == Link{ graph[current_node].pos, graph[previous_node].pos } ) )
 		{
 			std::cout << "adding Strong link: " << sl << '\n';
 			v_links.push_back( sl );
 		}
 
 	PrintVector( v_links, "before enumerating" );
+	int i=0;
 	for( const auto& link: v_links )
 	{
 //		if( graph[previous_node].pos != initial_pos ) // to avoid considering the initial link
 		{
 
-			std::cout << "FindNodes: considering link: " << link << '\n';
+			std::cout << "FindNodes: considering link " <<  ++i << '/' << v_links.size() << " : " << link << '\n';
 			if( link == Link{ initial_pos,current_pos } )                // if we find the initial node
 			{                                                            // in the link, then this
 				std::cout << " target=initial, found cycle !\n";
@@ -339,7 +441,7 @@ FindNodes(
 			else
 			{
 				std::cout << " target!=initial\n";
-				if( !LinkIsInGraph( graph, link ) )
+				if( !PosIsInGraph( graph, current_node ) )   //TODO !!! ??
 				{
 	/*				if( link.type == LT_Weak )
 						Nb_WL++;
@@ -374,7 +476,10 @@ ExploreOtherGraphs( const std::vector<Link>& v_StrongLinks, size_t& idx, const s
 	while( Found == false && idx+2 < v_StrongLinks.size() );
 	return Found;
 }
+#endif
+
 //----------------------------------------------------------------------------
+#if 0
 /// Helper function for X_Cycles()
 /**
 Iterates through the strong links for the given value and sees if a cycle to the initial position can be found
@@ -428,6 +533,99 @@ FindCycles(
 
 	return v_cycles;
 }
+
+#else
+
+std::vector<Cycle>
+FindCycles(
+	const Grid&              g,
+	value_t                  val,
+	const std::vector<Link>& v_StrongLinks
+)
+{
+	std::vector<Cycle> v_cycles;
+
+// build a set of position that are used in the set of links
+//	std::map<pos_t,bool> m;
+
+// 1 - add strong links to the graph
+	graph_t graph;
+	for( const auto& sl: v_StrongLinks )
+	{
+		auto v1 = FindVertex( sl.p1, graph );
+		if( v1 == -1 )
+		{
+			v1 = boost::add_vertex( graph );
+			graph[v1].pos = sl.p1;
+		}
+		auto v2 = FindVertex( sl.p2, graph );
+		if( v2 == -1 )
+		{
+			v2 = boost::add_vertex( graph );
+			graph[v2].pos = sl.p2;
+		}
+
+        auto e = boost::add_edge( v1, v2, graph ).first;
+		graph[e].link_type   = LT_Strong;
+		graph[e].link_orient = sl.orient;
+	}
+
+#ifdef GENERATE_DOT_FILES
+	std::ofstream file( "out/ls_" + std::to_string(val) + ".dot" );
+	assert( file.is_open() );
+	boost::write_graphviz(
+		file,
+		graph,
+		make_node_writer( boost::get( &GraphNode::pos, graph ) ),
+		make_edge_writer( boost::get( &GraphEdge::link_type, graph ), boost::get( &GraphEdge::link_orient, graph ) )
+	);
+#endif
+
+// 2 - for each of the vertices, search if there are some weak links and add them
+	auto pair_node_it = boost::vertices( graph );
+	for( ; pair_node_it.first != pair_node_it.second; pair_node_it.first++ )
+	{
+		vertex_t src = *pair_node_it.first;
+		auto pos_src = graph[src].pos;
+		auto v_WeakLinks = FindAllWeakLinks( g, val, pos_src );
+		std::cout << "Nb Weak links for pos " << pos_src << "=" << v_WeakLinks.size() << '\n';
+		PrintVector(v_WeakLinks, "weaklinks");
+		for( const auto& wl: v_WeakLinks )
+		{
+			auto pos_wl = wl.p1;        // consider the other side of the link,
+			if( pos_wl == pos_src )     // related to source position
+				pos_wl = wl.p2;
+
+			auto v = FindVertex( pos_wl, graph );
+			if( v == -1 )
+			{
+				v = boost::add_vertex( graph );
+				graph[v].pos = pos_wl;
+			}
+			if( !boost::edge( src, v, graph ).second )                   // add the edge only if not already present
+			{
+				auto e = boost::add_edge( src, v, graph ).first;
+				graph[e].link_type   = LT_Weak;
+				graph[e].link_orient = wl.orient;
+			}
+		}
+	}
+#ifdef GENERATE_DOT_FILES
+	std::ofstream file2( "out/la_" + std::to_string(val) + ".dot" );
+	assert( file2.is_open() );
+	boost::write_graphviz(
+		file2,
+		graph,
+		make_node_writer( boost::get( &GraphNode::pos, graph ) ),
+		make_edge_writer( boost::get( &GraphEdge::link_type, graph ), boost::get( &GraphEdge::link_orient, graph ) )
+	);
+
+//	auto cycles = udgcd::FindCycles<graph_t,vertex_t>( graph );
+#endif
+
+	return v_cycles;
+}
+#endif
 //----------------------------------------------------------------------------
 /// X Cycles algorithm (WIP)
 /**
