@@ -34,13 +34,17 @@ enum En_LinkType
 };
 //----------------------------------------------------------------------------
 /// A link between two cells holding the same candidate. Can be "Weak" or "Strong"
-struct Link
+struct BareLink
 {
-	pos_t p1, p2;
+	pos_t p1;
 	En_LinkType type;
 	EN_ORIENTATION orient;
-//	Link( pos_t pa, pos_t pb ): p1(pa), p2(pb), type(LT_Weak),orient(OR_ROW)
-//	{}
+};
+//----------------------------------------------------------------------------
+/// A link between two cells, also holds the second cell position
+struct Link : public BareLink
+{
+	pos_t p2;
 	friend bool operator == ( const Link& lA, const Link& lB )
 	{
 		if( lA.p1 == lB.p1 && lA.p2 == lB.p2 )
@@ -49,7 +53,8 @@ struct Link
 			return true;
 		return false;
 	}
-
+	Link( pos_t pA, pos_t pB, En_LinkType lt, EN_ORIENTATION o ): p2(pB), BareLink{ p1, lt, o }
+	{}
 	friend std::ostream& operator << ( std::ostream& s, const Link& l )
 	{
 		s << '{' << (l.type==LT_Strong ? 'S' : 'W') << ',' << l.p1 << "-" << l.p2 << ',' << GetString( l.orient ) <<  '}';
@@ -95,7 +100,7 @@ FindWeakLinks( const Grid& g, value_t val, pos_t current_pos, EN_ORIENTATION ori
 		for( const auto& i: v_temp )
 		{
 			const Cell& c = v1d.GetCell( i );
-			v_wl.push_back( Link{ current_pos, c.GetPos(), LT_Weak, orient } );
+			v_wl.push_back( Link( current_pos, c.GetPos(), LT_Weak, orient ) );
 		}
 
 //	std::cout << "after WeakLink search from pos " << current_pos << " with value -" << (int)val << "- with orientation " << GetString( orient ) << '\n';
@@ -194,7 +199,7 @@ struct GraphEdge
 	EN_ORIENTATION link_orient;
 };
 //-------------------------------------------------------------------
-/// used to printout the properties of the edges
+/// A functor class used to printout the properties of the edges
 template <class T1,class T2>
 class edge_writer_2
 {
@@ -217,7 +222,7 @@ class edge_writer_2
 		T2 _v2;
 };
 //-------------------------------------------------------------------
-/// A functor class to printout the hierarchical graph, see \c hgraph_t and \c HGraph_SaveDot()
+/// A functor class used to printout the properties of the nodes
 template <class T1>
 class node_writer
 {
@@ -232,6 +237,7 @@ class node_writer
 		T1 _v1;
 };
 //-------------------------------------------------------------------
+/// Helper function to printout nodes in the graph, used by boost::write_graphviz()
 template <class T1>
 inline
 node_writer<T1>
@@ -240,6 +246,7 @@ make_node_writer( T1 v1 )
 	return node_writer<T1>(v1);
 }
 //-------------------------------------------------------------------
+/// Helper function to printout edges in the graph, used by boost::write_graphviz()
 template <class T1,class T2>
 inline
 edge_writer_2<T1,T2>
@@ -282,6 +289,9 @@ FindVertex( pos_t pos, const graph_t& g )
 
 //----------------------------------------------------------------------------
 /// A cycle is associated with a value and a set of links. We store this as a vector of positions associated with a link type
+#if 1
+typedef std::vector<BareLink> Cycle;
+#else
 struct Cycle
 {
 //	value_t cycle_value;
@@ -295,11 +305,8 @@ struct Cycle
 		s << '\n';
 		return s;
 	}
-
 };
-//----------------------------------------------------------------------------
-// Used to store, when we find a cycle, in which position of the link is the original position
-// enum En_FoundCycleLink { FCL_NoCycle, FCL_p1, FCL_p2 };
+#endif
 //----------------------------------------------------------------------------
 void
 PrintCycle( const std::vector<vertex_t>& cy, const graph_t& graph )
@@ -383,7 +390,7 @@ CycleIsOk( const std::vector<vertex_t>& cy, const graph_t& graph )
 	return true;
 }
 //----------------------------------------------------------------------------
-/// returns the vector without the cycles having more than 2 consecutive weak links
+/// Returns the vector without the cycles having more than 2 consecutive weak links
 std::vector<std::vector<vertex_t>>
 FilterCycles( const std::vector<std::vector<vertex_t>>& vv_in, const graph_t& graph )
 {
@@ -405,7 +412,7 @@ Convert2Cycle( const std::vector<vertex_t>& in_cycle, const graph_t& graph )
 		auto idx2 = ( i+1!=in_cycle.size() ? in_cycle[i+1] : in_cycle[0] );
 		auto edge = boost::edge( idx1, idx2, graph ).first;
 
-		out_cycle.v_links.push_back( std::make_pair( graph[idx1].pos, graph[edge].link_type ) );
+		out_cycle.push_back( BareLink{ graph[idx1].pos, graph[edge].link_type, graph[edge].link_orient } );
 	}
 	return out_cycle;
 }
@@ -513,7 +520,15 @@ FindCycles(
 void
 ExploreCycle( const Cycle& cy, Grid& g )
 {
+/*	if( IsContinuous(cy) )
+	{
+		for( const auto& link: cy.v_links )
+			if( link.second == LT_Weak )
 
+	}
+	else
+	{
+	}*/
 }
 //----------------------------------------------------------------------------
 /// X Cycles algorithm (WIP)
@@ -538,8 +553,8 @@ X_Cycles( Grid& g )
 		if( v_sl.size() > 1 )
 		{
 			auto v_cyc = FindCycles( g, v, v_sl );
-			std::cout << "VALUE=" << (int)v << " cycles:\n";
-			PrintVector( v_cyc, "v_cyc" );
+//			std::cout << "VALUE=" << (int)v << " cycles:\n";
+//			PrintVector( v_cyc, "v_cyc" );
 			for( const auto& cy: v_cyc )
 				ExploreCycle( cy, g );
 		}
