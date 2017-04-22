@@ -258,6 +258,7 @@ typedef boost::adjacency_list<
 	> graph_t;
 
 typedef typename boost::graph_traits<graph_t>::vertex_descriptor vertex_t;
+typedef typename boost::graph_traits<graph_t>::edge_descriptor   edge_t;
 
 //----------------------------------------------------------------------------
 /// find vertex (get iterator on the vertex that we are searching), given its position \c pos
@@ -299,243 +300,125 @@ struct Cycle
 //----------------------------------------------------------------------------
 // Used to store, when we find a cycle, in which position of the link is the original position
 // enum En_FoundCycleLink { FCL_NoCycle, FCL_p1, FCL_p2 };
-
 //----------------------------------------------------------------------------
-#if 0
-/// Called when we have found a cycle, the link \c wl holds the initial position, \c fcl tells us which end
 void
-AddNewCycle( const Grid& g, vertex_t current_node, const graph_t& graph, const Link& link, std::vector<Cycle>& v_cycles )
+PrintCycle( const std::vector<vertex_t>& cy, const graph_t& graph )
 {
-//	assert( fcl != FCL_NoCycle );
-
-	Cycle c;
-//	c.cycle_value = val;
-	std::cout << "NEW CYCLE: link:" << link << '\n';
-	std::cout << "current node=" << graph[current_node].pos << '\n';
-
-	c.v_links.push_back( std::make_pair( graph[current_node].pos, link.type ) );
-
-	bool stop_loop = true;
-	do
+	for( int i=0; i<cy.size(); i++ )
 	{
-		stop_loop = true;
-		auto in_ed = boost::in_edges( current_node, graph );
-		assert( in_ed.second - in_ed.first < 2 );                     // just to make sure we have 0 or 1 input edge
+		auto idx1 = cy[i];
+		auto idx2 = ( i+1!=cy.size() ? cy[i+1] : cy[0] );
+		auto pair_edge = boost::edge( idx1, idx2, graph );
+		assert( pair_edge.second );
 
-		if( in_ed.second - in_ed.first == 1 )                         // if one input edge only
-		{                                                             // then we add the previous node
-			auto edge = *in_ed.first;
-			auto prev_node = boost::source( edge, graph );
-			c.v_links.push_back( std::make_pair( graph[prev_node].pos, graph[edge].link_type )) ;
-			current_node = prev_node;
-			stop_loop = false;
-		}
-//		else // no input edges: means we made it to the top of the tree
-
-
+		std::cout << '(' << graph[idx1].pos << ")-"
+			<< GetString( graph[pair_edge.first].link_orient )
+			<< '/'
+			<< ( graph[pair_edge.first].link_type==LT_Strong ? 'S' : 'W' )
+			<< '-';
 	}
-	while( !stop_loop );
-
-
-	std::cout << "cycle added: " << c;
-
-	v_cycles.push_back( c );
+	std::cout << '\n';
 }
 //----------------------------------------------------------------------------
-vertex_t
-AddLink2Graph( graph_t& graph, vertex_t current_node, const Link& wl )
-{
-	auto new_vertex = boost::add_vertex( graph );
-
-	if( graph[current_node].pos == wl.p1 )
-		graph[new_vertex].pos = wl.p2;
-	else
-		graph[new_vertex].pos = wl.p1;
-
-	auto edge = boost::add_edge( current_node, new_vertex, graph ).first;
-	graph[edge].link_type = wl.type;
-	return new_vertex;
-}
-//----------------------------------------------------------------------------
-/// Returns true if \c link can be found in \c graph
-bool
-LinkIsInGraph( const graph_t& graph, const Link& link )
-{
-	auto edges = boost::edges( graph );                  // get all the edges of the tree
-	for( ;edges.first != edges.second; edges.first++ )   // iterate
-	{
-		auto e = *edges.first;
-		auto n_s = boost::source( e, graph );
-		auto n_t = boost::target( e, graph );
-		auto pos_s = graph[n_s].pos;
-		auto pos_t = graph[n_t].pos;
-		if(
-			( pos_s == link.p1 && pos_t == link.p2 )
-			||
-			( pos_s == link.p2 && pos_t == link.p1 )
-		)
-			return true;
-	}
-	return false;
-}
-//----------------------------------------------------------------------------
-bool
-PosIsInGraph( const graph_t& graph, vertex_t current_node )
-{
-
-}
-//----------------------------------------------------------------------------
-/// recursive function. Explores the \c current_node, coming from a link of orientation \c current_or.
-/// Stops when an encountered link holds the \c initial_pos
 void
-FindNodes(
-	const Grid&              g,
-	value_t                  val,
-	pos_t                    initial_pos,    ///< initial pos, needed because if we find it, then we have a cycle
-	vertex_t                 current_node,
-	EN_ORIENTATION           current_or,
-	graph_t&                 graph,
-	const std::vector<Link>& v_StrongLinks,
-	std::vector<Cycle>&      v_cycles        ///< output cycles
-)
+PrintCycles( std::vector<std::vector<vertex_t>> cycles, std::string msg, const graph_t& graph )
 {
-	static int iter;
-//	static int Nb_SL;
-//	static int Nb_WL;
-	auto current_pos = graph[current_node].pos;
-	std::cout << "\n* FindNodes start: val=" << (int)val << " initial-pos=" << initial_pos << " current-pos=" << graph[current_node].pos << " iter " << iter++ << '\n';
-
-	auto v_links = FindAllWeakLinks_or( g, val, graph[current_node].pos, current_or );
-//	std::cout << "we have " << v_links.size() << " weak links\n";
-
-	// get previous position
-	auto pair_edge_it = boost::in_edges( current_node, graph );
-	assert( pair_edge_it.second - pair_edge_it.first == 1 );
-	auto previous_node = boost::source( *pair_edge_it.first, graph );
-	std::cout << "PREVIOUS="<< graph[previous_node].pos << '\n';
-
-	for( const auto& sl: v_StrongLinks )
-		if(
-			( sl.p1 == graph[current_node].pos && sl.p2 != graph[previous_node].pos )
-			||
-			( sl.p2 == graph[current_node].pos && sl.p1 != graph[previous_node].pos )
-		)
-		{
-			std::cout << "adding Strong link: " << sl << '\n';
-			v_links.push_back( sl );
-		}
-
-	PrintVector( v_links, "before enumerating" );
-	int i=0;
-	for( const auto& link: v_links )
-	{
-//		if( graph[previous_node].pos != initial_pos ) // to avoid considering the initial link
-		{
-
-			std::cout << "FindNodes: considering link " <<  ++i << '/' << v_links.size() << " : " << link << '\n';
-			if( link == Link{ initial_pos,current_pos } )                // if we find the initial node
-			{                                                            // in the link, then this
-				std::cout << " target=initial, found cycle !\n";
-				AddNewCycle( g, current_node, graph, link, v_cycles );   // means that we have found a cycle !
-			}
-			else
-			{
-				std::cout << " target!=initial\n";
-				if( !PosIsInGraph( graph, current_node ) )   //TODO !!! ??
-				{
-	/*				if( link.type == LT_Weak )
-						Nb_WL++;
-					else
-						Nb_SL++;*/
-					auto new_node = AddLink2Graph( graph, current_node, link );
-					FindNodes( g, val, initial_pos, new_node, link.orient, graph, v_StrongLinks, v_cycles );
-				}
-			}
-		}
-	}
-
-//	PrintVector( v_wl, "List of weak link positions with dupes Removed" );
+	std::cout << "Cycles: " << msg << '\n';
+	for( const auto& cy: cycles )
+		PrintCycle( cy, graph );
 }
 //----------------------------------------------------------------------------
-/// Searches all the graphs we have build to make sure that all the strong links have been considered.
-/// Returns true if the link is found in one of the graphs.
+/// returns true if the cycle \v_in has no more than 2 consecutive weak links
 bool
-ExploreOtherGraphs( const std::vector<Link>& v_StrongLinks, size_t& idx, const std::vector<graph_t>& v_graph )
+CycleIsOk( const std::vector<vertex_t>& cy, const graph_t& graph )
 {
-	bool Found = false;
-	do
+//	std::cout << "CycleIsOk:"; PrintCycle( cy, graph );
+	size_t count_WL = 0;
+	for( size_t i=0; i<cy.size(); i++ )
 	{
-		Found = false;
-		idx++;
-		std::cout << "ExploreOtherGraphs: idx= "<<idx << '\n';
-		for( const graph_t g: v_graph )              // we check for all the previous graphs
-			if( LinkIsInGraph( g, v_StrongLinks[idx] ) ) // and see if they hold the link
-				Found = true;
-		std::cout << "found=" << Found << '\n';
-	}
-	while( Found == false && idx+2 < v_StrongLinks.size() );
-	return Found;
-}
-#endif
-
-//----------------------------------------------------------------------------
-#if 0
-/// Helper function for X_Cycles()
-/**
-Iterates through the strong links for the given value and sees if a cycle to the initial position can be found
-*/
-std::vector<Cycle>
-FindCycles(
-	const Grid&              g,
-	value_t                  val,
-	const std::vector<Link>& v_StrongLinks
-)
-{
-	assert( v_StrongLinks.size() > 1 );
-	assert( v_StrongLinks[0].type == LT_Strong );
-
-	std::vector<Cycle> v_cycles;
-	std::vector<graph_t> v_graph;
-	size_t idx = 0;
-	bool done = false;
-	do
-	{
-		done = false;
-
-		auto current_link = v_StrongLinks[idx];
-		pos_t          initial_pos = current_link.p1;
-		pos_t          current_pos = current_link.p2;
-		EN_ORIENTATION current_or  = current_link.orient;
-
-		std::cout << "VALUE " << (int)val << ": start Cycle Search with SL: " << initial_pos << " - " << current_pos <<'\n';
-
-		graph_t graph;
-		auto init_vertex = boost::add_vertex( graph );
-		graph[init_vertex].pos = initial_pos;
-
-		auto curr_vertex = boost::add_vertex( graph );
-		graph[curr_vertex].pos = current_pos;
-
-		auto ed = boost::add_edge( init_vertex, curr_vertex, graph ).first;
-		graph[ed].link_type = LT_Strong;
-
-		FindNodes( g, val, initial_pos, curr_vertex, current_or, graph, v_StrongLinks, v_cycles );
-		PrintVector( v_cycles, "v_cycles" );
-
-		std::cout << "adding graph to vector, size=" << v_graph.size()+1 << '\n';
-		v_graph.push_back( graph );
-		if( idx+1 >= v_StrongLinks.size() )
-			done = true;
+//		std::cout <<"i=" << i << std::endl;
+		auto idx1 = cy[i];
+		auto idx2 = ( i+1!=cy.size() ? cy[i+1] : cy[0] );
+		auto pair_edge = boost::edge( idx1, idx2, graph );
+		assert( pair_edge.second );
+		if( graph[pair_edge.first].link_type == LT_Strong )
+			count_WL = 0;
 		else
-			done = ExploreOtherGraphs( v_StrongLinks, idx, v_graph );
+			count_WL++;
+
+		if( count_WL == 3 )
+		{
+//			std::cout << "count_WL == 3\n";
+			return false;       // no need to continue
+		}
 	}
-	while( !done );
+//	std::cout << "loop end, count_WL=" << count_WL << std::endl;
+	if( count_WL>0 )     // if the last one was Weak, we need to check the next ones
+	{
+		auto idx1a = cy[0];
+		auto idx2a = cy[1];
+		auto pair_edge_1 = boost::edge( idx1a, idx2a, graph );
+		assert( pair_edge_1.second );
 
-	return v_cycles;
+//		std::cout << "link between " << graph[idx1a].pos << " and " << graph[idx2a].pos << std::endl;
+        if( count_WL == 2 ) // if already 2, then just check the first link
+        {
+			if( graph[pair_edge_1.first].link_type == LT_Weak )
+				return false;
+        }
+        else               // count_WL == 1: we need to check the to next links (pos 1 and 2)
+        {
+			if( graph[pair_edge_1.first].link_type == LT_Weak )
+			{
+				auto idx1b = cy[1];
+				auto idx2b = cy[2];
+				auto pair_edge_2 = boost::edge( idx1b, idx2b, graph );
+				assert( pair_edge_2.second );
+				if( graph[pair_edge_2.first].link_type == LT_Weak )
+					return false;
+			}
+        }
+	}
+
+	return true;
 }
+//----------------------------------------------------------------------------
+/// returns the vector without the cycles having more than 2 consecutive weak links
+std::vector<std::vector<vertex_t>>
+FilterCycles( const std::vector<std::vector<vertex_t>>& vv_in, const graph_t& graph )
+{
+	std::vector<std::vector<vertex_t>> vv_out;
+	for( const auto& c: vv_in )
+		if( CycleIsOk( c, graph ) )
+			vv_out.push_back( c );
+	return vv_out;
+}
+//----------------------------------------------------------------------------
+/// Converts the cycle from a BGL representation into a \c Cycle representation
+Cycle
+Convert2Cycle( const std::vector<vertex_t>& in_cycle, const graph_t& graph )
+{
+	Cycle out_cycle;
+	for( int i=0; i<in_cycle.size(); i++ )
+	{
+		auto idx1 = in_cycle[i];
+		auto idx2 = ( i+1!=in_cycle.size() ? in_cycle[i+1] : in_cycle[0] );
+		auto edge = boost::edge( idx1, idx2, graph ).first;
 
-#else
-
+		out_cycle.v_links.push_back( std::make_pair( graph[idx1].pos, graph[edge].link_type ) );
+	}
+	return out_cycle;
+}
+//----------------------------------------------------------------------------
+std::vector<Cycle>
+Convert2Cycles( const std::vector<std::vector<vertex_t>>& v_cycle, const graph_t& graph )
+{
+	std::vector<Cycle> v_out;
+	for( const auto& cy: v_cycle )
+		v_out.push_back( Convert2Cycle( cy, graph ) );
+	return v_out;
+}
+//----------------------------------------------------------------------------
 std::vector<Cycle>
 FindCycles(
 	const Grid&              g,
@@ -543,12 +426,7 @@ FindCycles(
 	const std::vector<Link>& v_StrongLinks
 )
 {
-	std::vector<Cycle> v_cycles;
-
-// build a set of position that are used in the set of links
-//	std::map<pos_t,bool> m;
-
-// 1 - add strong links to the graph
+// 1 - add all the strong links to the graph
 	graph_t graph;
 	for( const auto& sl: v_StrongLinks )
 	{
@@ -619,13 +497,24 @@ FindCycles(
 		make_node_writer( boost::get( &GraphNode::pos, graph ) ),
 		make_edge_writer( boost::get( &GraphEdge::link_type, graph ), boost::get( &GraphEdge::link_orient, graph ) )
 	);
-
-//	auto cycles = udgcd::FindCycles<graph_t,vertex_t>( graph );
 #endif
 
-	return v_cycles;
+	auto cycles = udgcd::FindCycles<graph_t,vertex_t>( graph );
+//	std::cout << "VAL=" << (int)val << " nb cycles=" << cycles.size() << '\n';
+//	PrintCycles( cycles, "v1", graph );
+
+	auto cycles2 = FilterCycles( cycles, graph );
+	std::cout << "VAL=" << (int)val << " nb cycles2=" << cycles2.size() << '\n';
+	PrintCycles( cycles2, "v2", graph );
+
+	return Convert2Cycles( cycles2, graph );
 }
-#endif
+//----------------------------------------------------------------------------
+void
+ExploreCycle( const Cycle& cy, Grid& g )
+{
+
+}
 //----------------------------------------------------------------------------
 /// X Cycles algorithm (WIP)
 /**
@@ -651,6 +540,8 @@ X_Cycles( Grid& g )
 			auto v_cyc = FindCycles( g, v, v_sl );
 			std::cout << "VALUE=" << (int)v << " cycles:\n";
 			PrintVector( v_cyc, "v_cyc" );
+			for( const auto& cy: v_cyc )
+				ExploreCycle( cy, g );
 		}
 	}
 
