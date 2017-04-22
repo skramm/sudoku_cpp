@@ -33,18 +33,13 @@ enum En_LinkType
 	LT_Strong, LT_Weak
 };
 //----------------------------------------------------------------------------
-/// A link between two cells holding the same candidate. Can be "Weak" or "Strong"
-struct BareLink
+/// A link between two cells, also holds the second cell position
+struct Link
 {
-	pos_t p1;
+	pos_t p1, p2;
 	En_LinkType type;
 	EN_ORIENTATION orient;
-};
-//----------------------------------------------------------------------------
-/// A link between two cells, also holds the second cell position
-struct Link : public BareLink
-{
-	pos_t p2;
+
 	friend bool operator == ( const Link& lA, const Link& lB )
 	{
 		if( lA.p1 == lB.p1 && lA.p2 == lB.p2 )
@@ -53,8 +48,10 @@ struct Link : public BareLink
 			return true;
 		return false;
 	}
-	Link( pos_t pA, pos_t pB, En_LinkType lt, EN_ORIENTATION o ): p2(pB), BareLink{ p1, lt, o }
-	{}
+/*	Link( pos_t pA, pos_t pB, En_LinkType lt, EN_ORIENTATION o ): BareLink{ pA, lt, o }, p2(pB)
+	{
+//		std::cout << "CONSTRUCTOR: " << *this << '\n';
+	}*/
 	friend std::ostream& operator << ( std::ostream& s, const Link& l )
 	{
 		s << '{' << (l.type==LT_Strong ? 'S' : 'W') << ',' << l.p1 << "-" << l.p2 << ',' << GetString( l.orient ) <<  '}';
@@ -100,7 +97,7 @@ FindWeakLinks( const Grid& g, value_t val, pos_t current_pos, EN_ORIENTATION ori
 		for( const auto& i: v_temp )
 		{
 			const Cell& c = v1d.GetCell( i );
-			v_wl.push_back( Link( current_pos, c.GetPos(), LT_Weak, orient ) );
+			v_wl.push_back( Link{ current_pos, c.GetPos(), LT_Weak, orient } );
 		}
 
 //	std::cout << "after WeakLink search from pos " << current_pos << " with value -" << (int)val << "- with orientation " << GetString( orient ) << '\n';
@@ -290,7 +287,7 @@ FindVertex( pos_t pos, const graph_t& g )
 //----------------------------------------------------------------------------
 /// A cycle is associated with a value and a set of links. We store this as a vector of positions associated with a link type
 #if 1
-typedef std::vector<BareLink> Cycle;
+typedef std::vector<Link> Cycle;
 #else
 struct Cycle
 {
@@ -412,7 +409,7 @@ Convert2Cycle( const std::vector<vertex_t>& in_cycle, const graph_t& graph )
 		auto idx2 = ( i+1!=in_cycle.size() ? in_cycle[i+1] : in_cycle[0] );
 		auto edge = boost::edge( idx1, idx2, graph ).first;
 
-		out_cycle.push_back( BareLink{ graph[idx1].pos, graph[edge].link_type, graph[edge].link_orient } );
+		out_cycle.push_back( Link{ graph[idx1].pos, graph[idx2].pos, graph[edge].link_type, graph[edge].link_orient } );
 	}
 	return out_cycle;
 }
@@ -517,18 +514,49 @@ FindCycles(
 	return Convert2Cycles( cycles2, graph );
 }
 //----------------------------------------------------------------------------
-void
-ExploreCycle( const Cycle& cy, Grid& g )
+bool
+IsContinuous(const Cycle& cy )
 {
-/*	if( IsContinuous(cy) )
+	if( cy.size()%2 ) // if odd number of cells, then false
+		return false;
+
+	size_t count_WL = 0;
+	for( const auto& bl: cy )
 	{
-		for( const auto& link: cy.v_links )
-			if( link.second == LT_Weak )
+		if( bl.type == LT_Weak )
+			count_WL++;
+		else
+			count_WL = 0;
+
+		if( count_WL > 1 )
+			return false;
+	}
+	return true;
+}
+//----------------------------------------------------------------------------
+void
+ExploreCycle( const Cycle& cy, Grid& g, value_t val )
+{
+	if( IsContinuous(cy) )
+	{
+		for( const auto& link: cy )
+			if( link.type == LT_Weak )
+			{
+				view_1Dim_nc view;
+				switch( link.orient )
+				{
+					case OR_ROW: view = g.GetView( link.orient, link.p1.first );	break;
+					case OR_ROW: view = g.GetView( link.orient, link.p1.second );	break;
+					case OR_ROW: view = g.GetView( link.orient, GetBlockIndex( link.p1) );break;
+					default: assert(0);
+				}
+
+			}
 
 	}
 	else
 	{
-	}*/
+	}
 }
 //----------------------------------------------------------------------------
 /// X Cycles algorithm (WIP)
@@ -556,7 +584,7 @@ X_Cycles( Grid& g )
 //			std::cout << "VALUE=" << (int)v << " cycles:\n";
 //			PrintVector( v_cyc, "v_cyc" );
 			for( const auto& cy: v_cyc )
-				ExploreCycle( cy, g );
+				ExploreCycle( cy, g, v );
 		}
 	}
 
