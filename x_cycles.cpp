@@ -571,39 +571,43 @@ TagCycle( Cycle& cy )
 }
 //----------------------------------------------------------------------------
 void
-ExploreCycle( const Cycle& cy, Grid& g, value_t val )
+ExploreCycle( Cycle& cy, Grid& g, value_t val )
 {
 	TagCycle( cy );
-	if( cy.type == CT_Continuous )  // then, do the "Nice Loops Rule 1"
+	switch( cy.type )
 	{
-		std::cout << "Cycle continuous: " << cy;
-		for( const auto& link: cy.v_links)
-		{
-			if( link.type == LT_Weak ) // if link is weak, then:
+		case CT_Continuous:                          // then, do the "Nice Loops Rule 1"
+			std::cout << "Cycle continuous: " << cy;
+			for( const auto& link: cy.v_links)
 			{
-				View_1Dim_nc view;       // step 1 - get the corresponding view (row/col/block)
-				switch( link.orient )
+				if( link.type == LT_Weak ) // if link is weak, then:
 				{
-					case OR_ROW: view = g.GetView( link.orient, link.p1.first );	break;
-					case OR_COL: view = g.GetView( link.orient, link.p1.second );	break;
-					case OR_BLK: view = g.GetView( link.orient, GetBlockIndex( link.p1 ) );break;
-					default: assert(0);
-				}
-				std::cout << "link: " << link << '\n';
+					View_1Dim_nc view;       // step 1 - get the corresponding view (row/col/block)
+					switch( link.orient )
+					{
+						case OR_ROW: view = g.GetView( link.orient, link.p1.first );	break;
+						case OR_COL: view = g.GetView( link.orient, link.p1.second );	break;
+						case OR_BLK: view = g.GetView( link.orient, GetBlockIndex( link.p1 ) );break;
+						default: assert(0);
+					}
+					std::cout << "link: " << link << '\n';
 
-				for( index_t i=0; i<9; i++ ) // step 2 - parse the view and remove from the cells the value
-				{                            //          (except for the two cells part of the link)
-					auto& cell = view.GetCell( i );
-					if( cell.GetPos() != link.p1 && cell.GetPos() != link.p2 )
-						cell.RemoveCandidate( val );
+					for( index_t i=0; i<9; i++ ) // step 2 - parse the view and remove from the cells the value
+					{                            //          (except for the two cells part of the link)
+						auto& cell = view.GetCell( i );
+						if( cell.GetPos() != link.p1 && cell.GetPos() != link.p2 )
+							cell.RemoveCandidate( val );
+					}
 				}
 			}
-		}
+		break;
+		case CT_Discont_2SL:
+		break;
+		case CT_Discont_2WL:
+		break;
+		default: assert(0);
 	}
-	else
-	{
-		if( CycleHas2WeakLinks( cy ) )
-	}
+
 }
 //----------------------------------------------------------------------------
 /// X Cycles algorithm (WIP)
@@ -630,7 +634,7 @@ X_Cycles( Grid& g )
 			auto v_cyc = FindCycles( g, v, v_sl );
 //			std::cout << "VALUE=" << (int)v << " cycles:\n";
 //			PrintVector( v_cyc, "v_cyc" );
-			for( const auto& cy: v_cyc )
+			for( auto& cy: v_cyc )       // not const, because cycles will get tagged
 				ExploreCycle( cy, g, v );
 		}
 	}
