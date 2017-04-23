@@ -103,10 +103,32 @@ GetBlockIndex( pos_t p )
 	return GetBlockIndex( p.first, p.second );
 }
 //----------------------------------------------------------------------------
+inline
+char
+GetRowLetter( index_t i )
+{
+	uchar c = i+'A';
+	if( i==8 )   // so we replace 'I' by 'J' for readability
+		c++;
+	return c;
+}
+//----------------------------------------------------------------------------
+inline
+std::ostream& operator << ( std::ostream& s, const pos_t& p )
+{
+	s << GetRowLetter(p.first) << p.second+1;
+	return s;
+}
+//----------------------------------------------------------------------------
 /// Holds a cell, has either a value, either a set of candidates (in which case the value is 0)
 struct Cell
 {
-	friend std::ostream& operator << ( std::ostream&, const pos_t& );
+	friend std::ostream& operator << ( std::ostream& s, const Cell& c )
+	{
+//		s << "CELL: val=" << (int)c._value << " pos=" << c._pos << " candid: " << c._cand << '\n';
+		s << "CELL: pos=" << c._pos << " val=" << (int)c._value;
+		return s;
+	}
 
 private:
 	value_t    _value = 0; ///< value
@@ -220,23 +242,6 @@ private:
 		return bl == GetBlockIndex( _pos );
 	}
 };
-//----------------------------------------------------------------------------
-inline
-char
-GetRowLetter( index_t i )
-{
-	uchar c = i+'A';
-	if( i==8 )   // so we replace 'I' by 'J' for readability
-		c++;
-	return c;
-}
-//----------------------------------------------------------------------------
-inline
-std::ostream& operator << ( std::ostream& s, const pos_t& p )
-{
-	s << GetRowLetter(p.first) << p.second+1;
-	return s;
-}
 //----------------------------------------------------------------------------
 /// holds pointers on one element (column, row or block) of the grid
 template<typename T>

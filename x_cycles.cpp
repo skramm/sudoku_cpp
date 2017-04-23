@@ -19,13 +19,13 @@ See:
 
 //----------------------------------------------------------------------------
 // Related do X_Cycles()
-/*
+
 enum En_CycleType
 {
-	CT_Cont,           ///< continuous cycle, pair nb of nodes, alternate Weak and Strong links
+	CT_Continuous,     ///< continuous cycle, pair nb of nodes, alternate Weak and Strong links
 	CT_Discont_2SL,    ///< Discontinuous cycle, odd nb of nodes, 2 chained Strong links
 	CT_Discont_2WL     ///< Discontinuous cycle, odd nb of nodes, 2 chained Weak links
-};*/
+};
 //----------------------------------------------------------------------------
 /// To avoid a meaningless boolean
 enum En_LinkType
@@ -286,19 +286,26 @@ FindVertex( pos_t pos, const graph_t& g )
 
 //----------------------------------------------------------------------------
 /// A cycle is associated with a value and a set of links. We store this as a vector of positions associated with a link type
-#if 1
+#if 0
 typedef std::vector<Link> Cycle;
 #else
 struct Cycle
 {
 //	value_t cycle_value;
-	std::vector<std::pair<pos_t,En_LinkType>> v_links;
+	En_CycleType type;
+	std::vector<Link> v_links;
+	size_t size() const { return v_links.size(); }
+	void AddLink( const Link& l )
+	{
+		v_links.push_back( l );
+	}
 
 	friend std::ostream& operator << ( std::ostream& s, const Cycle& cy )
 	{
 		s << "Cycle: size=" << cy.v_links.size() <<'\n';
-		for( const auto& p: cy.v_links )
-			s << (p.second == LT_Strong ? 'S' : 'W') << '-' << p.first << ", ";
+		for( const auto& link: cy.v_links )
+			s << link << " - ";
+//			s << ( link.type == LT_Strong ? 'S' : 'W') << '-' << GetString( )p.first << ", ";
 		s << '\n';
 		return s;
 	}
@@ -409,7 +416,7 @@ Convert2Cycle( const std::vector<vertex_t>& in_cycle, const graph_t& graph )
 		auto idx2 = ( i+1!=in_cycle.size() ? in_cycle[i+1] : in_cycle[0] );
 		auto edge = boost::edge( idx1, idx2, graph ).first;
 
-		out_cycle.push_back( Link{ graph[idx1].pos, graph[idx2].pos, graph[edge].link_type, graph[edge].link_orient } );
+		out_cycle.AddLink( Link{ graph[idx1].pos, graph[idx2].pos, graph[edge].link_type, graph[edge].link_orient } );
 	}
 	return out_cycle;
 }
@@ -470,8 +477,8 @@ FindCycles(
 		vertex_t src = *pair_node_it.first;
 		auto pos_src = graph[src].pos;
 		auto v_WeakLinks = FindAllWeakLinks( g, val, pos_src );
-		std::cout << "Nb Weak links for pos " << pos_src << "=" << v_WeakLinks.size() << '\n';
-		PrintVector(v_WeakLinks, "weaklinks");
+//		std::cout << "Nb Weak links for pos " << pos_src << "=" << v_WeakLinks.size() << '\n';
+//		PrintVector(v_WeakLinks, "weaklinks");
 		for( const auto& wl: v_WeakLinks )
 		{
 			auto pos_wl = wl.p1;        // consider the other side of the link,
@@ -509,11 +516,14 @@ FindCycles(
 
 	auto cycles2 = FilterCycles( cycles, graph );
 	std::cout << "VAL=" << (int)val << " nb cycles2=" << cycles2.size() << '\n';
+
 	PrintCycles( cycles2, "v2", graph );
+//	std::cout << cycles2;
 
 	return Convert2Cycles( cycles2, graph );
 }
 //----------------------------------------------------------------------------
+#if 0
 bool
 IsContinuous(const Cycle& cy )
 {
@@ -521,7 +531,7 @@ IsContinuous(const Cycle& cy )
 		return false;
 
 	size_t count_WL = 0;
-	for( const auto& bl: cy )
+	for( const auto& bl: cy.v_links )
 	{
 		if( bl.type == LT_Weak )
 			count_WL++;
@@ -533,29 +543,66 @@ IsContinuous(const Cycle& cy )
 	}
 	return true;
 }
+#endif
+//----------------------------------------------------------------------------
+/// Analyse the cycle and tag it accordingly with \c En_CycleType
+void
+TagCycle( Cycle& cy )
+{
+	size_t count_WL = 0;
+	size_t count_SL = 0;
+	for( const auto& bl: cy.v_links )
+	{
+		if( bl.type == LT_Weak )
+		{
+			count_WL++;
+			count_SL = 0;
+		}
+		else
+		{
+			count_WL = 0;
+			count_SL++;
+		}
+
+//		if( count_WL == 2 )
+
+
+	}
+}
 //----------------------------------------------------------------------------
 void
 ExploreCycle( const Cycle& cy, Grid& g, value_t val )
 {
-	if( IsContinuous(cy) )
+	TagCycle( cy );
+	if( cy.type == CT_Continuous )  // then, do the "Nice Loops Rule 1"
 	{
-		for( const auto& link: cy )
-			if( link.type == LT_Weak )
+		std::cout << "Cycle continuous: " << cy;
+		for( const auto& link: cy.v_links)
+		{
+			if( link.type == LT_Weak ) // if link is weak, then:
 			{
-				view_1Dim_nc view;
+				View_1Dim_nc view;       // step 1 - get the corresponding view (row/col/block)
 				switch( link.orient )
 				{
 					case OR_ROW: view = g.GetView( link.orient, link.p1.first );	break;
-					case OR_ROW: view = g.GetView( link.orient, link.p1.second );	break;
-					case OR_ROW: view = g.GetView( link.orient, GetBlockIndex( link.p1) );break;
+					case OR_COL: view = g.GetView( link.orient, link.p1.second );	break;
+					case OR_BLK: view = g.GetView( link.orient, GetBlockIndex( link.p1 ) );break;
 					default: assert(0);
 				}
+				std::cout << "link: " << link << '\n';
 
+				for( index_t i=0; i<9; i++ ) // step 2 - parse the view and remove from the cells the value
+				{                            //          (except for the two cells part of the link)
+					auto& cell = view.GetCell( i );
+					if( cell.GetPos() != link.p1 && cell.GetPos() != link.p2 )
+						cell.RemoveCandidate( val );
+				}
 			}
-
+		}
 	}
 	else
 	{
+		if( CycleHas2WeakLinks( cy ) )
 	}
 }
 //----------------------------------------------------------------------------
