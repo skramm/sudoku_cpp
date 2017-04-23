@@ -18,13 +18,14 @@ See:
 #define GENERATE_DOT_FILES
 
 //----------------------------------------------------------------------------
-// Related do X_Cycles()
-
+/// Related to Cycle
 enum En_CycleType
 {
+	CT_undefined,
 	CT_Continuous,     ///< continuous cycle, pair nb of nodes, alternate Weak and Strong links
 	CT_Discont_2SL,    ///< Discontinuous cycle, odd nb of nodes, 2 chained Strong links
-	CT_Discont_2WL     ///< Discontinuous cycle, odd nb of nodes, 2 chained Weak links
+	CT_Discont_2WL,     ///< Discontinuous cycle, odd nb of nodes, 2 chained Weak links
+	CT_Invalid
 };
 //----------------------------------------------------------------------------
 /// To avoid a meaningless boolean
@@ -286,31 +287,23 @@ FindVertex( pos_t pos, const graph_t& g )
 
 //----------------------------------------------------------------------------
 /// A cycle is associated with a value and a set of links. We store this as a vector of positions associated with a link type
-#if 0
-typedef std::vector<Link> Cycle;
-#else
 struct Cycle
 {
 //	value_t cycle_value;
-	En_CycleType type;
+//	En_CycleType type = CT_undefined;
 	std::vector<Link> v_links;
-	size_t size() const { return v_links.size(); }
-	void AddLink( const Link& l )
-	{
-		v_links.push_back( l );
-	}
+	size_t size() const           { return v_links.size();  }
+	void AddLink( const Link& l ) {	v_links.push_back( l );	}
 
 	friend std::ostream& operator << ( std::ostream& s, const Cycle& cy )
 	{
 		s << "Cycle: size=" << cy.v_links.size() <<'\n';
 		for( const auto& link: cy.v_links )
 			s << link << " - ";
-//			s << ( link.type == LT_Strong ? 'S' : 'W') << '-' << GetString( )p.first << ", ";
 		s << '\n';
 		return s;
 	}
 };
-#endif
 //----------------------------------------------------------------------------
 void
 PrintCycle( const std::vector<vertex_t>& cy, const graph_t& graph )
@@ -421,6 +414,7 @@ Convert2Cycle( const std::vector<vertex_t>& in_cycle, const graph_t& graph )
 	return out_cycle;
 }
 //----------------------------------------------------------------------------
+/// Converts the cycles from the "graph" representation into a vector of \c Cycle
 std::vector<Cycle>
 Convert2Cycles( const std::vector<std::vector<vertex_t>>& v_cycle, const graph_t& graph )
 {
@@ -430,6 +424,8 @@ Convert2Cycles( const std::vector<std::vector<vertex_t>>& v_cycle, const graph_t
 	return v_out;
 }
 //----------------------------------------------------------------------------
+/// Finds all the cycles in the grid for value \c val.
+/// Needs as input the set of Strong Links that have been found
 std::vector<Cycle>
 FindCycles(
 	const Grid&              g,
@@ -545,12 +541,16 @@ IsContinuous(const Cycle& cy )
 }
 #endif
 //----------------------------------------------------------------------------
-/// Analyse the cycle and tag it accordingly with \c En_CycleType
-void
-TagCycle( Cycle& cy )
+/// Analyze the cycle and tag it accordingly with \c En_CycleType
+En_CycleType
+GetCycleType( Cycle& cy )
 {
+	En_CycleType type = CT_undefined;
+
 	size_t count_WL = 0;
 	size_t count_SL = 0;
+	bool has2WL(false);
+	bool has2SL(false);
 	for( const auto& bl: cy.v_links )
 	{
 		if( bl.type == LT_Weak )
@@ -564,17 +564,54 @@ TagCycle( Cycle& cy )
 			count_SL++;
 		}
 
-//		if( count_WL == 2 )
+		if( count_WL == 2 )
+		{
+			if( has2WL )
+			{
+				return CT_Invalid;
+			}
+			else
+				has2WL = true;
+		}
 
+		if( count_SL == 2 )
+		{
+			if( has2SL )
+				return CT_Invalid;
+			else
+				has2SL = true;
+		}
 
+		if( count_WL == 3 )
+		{
+			return CT_Invalid;
+		}
 	}
+
+	if( type != CT_Invalid )
+	{
+		if( has2WL )
+		{
+			if( has2SL )
+				type = CT_Invalid;
+			else
+				type = CT_Discont_2WL;
+		}
+		else
+		{
+			if( has2SL )
+				type = CT_Discont_2SL;
+			else
+				type = CT_Continuous;
+		}
+	}
+	return type;
 }
 //----------------------------------------------------------------------------
 void
 ExploreCycle( Cycle& cy, Grid& g, value_t val )
 {
-	TagCycle( cy );
-	switch( cy.type )
+	switch( GetCycleType( cy ) )
 	{
 		case CT_Continuous:                          // then, do the "Nice Loops Rule 1"
 			std::cout << "Cycle continuous: " << cy;
