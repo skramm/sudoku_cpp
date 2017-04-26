@@ -10,6 +10,8 @@ See:
 
 #include "grid.h"
 #include "header.h"
+#include "circvec.h"
+
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/graphviz.hpp>
 
@@ -287,19 +289,23 @@ FindVertex( pos_t pos, const graph_t& g )
 
 //----------------------------------------------------------------------------
 /// A cycle is associated with a value and a set of links. We store this as a vector of positions associated with a link type
-struct Cycle
+struct Cycle: public circvec<Link>
 {
 //	value_t cycle_value;
 //	En_CycleType type = CT_undefined;
-	std::vector<Link> v_links;
-	size_t size() const           { return v_links.size();  }
-	void AddLink( const Link& l ) {	v_links.push_back( l );	}
+//	private:
+//		std::vector<Link> v_links;
+//	public:
+//		size_t size() const           { return v_links.size();  }
+//		void AddLink( const Link& l ) {	v_links.push_back( l );	}
+//		Link&       GetLink( size_t idx )        { return v_links[ idx%v_links.size() ]; }
+//		const Link& GetLink( size_t idx ) const  { return v_links[ idx%v_links.size() ]; }
 
 	friend std::ostream& operator << ( std::ostream& s, const Cycle& cy )
 	{
-		s << "Cycle: size=" << cy.v_links.size() <<'\n';
-		for( const auto& link: cy.v_links )
-			s << link << " - ";
+		s << "Cycle: size=" << cy.size() <<'\n';
+		for( size_t i=0; i<cy.size(); i++ )
+			s << cy.GetElem(i) << " - ";
 		s << '\n';
 		return s;
 	}
@@ -409,7 +415,7 @@ Convert2Cycle( const std::vector<vertex_t>& in_cycle, const graph_t& graph )
 		auto idx2 = ( i+1!=in_cycle.size() ? in_cycle[i+1] : in_cycle[0] );
 		auto edge = boost::edge( idx1, idx2, graph ).first;
 
-		out_cycle.AddLink( Link{ graph[idx1].pos, graph[idx2].pos, graph[edge].link_type, graph[edge].link_orient } );
+		out_cycle.AddElem( Link{ graph[idx1].pos, graph[idx2].pos, graph[edge].link_type, graph[edge].link_orient } );
 	}
 	return out_cycle;
 }
@@ -519,40 +525,47 @@ FindCycles(
 	return Convert2Cycles( cycles2, graph );
 }
 //----------------------------------------------------------------------------
-#if 0
-bool
-IsContinuous(const Cycle& cy )
-{
-	if( cy.size()%2 ) // if odd number of cells, then false
-		return false;
+/// Analyze the cycle and return as a pair its type and the index where the discontinuity occurs (if any, -1 if none)
+/**
 
-	size_t count_WL = 0;
-	for( const auto& bl: cy.v_links )
-	{
-		if( bl.type == LT_Weak )
-			count_WL++;
-		else
-			count_WL = 0;
+Rules:
+- if even nb of links: is either continuous or invalid
+- if odd nb of links: is either CT_Discont_2SL, CT_Discont_2WL or invalid
 
-		if( count_WL > 1 )
-			return false;
-	}
-	return true;
-}
-#endif
-//----------------------------------------------------------------------------
-/// Analyze the cycle and tag it accordingly with \c En_CycleType
-En_CycleType
-GetCycleType( Cycle& cy )
+\todo needs a rewrite !
+We need to handle the case where a discontinuity occurs at the end !
+
+Test cases:
+\verbatim
+		idx
+size  0 1 2 3 4 5
+  6   W-S-W-W-W-S  => invalid (3 weak links in a row)
+  6   W-S-W-S-W-S  => continuous
+  6   S-W-S-W-S-W  => continuous
+  7   W-S-W-S-W-S-S => discontinuous, 2 strong links
+  7   S-W-S-W-S-W-S => discontinuous, 2 strong links
+  7   S-S-W-S-W-S-W => discontinuous, 2 strong links
+
+  6   W-W-W-S-W-S => invalid: 3 weak links
+  6   W-W-S-W-S-W => invalid: 3 weak links
+  6   W-S-W-S-W-W => invalid: 3 weak links
+  6   S-W-S-W-W-W => invalid: 3 weak links
+
+\endverbatim
+*/
+std::pair<En_CycleType,int>
+GetCycleType( const Cycle& cy )
 {
 	En_CycleType type = CT_undefined;
 
 	size_t count_WL = 0;
 	size_t count_SL = 0;
-	bool has2WL(false);
-	bool has2SL(false);
-	for( const auto& bl: cy.v_links )
+	bool   has2WL(false);
+	bool   has2SL(false);
+	int    middle_index = -1;
+	for( size_t i=0; i<cy.size(); i++ )
 	{
+		const auto& bl = cy.GetElem(i);
 		if( bl.type == LT_Weak )
 		{
 			count_WL++;
@@ -566,25 +579,28 @@ GetCycleType( Cycle& cy )
 
 		if( count_WL == 2 )
 		{
-			if( has2WL )
+			if( has2WL ) // if had previously counted 2
 			{
-				return CT_Invalid;
+				return std::make_pair(CT_Invalid,-1);
 			}
 			else
+			{
 				has2WL = true;
+				middle_index = i;
+			}
 		}
 
 		if( count_SL == 2 )
 		{
-			if( has2SL )
-				return CT_Invalid;
+			if( has2SL ) // if had previously counted 2
+				return std::make_pair(CT_Invalid,-1);
 			else
 				has2SL = true;
 		}
 
 		if( count_WL == 3 )
 		{
-			return CT_Invalid;
+			return std::make_pair(CT_Invalid,-1);
 		}
 	}
 
@@ -605,18 +621,69 @@ GetCycleType( Cycle& cy )
 				type = CT_Continuous;
 		}
 	}
-	return type;
+	return std::make_pair(type,middle_index);
 }
+//----------------------------------------------------------------------------
+#ifdef TESTMODE
+/// used only for unit testing
+Cycle
+BuildCycle( const std::string& s )
+{
+	assert( s.size()%2 ); // length must be odd
+	Cycle c;
+	for( size_t i=0; i<s.size(); i+=2 )
+	{
+		assert( s.at(i)=='W' || s.at(i)=='S' );
+		Link link;
+		link.type = ( s.at(i)=='W' ? LT_Weak :  LT_Strong );
+		c.AddLink(link);
+	}
+	return c;
+}
+
+void
+CheckCycle( const Cycle& c, En_CycleType ct )
+{
+	assert( GetCycleType( c ).first == ct );
+}
+
+void
+TestCycleType()
+{
+
+	CheckCycle( BuildCycle( "W-S-W-W-W-S" ), CT_Invalid );
+	CheckCycle( BuildCycle( "S-W-S-W-W-W" ), CT_Invalid );
+	CheckCycle( BuildCycle( "W-S-W-S-W-W" ), CT_Invalid );
+
+	CheckCycle( BuildCycle( "W-S-W-S-W-S" ), CT_Continuous );
+
+/*
+	assert( GetCycleType( BuildCycle( "W-S-W-S-W-S" ) ).first == CT_Continuous );
+	assert( GetCycleType( BuildCycle( "S-W-S-W-S-W" ) ).first == CT_Continuous );
+	assert( GetCycleType( BuildCycle( "W-S-W-S-W-S-S" ) ).first == CT_Discont_2SL ); // 2 strong links
+	assert( GetCycleType( BuildCycle( "S-W-S-W-S-W-S" ) ).first == CT_Discont_2SL ); // 2 strong links
+	assert( GetCycleType( BuildCycle( "S-S-W-S-W-S-W" ) ).first == CT_Discont_2SL ); // 2 strong links
+
+	assert( GetCycleType( BuildCycle( "W-W-W-S-W-S" ) ).first == CT_Invalid ); // invalid: 3 weak links
+	assert( GetCycleType( BuildCycle( "W-W-S-W-S-W" ) ).first == CT_Invalid ); // invalid: 3 weak links
+	assert( GetCycleType( BuildCycle( "W-S-W-S-W-W" ) ).first == CT_Invalid ); // invalid: 3 weak links
+	assert( GetCycleType( BuildCycle( "S-W-S-W-W-W" ) ).first == CT_Invalid ); // invalid: 3 weak links
+*/
+}
+#endif
 //----------------------------------------------------------------------------
 void
 ExploreCycle( Cycle& cy, Grid& g, value_t val )
 {
-	switch( GetCycleType( cy ) )
+	auto p = GetCycleType( cy );
+	auto middle_idx = p.second;
+	switch( p.first )
 	{
 		case CT_Continuous:                          // then, do the "Nice Loops Rule 1"
 			std::cout << "Cycle continuous: " << cy;
-			for( const auto& link: cy.v_links)
+			for( size_t i=0; i<cy.size(); i++ )
 			{
+				const auto& link = cy.GetElem( i );
 				if( link.type == LT_Weak ) // if link is weak, then:
 				{
 					View_1Dim_nc view;       // step 1 - get the corresponding view (row/col/block)
@@ -640,7 +707,12 @@ ExploreCycle( Cycle& cy, Grid& g, value_t val )
 		break;
 		case CT_Discont_2SL:
 		break;
-		case CT_Discont_2WL:
+		case CT_Discont_2WL: // Nice Loops Rule 3
+
+
+		break;
+		case CT_Invalid:
+			std::cout << "ERROR, invalid cycle !\n"; assert(0);
 		break;
 		default: assert(0);
 	}

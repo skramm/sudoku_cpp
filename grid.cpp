@@ -412,6 +412,7 @@ bool
 Grid::SearchPairsTriple( EN_ORIENTATION orient, uint n )
 {
 	PRINT_ALGO_START;
+	assert( n==2 || n==3 );
 	if( g_data.Verbose )
 		std::cout << "view: " << GetString(orient) << " n=" << n << '\n'; \
 

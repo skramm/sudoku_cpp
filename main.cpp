@@ -13,6 +13,9 @@ Licence: GPLv3
 
 using namespace std;
 
+#ifndef TESTMODE
+
+/// sudoku solver program
 int main( int argc, const char** argv )
 {
 	Grid grid;
@@ -56,3 +59,11 @@ int main( int argc, const char** argv )
 	cout << grid;
     return ret;
 }
+#else
+/// Test program
+int main( int argc, const char** argv )
+{
+	std::cout << "Test program\n";
+	TestCycleType();
+}
+#endif
