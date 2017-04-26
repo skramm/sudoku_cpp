@@ -21,4 +21,5 @@ bool X_Cycles( Grid& g );
 		} \
 	}
 
+void TestCycleType();
 

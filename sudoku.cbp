@@ -29,6 +29,7 @@
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
 		<Unit filename="build.sh" />
+		<Unit filename="circvec.h" />
 		<Unit filename="grid.cpp" />
 		<Unit filename="grid.h" />
 		<Unit filename="header.h" />
