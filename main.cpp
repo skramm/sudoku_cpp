@@ -8,7 +8,7 @@ Licence: GPLv3
 
 //#include <iostream>
 
-#include "grid.h"
+#include "header.h"
 
 
 using namespace std;

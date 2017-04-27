@@ -41,7 +41,7 @@ struct Link
 {
 	pos_t p1, p2;
 	En_LinkType type;
-	EN_ORIENTATION orient;
+	EN_ORIENTATION orient=OR_ROW;
 
 	friend bool operator == ( const Link& lA, const Link& lB )
 	{
@@ -51,10 +51,12 @@ struct Link
 			return true;
 		return false;
 	}
-/*	Link( pos_t pA, pos_t pB, En_LinkType lt, EN_ORIENTATION o ): BareLink{ pA, lt, o }, p2(pB)
-	{
-//		std::cout << "CONSTRUCTOR: " << *this << '\n';
-	}*/
+	Link( pos_t pA, pos_t pB, En_LinkType lt, EN_ORIENTATION o ): p1(pA), p2(pB), type(lt), orient(o)
+	{}
+#ifdef TESTMODE
+	Link( En_LinkType lt ): type(lt)
+	{}
+#endif
 	friend std::ostream& operator << ( std::ostream& s, const Link& l )
 	{
 		s << '{' << (l.type==LT_Strong ? 'S' : 'W') << ',' << l.p1 << "-" << l.p2 << ',' << GetString( l.orient ) <<  '}';
@@ -415,7 +417,7 @@ Convert2Cycle( const std::vector<vertex_t>& in_cycle, const graph_t& graph )
 		auto idx2 = ( i+1!=in_cycle.size() ? in_cycle[i+1] : in_cycle[0] );
 		auto edge = boost::edge( idx1, idx2, graph ).first;
 
-		out_cycle.AddElem( Link{ graph[idx1].pos, graph[idx2].pos, graph[edge].link_type, graph[edge].link_orient } );
+		out_cycle.AddElem( Link( graph[idx1].pos, graph[idx2].pos, graph[edge].link_type, graph[edge].link_orient ) );
 	}
 	return out_cycle;
 }
@@ -634,9 +636,8 @@ BuildCycle( const std::string& s )
 	for( size_t i=0; i<s.size(); i+=2 )
 	{
 		assert( s.at(i)=='W' || s.at(i)=='S' );
-		Link link;
-		link.type = ( s.at(i)=='W' ? LT_Weak :  LT_Strong );
-		c.AddLink(link);
+		Link link( s.at(i)=='W' ? LT_Weak :  LT_Strong );
+		c.AddElem(link);
 	}
 	return c;
 }
@@ -644,6 +645,7 @@ BuildCycle( const std::string& s )
 void
 CheckCycle( const Cycle& c, En_CycleType ct )
 {
+	std::cout << "CheckCycle: " << c;
 	assert( GetCycleType( c ).first == ct );
 }
 
