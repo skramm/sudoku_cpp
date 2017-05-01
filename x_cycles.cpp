@@ -64,6 +64,16 @@ struct Link
 	}
 };
 //----------------------------------------------------------------------------
+Cell&
+GetCommonCell( const Link& l1, const Link& l2, Grid& g )
+{
+	if( l1.p1 == l2.p2 || l1.p1 == l2.p1 )
+		return g.GetCellByPos( l1.p1 );
+	if( l1.p2 == l2.p1 || l1.p2 == l2.p2 )
+		return g.GetCellByPos( l1.p2 );
+	assert(0); // should never be here...
+}
+//----------------------------------------------------------------------------
 /// Searches from pos \c pos for all the weak links based on value \c val. Result is added to \c v_wl
 void
 FindWeakLinks( const Grid& g, value_t val, pos_t current_pos, EN_ORIENTATION orient, std::vector<Link>& v_wl )
@@ -529,7 +539,6 @@ FindCycles(
 //----------------------------------------------------------------------------
 /// Analyze the cycle and return as a pair its type and the index where the discontinuity occurs (if any, -1 if none)
 /**
-
 Rules:
 - if even nb of links: is either continuous or invalid
 - if odd nb of links: is either CT_Discont_2SL, CT_Discont_2WL or invalid
@@ -597,7 +606,10 @@ GetCycleType( const Cycle& cy )
 			if( has2SL ) // if had previously counted 2
 				return std::make_pair(CT_Invalid,-1);
 			else
+			{
 				has2SL = true;
+				middle_index = i;
+			}
 		}
 
 		if( count_WL == 3 )
@@ -643,37 +655,48 @@ BuildCycle( const std::string& s )
 }
 
 void
-CheckCycle( const Cycle& c, En_CycleType ct )
+CheckCycle( const Cycle& c, En_CycleType ct, int pos=0 )
 {
 	std::cout << "CheckCycle: " << c;
-	assert( GetCycleType( c ).first == ct );
+	Cycle c2(c);                      // copy, 'coz original is const
+	for( int i=0; i<c.size(); i++ )
+	{
+		std::rotate( std::begin( c2.data() ), std::begin( c2.data() )+1, std::end( c2.data() ) );
+		if( GetCycleType( c ).first != ct )
+		{
+			std::cout << "- Failure for cycle: " << c << ": Is not of required type\n";
+		}
+	}
+	if( ct != CT_Invalid )
+	{
+		if( GetCycleType( c ).second != pos )
+		{
+			std::cout << "- Failure for cycle: " << c << ": position not correct\n";
+		}
+	}
 }
 
 void
 TestCycleType()
 {
-
 	CheckCycle( BuildCycle( "W-S-W-W-W-S" ), CT_Invalid );
-	CheckCycle( BuildCycle( "S-W-S-W-W-W" ), CT_Invalid );
-	CheckCycle( BuildCycle( "W-S-W-S-W-W" ), CT_Invalid );
-
 	CheckCycle( BuildCycle( "W-S-W-S-W-S" ), CT_Continuous );
+	CheckCycle( BuildCycle( "W-S-W-W-S-W-S" ), CT_Discont_2WL, 2 );
+	CheckCycle( BuildCycle( "W-S-W-S-S-W-S" ), CT_Discont_2SL, 3 );
 
-/*
-	assert( GetCycleType( BuildCycle( "W-S-W-S-W-S" ) ).first == CT_Continuous );
-	assert( GetCycleType( BuildCycle( "S-W-S-W-S-W" ) ).first == CT_Continuous );
-	assert( GetCycleType( BuildCycle( "W-S-W-S-W-S-S" ) ).first == CT_Discont_2SL ); // 2 strong links
-	assert( GetCycleType( BuildCycle( "S-W-S-W-S-W-S" ) ).first == CT_Discont_2SL ); // 2 strong links
-	assert( GetCycleType( BuildCycle( "S-S-W-S-W-S-W" ) ).first == CT_Discont_2SL ); // 2 strong links
-
-	assert( GetCycleType( BuildCycle( "W-W-W-S-W-S" ) ).first == CT_Invalid ); // invalid: 3 weak links
-	assert( GetCycleType( BuildCycle( "W-W-S-W-S-W" ) ).first == CT_Invalid ); // invalid: 3 weak links
-	assert( GetCycleType( BuildCycle( "W-S-W-S-W-W" ) ).first == CT_Invalid ); // invalid: 3 weak links
-	assert( GetCycleType( BuildCycle( "S-W-S-W-W-W" ) ).first == CT_Invalid ); // invalid: 3 weak links
-*/
+	CheckCycle( BuildCycle( "W-S-W-S-S-W-S-S" ), CT_Invalid ); // twice 2 strong links
+	CheckCycle( BuildCycle( "W-W-S-W-S-W-W-S" ), CT_Invalid ); // twice 2 weak links
 }
 #endif
 //----------------------------------------------------------------------------
+/// Explore a cycle and do the corresponding action, that is either
+/**
+- Nice Loops Rule 1
+- Nice Loops Rule 2
+- Nice Loops Rule 3
+
+See http://www.sudokuwiki.org/X_Cycles for details
+*/
 void
 ExploreCycle( Cycle& cy, Grid& g, value_t val )
 {
@@ -707,15 +730,29 @@ ExploreCycle( Cycle& cy, Grid& g, value_t val )
 				}
 			}
 		break;
-		case CT_Discont_2SL:
+
+		case CT_Discont_2SL: // Nice Loops Rule 2
+		{
+			const auto& link1 = cy.GetElem( p.second );
+			const auto& link2 = cy.GetElem( p.second+1 );
+			Cell& c = GetCommonCell( link1, link2, g );
+			c.RemoveAllCandidatesBut( val );
+		}
 		break;
+
 		case CT_Discont_2WL: // Nice Loops Rule 3
-
-
+		{
+			const auto& link1 = cy.GetElem( p.second );
+			const auto& link2 = cy.GetElem( p.second+1 );
+			Cell& c = GetCommonCell( link1, link2, g );
+			c.RemoveCandidate( val );
+		}
 		break;
+
 		case CT_Invalid:
 			std::cout << "ERROR, invalid cycle !\n"; assert(0);
 		break;
+
 		default: assert(0);
 	}
 

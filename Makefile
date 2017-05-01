@@ -1,5 +1,6 @@
 # standard Linux makefile
 
+.PHONY=program
 
 DOT_FILES=$(wildcard out/*.dot)
 SVG_FILES = $(patsubst %.dot,%.svg,$(DOT_FILES))
@@ -19,10 +20,13 @@ ifeq ($(TEST),Y)
 	CFLAGS += -DTESTMODE
 endif
 
+program: sudoku
+	@echo "done target $@"
 
 # linking binary
 sudoku: $(OBJ_FILES)
 	$(CXX) -o sudoku obj/grid.o obj/x_cycles.o obj/main.o  -s
+	@echo "done target $@"
 
 # generic compile rule
 obj/%.o: %.cpp $(HEADERS) Makefile

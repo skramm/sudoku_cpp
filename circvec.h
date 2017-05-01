@@ -10,23 +10,25 @@ class circvec
 {
 	private:
 		std::vector<T> _data;
-		int _current_pos=0;
+//		int _current_pos=0;
 	public:
+		std::vector<T>&       data()       { return _data; }
+		const std::vector<T>& data() const { return _data; }
 		size_t size() const { return _data.size(); }
 		void AddElem( const T& elem ) { _data.push_back( elem );	}
 		const T& GetElem( size_t idx ) const
 		{
-			if( idx +_current_pos >= size() )
-				return _data[ (idx + _current_pos) % size() ];
-			return _data[idx + _current_pos];
+			if( idx >= size() )
+				return _data[ (idx ) % size() ];
+			return _data[idx];
 		}
 		T& GetElem( size_t idx )
 		{
-			if( idx +_current_pos >= size() )
-				return _data[ (idx + _current_pos) % size() ];
-			return _data[idx + _current_pos];
+			if( idx >= size() )
+				return _data[ (idx) % size() ];
+			return _data[idx];
 		}
-		void RotateDown( size_t n )
+/*		void RotateDown( size_t n )
 		{
 			assert( n<size() );
 			int p = _current_pos - n;
@@ -34,6 +36,6 @@ class circvec
 				_current_pos = size() - n;
 			else
 				_current_pos = p;
-		}
+		}*/
 };
 
