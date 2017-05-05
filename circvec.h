@@ -1,5 +1,5 @@
 /**
-\file circvec.hpp
+\file circvec.h
 \brief holds a class template designed to handle a vector as circular
 
 \todo TESTING NEEDED !!!

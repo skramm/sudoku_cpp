@@ -40,7 +40,7 @@ dot: $(SVG_FILES)
 
 dox: html/index.html
 
-html/index.html: $(INPUT_FILES)
+html/index.html: $(INPUT_FILES) doxyfile
 	doxygen doxyfile
 
 
