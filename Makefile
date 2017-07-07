@@ -9,6 +9,8 @@ INPUT_FILES=grid.cpp x_cycles.cpp main.cpp
 OBJ_FILES = $(patsubst %.cpp,obj/%.o,$(INPUT_FILES))
 HEADERS=$(wildcard *.h)
 
+SAMPLE_FILES=$(wildcard samples/*.*)
+
 CFLAGS=-Wall -std=c++11 -fexceptions
 
 #----------------------------------------------
@@ -40,7 +42,7 @@ dot: $(SVG_FILES)
 
 dox: html/index.html
 
-html/index.html: $(INPUT_FILES) doxyfile
+html/index.html: $(INPUT_FILES) $(HEADERS) doxyfile
 	doxygen doxyfile
 
 

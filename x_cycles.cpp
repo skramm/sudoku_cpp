@@ -689,7 +689,7 @@ TestCycleType()
 }
 #endif
 //----------------------------------------------------------------------------
-/// Explore a cycle and do the corresponding action, that is either
+/// Explore a cycle and do the corresponding action, that is either:
 /**
 - Nice Loops Rule 1
 - Nice Loops Rule 2
@@ -702,6 +702,7 @@ ExploreCycle( Cycle& cy, Grid& g, value_t val )
 {
 	auto p = GetCycleType( cy );
 	auto middle_idx = p.second;
+	assert( p.first != CT_undefined );
 	switch( p.first )
 	{
 		case CT_Continuous:                          // then, do the "Nice Loops Rule 1"
@@ -749,8 +750,8 @@ ExploreCycle( Cycle& cy, Grid& g, value_t val )
 		}
 		break;
 
-		case CT_Invalid:
-			std::cout << "ERROR, invalid cycle !\n"; assert(0);
+		case CT_Invalid: // don't do anything
+//			std::cout << "ERROR, invalid cycle !\n"; assert(0);
 		break;
 
 		default: assert(0);
@@ -764,7 +765,7 @@ This enables removing some candidates
 
 See http://www.sudokuwiki.org/X_Cycles
 
-TODO: we only explore the first strong link! But other cycles could be found by iterating over the other ones
+\todo we only explore the first strong link! But other cycles could be found by iterating over the other ones
 
 */
 bool

@@ -921,6 +921,71 @@ PointingPairsTriples( Grid& g )
 	return true;
 }
 //----------------------------------------------------------------------------
+/// Box reduction. See http://www.sudokuwiki.org/Intersection_Removal#LBR
+bool
+BoxReduction( EN_ORIENTATION orient, Grid& g )
+{
+	PRINT_ALGO_START;
+
+	for( index_t i=0; i<9; i++ )  // for each row/col
+	{
+		PRINT_MAIN_IDX(orient);
+		View_1Dim_nc v1d = g.GetView( orient, i );
+		for( value_t val=1; val<10; val++ )          // for each candidate value
+		{
+			std::cout << "row/col=" << (int)i << " CAND=" << (int)val << "\n";
+			std::vector<pos_t> v_cand;
+			for( index_t j=0; j<9; j++ )   //
+			{
+				const Cell& c = v1d.GetCell( j );
+				if( c.HasCandidate( val ) )
+					v_cand.push_back( c.GetPos() );
+			}
+			if( v_cand.size()>0 && v_cand.size()<4 ) // if 2 or 3 candidates
+			{
+				std::cout << "nb cand=" << v_cand.size() << '\n';
+				bool sameBlock( true );
+				auto block_index = GetBlockIndex( v_cand[0] );
+				for( auto cand_pos: v_cand )
+				{
+					if( GetBlockIndex( cand_pos ) != block_index )
+						sameBlock = false;
+				}
+				if( sameBlock ) // if all the candidates are in the same block, we can remove them from the other lines/col of this block
+				{
+					std::cout << " all in block " << (int)block_index << '\n';
+					View_1Dim_nc block = g.GetView( OR_BLK, block_index );
+					bool doneRemoval(false);
+					for( index_t j=0; j<9; j++ )   //
+					{
+						Cell& c = block.GetCell( j );
+						if( c.GetPos().first != i )
+						{
+							c.RemoveCandidate( val );
+							doneRemoval = true;
+						}
+					}
+					if( doneRemoval )
+						return true;
+
+				}
+			}
+		}
+	}
+	return false;
+}
+
+//----------------------------------------------------------------------------
+/// Box reduction. See http://www.sudokuwiki.org/Intersection_Removal#LBR
+bool
+Algo_BoxReduction( Grid& g )
+{
+	if( !BoxReduction( OR_ROW, g ) )
+		if( ! BoxReduction( OR_COL, g ) )
+			return false;
+	return true;
+}
+//----------------------------------------------------------------------------
 bool
 Grid::SearchPairs()
 {
@@ -1020,7 +1085,8 @@ Grid::ProcessAlgorithm( EN_ALGO algo )
 		case ALG_SEARCH_TRIPLES: res=SearchTriples();      break;
 		case ALG_SEARCH_SINGLE_CAND: res=SearchSingleCand(); break;
 		case ALG_SEARCH_MISSING_SINGLE: res=SeachForSingleMissing(); break;
-		case ALG_POINTING_PT:    res=PointingPairsTriples( *this ); break;
+		case ALG_POINTING_PT:    res = PointingPairsTriples( *this ); break;
+		case ALG_BOX_RED:        res = Algo_BoxReduction( *this ); break;
 		case ALG_XY_WING:        res = XY_Wing( *this ); break;
 		case ALG_X_CYCLES:       res = X_Cycles( *this ); break;
 		default: assert(0);

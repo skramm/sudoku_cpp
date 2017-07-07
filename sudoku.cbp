@@ -30,6 +30,7 @@
 		</Unit>
 		<Unit filename="build.sh" />
 		<Unit filename="circvec.h" />
+		<Unit filename="doxyfile" />
 		<Unit filename="grid.cpp" />
 		<Unit filename="grid.h" />
 		<Unit filename="header.h" />

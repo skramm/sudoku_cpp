@@ -70,6 +70,7 @@ InitCandMap( cand_map_t& cmap )
 		cmap[i]=true;
 }
 //----------------------------------------------------------------------------
+/// Wrapper over \ref cand_map_t, with somme added member functions
 struct CandMap
 {
 	CandMap()
@@ -314,6 +315,7 @@ enum EN_ALGO
 	ALG_SEARCH_SINGLE_CAND,
 	ALG_SEARCH_MISSING_SINGLE,
 	ALG_POINTING_PT,
+	ALG_BOX_RED,
 	ALG_XY_WING,
 	ALG_X_CYCLES,
 
@@ -332,6 +334,7 @@ GetString( EN_ALGO algo )
 		case ALG_SEARCH_SINGLE_CAND: return "SearchSingleCand"; break;
 		case ALG_SEARCH_MISSING_SINGLE: return "MissingSingle"; break;
 		case ALG_POINTING_PT: return "PointingPairs/Triples"; break;
+		case ALG_BOX_RED: return "BoxReduction"; break;
 		case ALG_XY_WING: return "XY_Wing"; break;
 		case ALG_X_CYCLES: return "X_cycles"; break;
 		default: assert(0);
@@ -418,7 +421,6 @@ class Grid
 
 		bool SearchPairs();
 		bool SearchTriples();
-//		bool SearchPairs( EN_ORIENTATION );
 		bool SearchPairsTriple( EN_ORIENTATION, uint );
 
 		bool SearchSingleCand();
