@@ -417,7 +417,7 @@ class Grid
 		bool Check( EN_ORIENTATION ) const;
 
 		bool RemoveCandidates( EN_ORIENTATION );
-		bool RemoveCandidates();
+		bool Algo_RemoveCandidates();
 
 		bool SearchPairs();
 		bool SearchTriples();

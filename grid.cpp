@@ -8,7 +8,13 @@ Licence: GPLv3
 #define PRINT_ALGO_START \
 	{ \
 		if( g_data.Verbose ) \
-			std::cout << "START: " << __FUNCTION__ << '\n'; \
+			std::cout << "START ALGO: " << __FUNCTION__ << ", orient=" << GetString( orient ) << '\n'; \
+	}
+
+	#define PRINT_ALGO_START_2 \
+	{ \
+		if( g_data.Verbose ) \
+			std::cout << "START ALGO: " << __FUNCTION__ << '\n'; \
 	}
 
 
@@ -794,8 +800,6 @@ FindSymmetricalMatches(
 std::vector<pos_t>
 FindCommonRegion( pos_t p1, pos_t p2 )
 {
-//	std::cout << "START: " << __FUNCTION__ << '\n';
-//	std::cout << "p1=" << p1 << " p2=" << p2 << '\n';
 	assert( p1 != p2 );
 
 //	assert( p1.first != p2.first || p1.second != p2.second ); // must be on different rows OR different cols
@@ -861,7 +865,7 @@ RemoveCandidatesFromRegion( Grid& grid, const std::vector<pos_t>& v_region, valu
 bool
 XY_Wing( Grid& g )
 {
-	PRINT_ALGO_START;
+	PRINT_ALGO_START_2;
 
 	bool retval(false);
 	for( index_t i=0; i<9; i++ )  // for each row
@@ -933,7 +937,6 @@ BoxReduction( EN_ORIENTATION orient, Grid& g )
 		View_1Dim_nc v1d = g.GetView( orient, i );
 		for( value_t val=1; val<10; val++ )          // for each candidate value
 		{
-			std::cout << "row/col=" << (int)i << " CAND=" << (int)val << "\n";
 			std::vector<pos_t> v_cand;
 			for( index_t j=0; j<9; j++ )   //
 			{
@@ -943,7 +946,7 @@ BoxReduction( EN_ORIENTATION orient, Grid& g )
 			}
 			if( v_cand.size()>0 && v_cand.size()<4 ) // if 2 or 3 candidates
 			{
-				std::cout << "nb cand=" << v_cand.size() << '\n';
+				std::cout << "CAND=" << (int)val << " nb=" << v_cand.size() << '\n';
 				bool sameBlock( true );
 				auto block_index = GetBlockIndex( v_cand[0] );
 				for( auto cand_pos: v_cand )
@@ -953,28 +956,30 @@ BoxReduction( EN_ORIENTATION orient, Grid& g )
 				}
 				if( sameBlock ) // if all the candidates are in the same block, we can remove them from the other lines/col of this block
 				{
-					std::cout << " all in block " << (int)block_index << '\n';
+					std::cout << "all in block " << (int)block_index << '\n';
 					View_1Dim_nc block = g.GetView( OR_BLK, block_index );
 					bool doneRemoval(false);
 					for( index_t j=0; j<9; j++ )   //
 					{
 						Cell& c = block.GetCell( j );
-						if( c.GetPos().first != i )
+						if(
+							( orient == OR_ROW && c.GetPos().first != i )
+							||
+							( orient == OR_COL && c.GetPos().second != i )
+						)
 						{
-							c.RemoveCandidate( val );
-							doneRemoval = true;
+							if( c.RemoveCandidate( val ) )
+								doneRemoval = true;
 						}
 					}
 					if( doneRemoval )
 						return true;
-
 				}
 			}
 		}
 	}
 	return false;
 }
-
 //----------------------------------------------------------------------------
 /// Box reduction. See http://www.sudokuwiki.org/Intersection_Removal#LBR
 bool
@@ -1019,7 +1024,7 @@ Grid::SearchSingleCand()
 //----------------------------------------------------------------------------
 /// remove candidates on rows/cols/blocks that have a value in another cell
 bool
-Grid::RemoveCandidates()
+Grid::Algo_RemoveCandidates()
 {
 	if( !RemoveCandidates( OR_ROW ) )
 		if( !RemoveCandidates( OR_COL ) )
@@ -1080,7 +1085,7 @@ Grid::ProcessAlgorithm( EN_ALGO algo )
 	bool res = false;
 	switch( algo )
 	{
-		case ALG_REMOVE_CAND:    res=RemoveCandidates(); break;
+		case ALG_REMOVE_CAND:    res = Algo_RemoveCandidates(); break;
 		case ALG_SEARCH_PAIRS:   res=SearchPairs();      break;
 		case ALG_SEARCH_TRIPLES: res=SearchTriples();      break;
 		case ALG_SEARCH_SINGLE_CAND: res=SearchSingleCand(); break;

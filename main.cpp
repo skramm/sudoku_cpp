@@ -32,9 +32,15 @@ int main( int argc, const char** argv )
 		for( int i=0; i<argc-1; i++ )
 		{
 			if( std::string( argv[i+1] ) == std::string( "-v" ) )
+			{
 				g_data.Verbose = true;
+				cout << " -Option -v (Verbose) activated\n";
+			}
 			if( std::string( argv[i+1] ) == std::string( "-s" ) )
+			{
 				g_data.LogSteps = true;
+				cout << " -Option -s (log Steps) activated\n";
+			}
 		}
 	}
 	grid.InitCandidates();
