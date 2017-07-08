@@ -30,6 +30,20 @@ enum En_CycleType
 	CT_Invalid
 };
 //----------------------------------------------------------------------------
+const char*
+GetString( En_CycleType ct )
+{
+	switch( ct )
+	{
+		case CT_undefined:   return "UNDEFINED"; break;
+		case CT_Continuous:  return "Continuous"; break;
+		case CT_Discont_2SL: return "Discontinuous/SL"; break;
+		case CT_Discont_2WL: return "Discontinuous/WL"; break;
+		case CT_Invalid:     return "INVALID"; break;
+		default: assert(0);
+	}
+}
+//----------------------------------------------------------------------------
 /// To avoid a meaningless boolean
 enum En_LinkType
 {
@@ -574,6 +588,19 @@ GetCycleType( const Cycle& cy )
 	bool   has2WL(false);
 	bool   has2SL(false);
 	int    middle_index = -1;
+
+// first check if even and only strong links => then, is continuous
+	if( cy.size()%2 == 0 )
+		if( std::find_if(
+				std::begin( cy.data() ),
+				std::end(   cy.data() ),
+				[](const Link& l){return l.type==LT_Weak; }
+			)
+			==
+			std::end(  cy.data() )
+		)
+			return std::make_pair(CT_Continuous,0 );
+
 	for( size_t i=0; i<cy.size(); i++ )
 	{
 		const auto& bl = cy.GetElem(i);
@@ -696,28 +723,33 @@ TestCycleType()
 - Nice Loops Rule 3
 
 See http://www.sudokuwiki.org/X_Cycles for details
+
+Returns true if some removals has been processed
 */
-void
+bool
 ExploreCycle( Cycle& cy, Grid& g, value_t val )
 {
+	bool removalDone( false );
 	auto p = GetCycleType( cy );
+	std::cout << "Cycle type=" << GetString( p.first ) << " middle=" << (int)p.second << '\n';
+
 	auto middle_idx = p.second;
 	assert( p.first != CT_undefined );
 	switch( p.first )
 	{
 		case CT_Continuous:                          // then, do the "Nice Loops Rule 1"
-			std::cout << "Cycle continuous: " << cy;
+			std::cout << "Cycle continuous: " << cy << " Nice Loops Rule 1\n";
 			for( size_t i=0; i<cy.size(); i++ )
 			{
 				const auto& link = cy.GetElem( i );
-				if( link.type == LT_Weak ) // if link is weak, then:
+//				if( link.type == LT_Weak ) // if link is weak, then:
 				{
 					View_1Dim_nc view;       // step 1 - get the corresponding view (row/col/block)
 					switch( link.orient )
 					{
-						case OR_ROW: view = g.GetView( link.orient, link.p1.first );	break;
-						case OR_COL: view = g.GetView( link.orient, link.p1.second );	break;
-						case OR_BLK: view = g.GetView( link.orient, GetBlockIndex( link.p1 ) );break;
+						case OR_ROW: view = g.GetView( link.orient, link.p1.first ); break;
+						case OR_COL: view = g.GetView( link.orient, link.p1.second ); break;
+						case OR_BLK: view = g.GetView( link.orient, GetBlockIndex( link.p1 ) ); break;
 						default: assert(0);
 					}
 					std::cout << "link: " << link << '\n';
@@ -726,7 +758,8 @@ ExploreCycle( Cycle& cy, Grid& g, value_t val )
 					{                            //          (except for the two cells part of the link)
 						auto& cell = view.GetCell( i );
 						if( cell.GetPos() != link.p1 && cell.GetPos() != link.p2 )
-							cell.RemoveCandidate( val );
+							if( cell.RemoveCandidate( val ) )
+								removalDone = true;
 					}
 				}
 			}
@@ -734,19 +767,24 @@ ExploreCycle( Cycle& cy, Grid& g, value_t val )
 
 		case CT_Discont_2SL: // Nice Loops Rule 2
 		{
-			const auto& link1 = cy.GetElem( p.second );
-			const auto& link2 = cy.GetElem( p.second+1 );
+			std::cout << "* Nice Loops Rule 2\n";
+			assert( p.second != 0 );
+			const auto& link1 = cy.GetElem( p.second-1);
+			const auto& link2 = cy.GetElem( p.second );
 			Cell& c = GetCommonCell( link1, link2, g );
-			c.RemoveAllCandidatesBut( val );
+			if( c.RemoveAllCandidatesBut( val ) )
+				removalDone = true;
 		}
 		break;
 
 		case CT_Discont_2WL: // Nice Loops Rule 3
 		{
+			std::cout << "* Nice Loops Rule 3\n";
 			const auto& link1 = cy.GetElem( p.second );
 			const auto& link2 = cy.GetElem( p.second+1 );
 			Cell& c = GetCommonCell( link1, link2, g );
-			c.RemoveCandidate( val );
+			if( c.RemoveCandidate( val ) )
+				removalDone = true;
 		}
 		break;
 
@@ -756,7 +794,7 @@ ExploreCycle( Cycle& cy, Grid& g, value_t val )
 
 		default: assert(0);
 	}
-
+	return removalDone;
 }
 //----------------------------------------------------------------------------
 /// X Cycles algorithm (WIP)
@@ -782,9 +820,10 @@ X_Cycles( Grid& g )
 		{
 			auto v_cyc = FindCycles( g, v, v_sl );
 //			std::cout << "VALUE=" << (int)v << " cycles:\n";
-//			PrintVector( v_cyc, "v_cyc" );
+			PrintVector( v_cyc, "v_cyc" );
 			for( auto& cy: v_cyc )       // not const, because cycles will get tagged
-				ExploreCycle( cy, g, v );
+				if( ExploreCycle( cy, g, v ) )
+					return true;
 		}
 	}
 

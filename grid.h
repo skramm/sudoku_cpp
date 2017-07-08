@@ -198,11 +198,14 @@ private:
 		return false;
 	}
 
-	void RemoveAllCandidatesBut( value_t val )
+	bool RemoveAllCandidatesBut( value_t val )
 	{
+		bool removalDone(false);
 		for( int i=1; i<10; i++ )
 			if( i != val )
-				RemoveCandidate( i );
+				if( RemoveCandidate( i ) )
+					removalDone = true;
+		return removalDone;
 	}
 	std::vector<value_t> GetCandidates() const
 	{
