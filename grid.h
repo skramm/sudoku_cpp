@@ -170,7 +170,7 @@ private:
 		for( int i=1; i<10; i++ )
 			_cand[i] = false;
 	}
-	bool RemoveCandidates( std::vector<value_t> v_cand )
+	bool RemoveCellCandidates( std::vector<value_t> v_cand )
 	{
 		bool b = false;
 		for( auto v: v_cand )
@@ -325,24 +325,6 @@ enum EN_ALGO
 	ALG_END
 };
 
-inline
-const char*
-GetString( EN_ALGO algo )
-{
-	switch( algo )
-	{
-		case ALG_REMOVE_CAND: return "RemoveCand"; break;
-		case ALG_SEARCH_PAIRS: return "SearchPairs"; break;
-		case ALG_SEARCH_TRIPLES: return "SearchTriples"; break;
-		case ALG_SEARCH_SINGLE_CAND: return "SearchSingleCand"; break;
-		case ALG_SEARCH_MISSING_SINGLE: return "MissingSingle"; break;
-		case ALG_POINTING_PT: return "PointingPairs/Triples"; break;
-		case ALG_BOX_RED: return "BoxReduction"; break;
-		case ALG_XY_WING: return "XY_Wing"; break;
-		case ALG_X_CYCLES: return "X_cycles"; break;
-		default: assert(0);
-	}
-}
 
 //----------------------------------------------------------------------------
 template<typename T>
@@ -419,18 +401,18 @@ class Grid
 	private:
 		bool Check( EN_ORIENTATION ) const;
 
-		bool RemoveCandidates( EN_ORIENTATION );
-		bool Algo_RemoveCandidates();
+//		bool RemoveCandidates( EN_ORIENTATION );
+//		bool Algo_RemoveCandidates();
 
-		bool SearchPairs();
-		bool SearchTriples();
-		bool SearchPairsTriple( EN_ORIENTATION, uint );
+//		bool SearchPairs();
+//		bool SearchTriples();
+//		bool SearchPairsTriple( EN_ORIENTATION, uint );
 
-		bool SearchSingleCand();
-		bool SearchSingleCand( EN_ORIENTATION );
+//		bool SearchSingleCand();
+//		bool SearchSingleCand( EN_ORIENTATION );
 
-		bool SeachForSingleMissing();
-		bool SeachForSingleMissing( EN_ORIENTATION );
+//		bool SeachForSingleMissing();
+//		bool SeachForSingleMissing( EN_ORIENTATION );
 
 		int  NbUnknows() const;
 //		int  NbUnknows2() const;

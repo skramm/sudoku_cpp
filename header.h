@@ -7,7 +7,13 @@ Licence: GPLv3
 */
 
 #include "grid.h"
-bool X_Cycles( Grid& g );
+
+#ifdef DEBUGMODE
+	#define DEBUG if(1) std::cout
+#else
+	#define DEBUG if(0) std::cout
+#endif
+
 
 #define PRINT_MAIN_IDX( o ) \
 	{ \

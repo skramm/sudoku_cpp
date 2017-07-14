@@ -9,7 +9,7 @@ Licence: GPLv3
 //#include <iostream>
 
 #include "header.h"
-
+#include "algorithms.h"
 
 using namespace std;
 

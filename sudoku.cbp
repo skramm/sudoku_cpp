@@ -28,6 +28,8 @@
 		<Unit filename="README.md">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
+		<Unit filename="algorithms.cpp" />
+		<Unit filename="algorithms.h" />
 		<Unit filename="build.sh" />
 		<Unit filename="circvec.h" />
 		<Unit filename="doxyfile" />
