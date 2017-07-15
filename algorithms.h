@@ -1,7 +1,11 @@
+/**
+\file algorithms.h
+*/
 
-#include "grid.h"
 #ifndef _ALGORITHMS_H_
 #define _ALGORITHMS_H_
+
+#include "grid.h"
 
 bool X_Cycles( Grid& g );
 bool Algo_PointingPairsTriples(  Grid& g );
@@ -44,6 +48,47 @@ GetString( EN_ALGO algo )
 		if( g_data.Verbose ) \
 			std::cout << "START ALGO: " << __FUNCTION__ << '\n'; \
 	}
+
+//----------------------------------------------------------------------------
+/// use in the "naked triples" algorithm
+struct pos_cand
+{
+	index_t pos_index;
+	std::vector<value_t> values;
+	pos_cand( size_t p, const std::vector<value_t>& vect ) : pos_index(p), values(vect) {}
+};
+
+std::pair<bool,std::array<value_t,3>> SearchTriplesPattern( const std::vector<pos_cand>& );
+
+//----------------------------------------------------------------------------
+template<typename T>
+bool
+VectorsOverlap( const std::vector<T>& v1, const std::vector<T>& v2, size_t n )
+{
+	const std::vector<T>* pv1 = &v1;
+	const std::vector<T>* pv2 = &v2;
+	if( v1.size() < v2.size() )
+	{
+		pv1 = &v2;
+		pv2 = &v1;
+	}
+	assert( n <= pv1->size() );
+
+	size_t c=0;
+	for( const auto& e1: *pv1 )           // for each element of v1,
+		if( std::find(                    // if we find one
+				std::begin( *pv2 ),       // of the elements of v2
+				std::end( *pv2 ),
+				e1
+			) != std::end( *pv2 )
+		)
+			c++;                        // then we increment the counter
+
+	if( c >= n )                        // if more than 2 elements,
+		return true;                    // then, the vectors do overlap
+	return false;
+}
+//----------------------------------------------------------------------------
 
 
 #endif

@@ -37,6 +37,7 @@
 		<Unit filename="grid.h" />
 		<Unit filename="header.h" />
 		<Unit filename="main.cpp" />
+		<Unit filename="test_catch.cpp" />
 		<Unit filename="x_cycles.cpp" />
 		<Extensions>
 			<envvars />

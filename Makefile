@@ -5,7 +5,7 @@
 DOT_FILES=$(wildcard out/*.dot)
 SVG_FILES = $(patsubst %.dot,%.svg,$(DOT_FILES))
 
-INPUT_FILES=grid.cpp x_cycles.cpp algorithms.cpp main.cpp
+INPUT_FILES=grid.cpp x_cycles.cpp algorithms.cpp main.cpp test_catch.cpp
 OBJ_FILES = $(patsubst %.cpp,obj/%.o,$(INPUT_FILES))
 HEADERS=$(wildcard *.h)
 
@@ -28,6 +28,10 @@ program: sudoku
 # linking binary
 sudoku: $(OBJ_FILES)
 	$(CXX) -o sudoku obj/algorithms.o obj/grid.o obj/x_cycles.o obj/main.o  -s
+	@echo "done target $@"
+
+test_catch: $(OBJ_FILES)
+	$(CXX) -o test_catch obj/algorithms.o obj/grid.o obj/x_cycles.o obj/test_catch.o  -s
 	@echo "done target $@"
 
 # generic compile rule
@@ -53,5 +57,9 @@ show:
 clean:
 	-rm obj/*.o
 
-test: sudoku
-	./sudoku
+cleandoc:
+	-rm -R html/*
+
+test: test_catch
+	./test_catch
+

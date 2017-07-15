@@ -265,7 +265,16 @@ struct View_T
 		assert( i<9 );
 		return *_viewData[i];
 	}
+	bool RemoveCand( value_t v )
+	{
+		bool retval(false);
+		for( auto& e: _viewData )
+			if( e->RemoveCandidate( v ) )
+				retval = true;
+		return retval;
+	}
 };
+//----------------------------------------------------------------------------
 
 typedef View_T<const Cell*> View_1Dim_c;
 typedef View_T<Cell*>       View_1Dim_nc;
@@ -400,19 +409,6 @@ class Grid
 
 	private:
 		bool Check( EN_ORIENTATION ) const;
-
-//		bool RemoveCandidates( EN_ORIENTATION );
-//		bool Algo_RemoveCandidates();
-
-//		bool SearchPairs();
-//		bool SearchTriples();
-//		bool SearchPairsTriple( EN_ORIENTATION, uint );
-
-//		bool SearchSingleCand();
-//		bool SearchSingleCand( EN_ORIENTATION );
-
-//		bool SeachForSingleMissing();
-//		bool SeachForSingleMissing( EN_ORIENTATION );
 
 		int  NbUnknows() const;
 //		int  NbUnknows2() const;

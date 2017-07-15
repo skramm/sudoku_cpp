@@ -1,3 +1,6 @@
+/**
+\file algorithms.cpp
+*/
 
 #include "algorithms.h"
 #include "header.h"
@@ -365,6 +368,7 @@ Algo_SearchPairs( Grid& g )
 }
 //----------------------------------------------------------------------------
 /// "Naked triple" algorithm
+/// \todo WRONG, only get the first pattern of naked triples
 bool
 Algo_SearchTriples( Grid& g )
 {
@@ -374,109 +378,105 @@ Algo_SearchTriples( Grid& g )
 				return false;
 	return true;
 }
+
 //----------------------------------------------------------------------------
-template<typename T>
-bool
-VectorsOverlap( const std::vector<T>& v1, const std::vector<T>& v2, size_t n )
+/// WIP !!! Naked triples, see http://www.sudokuwiki.org/Naked_Candidates#NP
+/**
+\verbatim
+The combinations of candidates for a Naked Triple will be one of the following:
+
+- case A: (123) (123) (123) - {3/3/3} (in terms of candidates per cell)
+- case B: (123) (123) (12) - {3/3/2} (or some combination thereof)
+- case C: (123) (12) (23) - {3/2/2/}
+- case D: (12) (23) (13) - {2/2/2}
+\endverbatim
+
+- Input: a set of vector of candidates
+- output: a pair (bool, std::array<3,value_t>). If first element is true, means we found a triple pattern, with the candidates in the array
+*/
+std::pair<bool,std::array<value_t,3>>
+SearchTriplesPattern( const std::vector<pos_cand>& v_cand )
 {
-	const std::vector<T>* pv1 = &v1;
-	const std::vector<T>* pv2 = &v2;
-	if( v1.size() < v2.size() )
+	bool done(false);
+	for( index_t i=0; i<v_cand.size()-1 && !done; i++ )
 	{
-		pv1 = &v2;
-		pv2 = &v1;
-	}
-	size_t c=0;
-	for( const auto& e1: *pv1 )
-		if( std::find(
-				std::begin( *pv2 ),
-				std::end( *pv2 ),
-				e1
-			) != std::end( *pv2 )
-		)
+		bool found2Triples(false);
+//		std::vector<index_t> v_res(1);
+//		v_res[0] = v_cand[i].pos_index;
+		if( v_cand[i].values.size() == 3 )  // if 3 candidates (useful for patterns A,B,C)
 		{
-			c++;
+			std::vector<index_t> v_pairs;
+			std::vector<index_t> v_triples;
+			for( index_t j=0; j<v_cand.size() && !done; j++ )
+			{
+				if( i != j )
+				{
+					if( v_cand[i].values == v_cand[j].values )                    // if found two triples (case A and B)
+						v_triples.push_back( v_cand[j].pos_index );
+					if( VectorsOverlap( v_cand[i].values, v_cand[j].values, 2 ) ) // if found a pair
+						v_pairs.push_back( v_cand[j].pos_index );
+				}
+			}
+			PrintVector( v_triples, "v_triples" );
+			PrintVector( v_pairs,   "v_pairs" );
+
+			if( v_triples.size() == 3 )           // case A
+			{
+				std::array<value_t,3> arr;
+				for( int k=0; k<3; k++)
+					arr[k] = v_cand[i].values.at( v_triples[0] );
+				return std::make_pair( true, arr );
+			}
+
 		}
-	if( c >= n )
-		return true;
-	return false;
+		else	// if not pattern A,B,C, maybe we can find a pattern D ?
+		{
+		}
+	}
 }
 
 //----------------------------------------------------------------------------
-#if 0
 /// Naked triples attempt
 bool
-SearchTriples( Grid& g, EN_ORIENTATION orient )
+SearchNakedTriples( Grid& g, EN_ORIENTATION orient )
 {
 	PRINT_ALGO_START;
 
-	bool res = false;
+	bool retval = false;
 	for( index_t i=0; i<9; i++ )  // for each row/col/block
 	{
 		PRINT_MAIN_IDX(orient);
-		std::vector<index_t> v_pos(1);
 		View_1Dim_nc v1d = g.GetView( orient, i );
-		std::vector<value_t> v_cand_1;
+		std::vector<pos_cand> v_cand;
 
-//		for( index_t j=0; j<8 && (v_pos.size()!=n); j++ ) // for each cell in the view (and stop if found 'n' matches)
-		for( index_t j=0; j<8; j++ ) // for each cell in the view (and stop if found 'n' matches)
+		for( index_t j=0; j<9; j++ ) // for each cell in the view (and stop if found 'n' matches)
 		{
-			Cell& cell_1 = v1d.GetCell(j);
-			if( cell_1.NbCandidates() == 2 || cell_1.NbCandidates() == 3 )     // if cell has 2 or 3 candidates
-			{
-				v_pos[0] = j;
-				v_cand_1 = cell_1.GetCandidates();
-
-//				for( index_t k=j+1; k<9 && (v_pos.size()!=n); k++ ) // for each other cell in the view
-				for( index_t k=j+1; k<9; k++ ) // for each other cell in the view
-				{
-					Cell& cell_2 = v1d.GetCell(k);
-					if( cell_2.NbCandidates() == 2 || cell_2.NbCandidates() == 3 )    // if OTHER cell has also 2 or 3 candidates
-					{
-						v_cand_2 = cell_2.GetCandidates();
-						if( VectorsOverlap( v_cand_1, v_cand_2, 2 ) )         // then check if they overlap
-						{
-							v_pos.push_back( k );                           // and if so, store the location
-						}
-					}
-				}
-			}
+			Cell& cell = v1d.GetCell(j);
+			if( cell.NbCandidates() == 2 || cell.NbCandidates() == 3 )     // if cell has 2 or 3 candidates
+				v_cand.emplace_back( j, cell.GetCandidates() );
 		}
-		if( v_pos.size() == 3 )
+		if( v_cand.size() > 2 )  // if more than two cells with 2 or 3 candidates found, then search for "naked triple patterns"
 		{
-			uchar Nb(0);
-			for( index_t j=0; j<9; j++ ) // for each cell in the view
-			{
-				Cell& cell = v1d.GetCell(j);
-				bool dontremove( false );
-				for( uchar p=0; p<n; p++ )
-					if( j == v_pos[p] )
-						dontremove = true;
-				if( !dontremove )
-					if( cell.RemoveCellCandidates( v_cand_1 ) )
-					{
-						res = true;
-						Nb++;
-					}
-			}
-			if( g_data.Verbose && Nb )
-				std::cout << " - found a " << (n==2 ? "pair" : "triple") << ", removed " << (int)Nb << " candidates from others cells in same view\n";
+			auto tp = SearchTriplesPattern(v_cand);
+			if( tp.first )                                     // if a triple was found,
+				for( int k=0; k<3; k++ )                       // then erase the values from
+					if( v1d.RemoveCand( tp.second[k] ) )       //  all cells of the view
+						retval = true;
 		}
 	}
-	return res;
+	return retval;
 }
 //----------------------------------------------------------------------------
 /// "Naked triple" algorithm
 bool
 Algo_SearchTriples_2( Grid& g )
 {
-	if( !SearchTriples( g, OR_ROW ) )
-		if( !SearchTriples( g, OR_COL ) )
-			if( !SearchTriples( g, OR_BLK ) )
+	if( !SearchNakedTriples( g, OR_ROW ) )
+		if( !SearchNakedTriples( g, OR_COL ) )
+			if( !SearchNakedTriples( g, OR_BLK ) )
 				return false;
 	return true;
 }
-#endif
 //----------------------------------------------------------------------------
 /// Filter vector \c v_pos so that it holds only positions of cells holding only one of the candidates that are in \c v_cand.
 /**
