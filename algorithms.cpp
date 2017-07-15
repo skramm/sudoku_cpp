@@ -392,21 +392,22 @@ The combinations of candidates for a Naked Triple will be one of the following:
 \endverbatim
 
 - Input: a set of vector of candidates
-- output: a pair (bool, std::array<3,value_t>). If first element is true, means we found a triple pattern, with the candidates in the array
+- output: a tuple (bool, array, array). If first element is true, means we found a triple pattern, with the candidates in the first array, at positions given by the second array
 */
-std::pair<bool,std::array<value_t,3>>
-SearchTriplesPattern( const std::vector<pos_cand>& v_cand )
+NakedTriple
+SearchTriplesPattern( const std::vector<pos_vcand>& v_cand )
 {
 	bool done(false);
 	for( index_t i=0; i<v_cand.size()-1 && !done; i++ )
 	{
+		std::cout << "\n* main pos=" << i << '\n';
 		bool found2Triples(false);
-//		std::vector<index_t> v_res(1);
-//		v_res[0] = v_cand[i].pos_index;
 		if( v_cand[i].values.size() == 3 )  // if 3 candidates (useful for patterns A,B,C)
 		{
 			std::vector<index_t> v_pairs;
 			std::vector<index_t> v_triples;
+			v_triples.push_back( v_cand[i].pos_index );
+
 			for( index_t j=0; j<v_cand.size() && !done; j++ )
 			{
 				if( i != j )
@@ -420,17 +421,28 @@ SearchTriplesPattern( const std::vector<pos_cand>& v_cand )
 			PrintVector( v_triples, "v_triples" );
 			PrintVector( v_pairs,   "v_pairs" );
 
-			if( v_triples.size() == 3 )           // case A
+			switch( v_triples.size() )
 			{
-				std::array<value_t,3> arr;
-				for( int k=0; k<3; k++)
-					arr[k] = v_cand[i].values.at( v_triples[0] );
-				return std::make_pair( true, arr );
+				case 3:                    // case A
+				{
+					std::cout <<" case A !\n";
+					NakedTriple return_value;
+					for( int k=0; k<3; k++)
+					{
+						return_value.cand_values[k] = v_cand[i].values.at( k );
+						return_value.cand_pos[k]    = v_triples[k];
+					}
+					return return_value;             // no need to continue
+				}
+				break;
+				case 2:                 // maybe case B
+				break;
+				case 1:                 // maybe case C
+				break;
+				case 0:                 // if not pattern A,B,C, maybe we can find pattern D ?
+				break;
+				default: assert(0);
 			}
-
-		}
-		else	// if not pattern A,B,C, maybe we can find a pattern D ?
-		{
 		}
 	}
 }
@@ -447,7 +459,7 @@ SearchNakedTriples( Grid& g, EN_ORIENTATION orient )
 	{
 		PRINT_MAIN_IDX(orient);
 		View_1Dim_nc v1d = g.GetView( orient, i );
-		std::vector<pos_cand> v_cand;
+		std::vector<pos_vcand> v_cand;
 
 		for( index_t j=0; j<9; j++ ) // for each cell in the view (and stop if found 'n' matches)
 		{
@@ -458,10 +470,12 @@ SearchNakedTriples( Grid& g, EN_ORIENTATION orient )
 		if( v_cand.size() > 2 )  // if more than two cells with 2 or 3 candidates found, then search for "naked triple patterns"
 		{
 			auto tp = SearchTriplesPattern(v_cand);
-			if( tp.first )                                     // if a triple was found,
-				for( int k=0; k<3; k++ )                       // then erase the values from
-					if( v1d.RemoveCand( tp.second[k] ) )       //  all cells of the view
-						retval = true;
+			if( tp.found )                             // if a triple was found,
+				for( index_t i=0; i<9; i++ )                  // then, for all the other positions of the view,
+					for( int k=0; k<3; k++ )                  // remove the candidates found
+						if( i != tp.cand_pos[k] )
+							if( v1d.GetCell(i).RemoveCandidate( tp.cand_values[k] ) )
+								retval = true;
 		}
 	}
 	return retval;
@@ -502,16 +516,16 @@ FilterByCand( Grid& g, const std::vector<value_t>& v_cand, T& v_pos )
 }
 //----------------------------------------------------------------------------
 /// Helper function for FindSymmetricalMatches()
-/** Finds indexes of correspondences betwen 2 vectors holding 2 elements.
+/** Finds indexes of correspondences between 2 vectors holding 2 elements.
 Returned value holds \c first: index on first vector, \c second: index on second vector
 */
 std::pair<index_t,index_t>
-FindMatch( const std::vector<index_t>& v_key, const std::vector<index_t>& v_cand )
+FindMatch( const std::vector<value_t>& v_key, const std::vector<value_t>& v_cand )
 {
 	assert( v_key.size()  == 2 );
 	assert( v_cand.size() == 2 );
 
-	std::pair<index_t,index_t> p_out(0,0)	;
+	std::pair<index_t,index_t> p_out(0,0);
 	if( v_key[0] == v_cand[0] )
 		return std::pair<index_t,index_t>(0,0);
 	if( v_key[0] == v_cand[1] )

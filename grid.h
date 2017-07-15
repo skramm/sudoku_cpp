@@ -23,7 +23,8 @@ typedef unsigned char uchar;
 typedef uchar value_t;
 
 /// index type
-typedef uchar index_t;
+//typedef uchar index_t;
+typedef uint index_t;
 
 /// a position in the grid
 typedef std::pair<index_t,index_t> pos_t;

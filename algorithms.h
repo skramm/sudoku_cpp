@@ -6,6 +6,7 @@
 #define _ALGORITHMS_H_
 
 #include "grid.h"
+//#include <tuple>
 
 bool X_Cycles( Grid& g );
 bool Algo_PointingPairsTriples(  Grid& g );
@@ -50,15 +51,24 @@ GetString( EN_ALGO algo )
 	}
 
 //----------------------------------------------------------------------------
-/// use in the "naked triples" algorithm
-struct pos_cand
+/// used in the "naked triples" algorithm
+struct pos_vcand
 {
 	index_t pos_index;
 	std::vector<value_t> values;
-	pos_cand( size_t p, const std::vector<value_t>& vect ) : pos_index(p), values(vect) {}
+	pos_vcand( size_t p, const std::vector<value_t>& vect ) : pos_index(p), values(vect) {}
 };
 
-std::pair<bool,std::array<value_t,3>> SearchTriplesPattern( const std::vector<pos_cand>& );
+//----------------------------------------------------------------------------
+struct NakedTriple
+{
+	bool found = true;
+	std::array<value_t,3> cand_values;
+	std::array<index_t,3> cand_pos;
+};
+
+NakedTriple
+SearchTriplesPattern( const std::vector<pos_vcand>& v_cand );
 
 //----------------------------------------------------------------------------
 template<typename T>
