@@ -391,60 +391,111 @@ The combinations of candidates for a Naked Triple will be one of the following:
 - case D: (12) (23) (13) - {2/2/2}
 \endverbatim
 
-- Input: a set of vector of candidates
-- output: a tuple (bool, array, array). If first element is true, means we found a triple pattern, with the candidates in the first array, at positions given by the second array
+- Input: a set of candidates, described with \ref pos_vcand
+- output: a NakedTriple object, holding a boolean, the triple pattern values and positions
 */
 NakedTriple
 SearchTriplesPattern( const std::vector<pos_vcand>& v_cand )
 {
 	bool done(false);
-	for( index_t i=0; i<v_cand.size()-1 && !done; i++ )
+	NakedTriple return_value;
+
+	for( index_t i=0; i<v_cand.size() && !done; i++ )
 	{
-		std::cout << "\n* main pos=" << i << '\n';
-		bool found2Triples(false);
+		std::cout << "\n* main pos=" << i << " size=" << v_cand[i].values.size() << '\n';
 		if( v_cand[i].values.size() == 3 )  // if 3 candidates (useful for patterns A,B,C)
 		{
 			std::vector<index_t> v_pairs;
-			std::vector<index_t> v_triples;
-			v_triples.push_back( v_cand[i].pos_index );
+			std::vector<index_t> v_triples(1);
+			v_triples[0] = v_cand[i].pos_index;
 
 			for( index_t j=0; j<v_cand.size() && !done; j++ )
-			{
 				if( i != j )
 				{
 					if( v_cand[i].values == v_cand[j].values )                    // if found two triples (case A and B)
 						v_triples.push_back( v_cand[j].pos_index );
-					if( VectorsOverlap( v_cand[i].values, v_cand[j].values, 2 ) ) // if found a pair
-						v_pairs.push_back( v_cand[j].pos_index );
+					if( v_cand[j].values.size() == 2 )
+						if( VectorsOverlap( v_cand[i].values, v_cand[j].values, 2 ) ) // if found a pair of 2 values that are in the triplet
+//							v_pairs.push_back( v_cand[j].pos_index );
+							v_pairs.push_back( j );
 				}
-			}
 			PrintVector( v_triples, "v_triples" );
 			PrintVector( v_pairs,   "v_pairs" );
+
+			for( int k=0; k<3; k++)
+				return_value.cand_values[k] = v_cand[i].values.at( k );
 
 			switch( v_triples.size() )
 			{
 				case 3:                    // case A
 				{
-					std::cout <<" case A !\n";
-					NakedTriple return_value;
-					for( int k=0; k<3; k++)
-					{
-						return_value.cand_values[k] = v_cand[i].values.at( k );
-						return_value.cand_pos[k]    = v_triples[k];
-					}
-					return return_value;             // no need to continue
+					std::cout << " case A !\n";
+					return_value.foundPattern();
+					for( int k=0; k<3; k++ )
+						return_value.cand_pos[k] = v_triples[k];
+					return return_value;
 				}
 				break;
+
 				case 2:                 // maybe case B
+					if( !v_pairs.empty() )
+					{
+						std::cout << " case B !\n";
+						assert( v_pairs.size() == 1 ); // should be, I think. If not, triggering this assert will be a good way to find out ;-)
+						return_value.foundPattern();
+						for( int k=0; k<2; k++ )
+							return_value.cand_pos[k] = v_triples[k];
+//						return_value.cand_pos[2] = v_pairs[0];
+						return_value.cand_pos[2] = v_cand[v_pairs[0]].pos_index;
+						std::sort( std::begin(return_value.cand_pos), std::end(return_value.cand_pos) );
+						return return_value;
+					}
 				break;
+
 				case 1:                 // maybe case C
+					std::cout << " v_pairs.size()=" << v_pairs.size() << '\n';
+					if( v_pairs.size() == 2 )
+					{
+						std::cout << " case C !\n";
+
+						std::vector<index_t> value_count(3,0);
+						for( int k=0; k<3; k++ )                              // for each value of the triplet,
+						{
+							if( std::find(                                    // search in the pairs candidate value
+									std::begin( v_cand[v_pairs[0]].values ),  // and make sure each value is there
+									std::end( v_cand[v_pairs[0]].values ),    // only twice
+									return_value.cand_values[k]
+								) != std::end( v_cand[v_pairs[0]].values )
+							)
+								value_count[k]++;
+						}
+						bool fail(false);
+						for( int k=0; k<3; k++ )
+						{
+							std::cout << k << ": value_count=" <<value_count[k] << '\n';
+							if( value_count[k] != 2 )
+								fail = true;
+						}
+						if( !fail )
+						{
+							return_value.foundPattern();
+							return_value.cand_pos[0] = v_triples[0];
+							return_value.cand_pos[1] = v_cand[v_pairs[0]].pos_index;
+							return_value.cand_pos[2] = v_cand[v_pairs[2]].pos_index;
+							return return_value;
+						}
+
+					}
 				break;
-				case 0:                 // if not pattern A,B,C, maybe we can find pattern D ?
-				break;
+
 				default: assert(0);
 			}
 		}
+// here, we search for case D (no single triple)
+
 	}
+
+	return return_value;
 }
 
 //----------------------------------------------------------------------------

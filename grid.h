@@ -355,7 +355,7 @@ VectorRemoveDupes( std::vector<T>& vin )
 //----------------------------------------------------------------------------
 template<typename T>
 void
-PrintVector( const std::vector<T>& v, std::string s )
+PrintVector( const T& v, std::string s )
 {
 	std::cout <<  s << ": " << v.size() << " elems\n";
 	for( auto p: v )

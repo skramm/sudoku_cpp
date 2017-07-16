@@ -51,7 +51,7 @@ GetString( EN_ALGO algo )
 	}
 
 //----------------------------------------------------------------------------
-/// used in the "naked triples" algorithm
+/// Used in the "naked triples" algorithm. See SearchTriplesPattern() and SearchNakedTriples()
 struct pos_vcand
 {
 	index_t pos_index;
@@ -60,15 +60,17 @@ struct pos_vcand
 };
 
 //----------------------------------------------------------------------------
+/// return type of SearchTriplesPattern(). Holds
 struct NakedTriple
 {
-	bool found = true;
+	bool found = false;
 	std::array<value_t,3> cand_values;
 	std::array<index_t,3> cand_pos;
+//	NakedTriple(bool b) : found(b) {}
+	void foundPattern() { found = true; }
 };
 
-NakedTriple
-SearchTriplesPattern( const std::vector<pos_vcand>& v_cand );
+NakedTriple SearchTriplesPattern( const std::vector<pos_vcand>& v_cand );
 
 //----------------------------------------------------------------------------
 template<typename T>
