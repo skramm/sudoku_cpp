@@ -61,5 +61,5 @@ cleandoc:
 	-rm -R html/*
 
 test: test_catch
-	./test_catch
+	./test_catch -s
 

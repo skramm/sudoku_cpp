@@ -441,9 +441,9 @@ Grid::ProcessAlgorithm( EN_ALGO algo )
 	bool res = false;
 	switch( algo )
 	{
-		case ALG_REMOVE_CAND:    res = Algo_RemoveCandidates( *this ); break;
-		case ALG_SEARCH_PAIRS:   res = Algo_SearchPairs( *this );      break;
-		case ALG_SEARCH_TRIPLES: res = Algo_SearchTriples( *this );      break;
+		case ALG_REMOVE_CAND:    res = Algo_RemoveCandidates( *this );     break;
+		case ALG_SEARCH_PAIRS:   res = Algo_SearchNakedPairs( *this );     break;
+		case ALG_SEARCH_TRIPLES: res = Algo_SearchNakedTriples( *this );   break;
 		case ALG_SEARCH_SINGLE_CAND: res = Algo_SearchSingleCand( *this ); break;
 		case ALG_SEARCH_MISSING_SINGLE: res = Algo_SeachForSingleMissing( *this ); break;
 		case ALG_POINTING_PT:    res = Algo_PointingPairsTriples( *this ); break;

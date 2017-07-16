@@ -14,8 +14,8 @@ bool Algo_BoxReduction(          Grid& g );
 bool Algo_RemoveCandidates(      Grid& g );
 bool Algo_SeachForSingleMissing( Grid& g );
 bool Algo_SearchSingleCand(      Grid& g );
-bool Algo_SearchPairs(           Grid& g );
-bool Algo_SearchTriples(         Grid& g );
+bool Algo_SearchNakedPairs(      Grid& g );
+bool Algo_SearchNakedTriples(    Grid& g );
 bool Algo_XY_Wing(               Grid& g );
 
 
@@ -66,8 +66,23 @@ struct NakedTriple
 	bool found = false;
 	std::array<value_t,3> cand_values;
 	std::array<index_t,3> cand_pos;
-//	NakedTriple(bool b) : found(b) {}
 	void foundPattern() { found = true; }
+
+	friend std::ostream& operator << ( std::ostream& s, const NakedTriple& nt )
+	{
+		s << "NakedTriple: " << std::boolalpha << nt.found;
+		if( nt.found )
+		{
+			s << ", values=";
+			for( const auto& v: nt.cand_values )
+				s << (int)v << '-';
+			s << ", pos=";
+			for( const auto& v: nt.cand_pos )
+				s << (int)v << '-';
+		}
+		s << '\n';
+		return s;
+	}
 };
 
 NakedTriple SearchTriplesPattern( const std::vector<pos_vcand>& v_cand );
