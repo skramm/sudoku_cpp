@@ -25,6 +25,9 @@ endif
 program: sudoku
 	@echo "done target $@"
 
+runall: program
+	@for f in samples/*.sud; do echo "RUNNING $$f"; ./sudoku $$f; done
+
 # linking binary
 sudoku: $(OBJ_FILES)
 	$(CXX) -o sudoku obj/algorithms.o obj/grid.o obj/x_cycles.o obj/main.o  -s

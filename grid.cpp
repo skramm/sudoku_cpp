@@ -1,3 +1,28 @@
+/**************************************************************************
+
+    This file is part of sudoku_cpp.
+    homepage: https://github.com/skramm/sudoku_cpp
+
+    Author & Copyright 2017 Sebastien Kramm
+
+    Contact: firstname.lastname@univ-rouen.fr
+
+    Licence: LGPL v3
+
+    This library is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+	See included lgpl.txt and gpl.txt files.
+
+**************************************************************************/
+
 /**
 \file grid.cpp
 
@@ -449,7 +474,7 @@ Grid::ProcessAlgorithm( EN_ALGO algo )
 		case ALG_POINTING_PT:    res = Algo_PointingPairsTriples( *this ); break;
 		case ALG_BOX_RED:        res = Algo_BoxReduction( *this ); break;
 		case ALG_XY_WING:        res = Algo_XY_Wing( *this ); break;
-		case ALG_X_CYCLES:   break; //    res = X_Cycles( *this ); break;
+		case ALG_X_CYCLES:       res = X_Cycles( *this ); break;
 		default: assert(0);
 	}
 //	SearchSingles();

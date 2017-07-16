@@ -1,10 +1,35 @@
+/**************************************************************************
+
+    This file is part of sudoku_cpp.
+    homepage: https://github.com/skramm/sudoku_cpp
+
+    Author & Copyright 2017 Sebastien Kramm
+
+    Contact: firstname.lastname@univ-rouen.fr
+
+    Licence: LGPL v3
+
+    This library is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+	See included lgpl.txt and gpl.txt files.
+
+**************************************************************************/
+
 /**
 \file algorithms.cpp
 */
 
 #include "algorithms.h"
 #include "header.h"
- #include <numeric> // for std::accumulate()
+#include <numeric> // for std::accumulate()
 
 //----------------------------------------------------------------------------
 /// Box reduction. See http://www.sudokuwiki.org/Intersection_Removal#LBR
@@ -28,7 +53,7 @@ BoxReduction( EN_ORIENTATION orient, Grid& g )
 			}
 			if( v_cand.size()>0 && v_cand.size()<4 ) // if 2 or 3 candidates
 			{
-				std::cout << "CAND=" << (int)val << " nb=" << v_cand.size() << '\n';
+//				std::cout << "CAND=" << (int)val << " nb=" << v_cand.size() << '\n';
 				bool sameBlock( true );
 				auto block_index = GetBlockIndex( v_cand[0] );
 				for( auto cand_pos: v_cand )
@@ -38,7 +63,7 @@ BoxReduction( EN_ORIENTATION orient, Grid& g )
 				}
 				if( sameBlock ) // if all the candidates are in the same block, we can remove them from the other lines/col of this block
 				{
-					std::cout << "all in block " << (int)block_index << '\n';
+//					std::cout << "all in block " << (int)block_index << '\n';
 					View_1Dim_nc block = g.GetView( OR_BLK, block_index );
 					bool doneRemoval(false);
 					for( index_t j=0; j<9; j++ )   //
@@ -372,7 +397,7 @@ Algo_SearchNakedPairs( Grid& g )
 void
 CheckForTriplePattern_D( const std::vector<pos_vcand>& v_cand, NakedTriple& ret_val )
 {
-	std::cout << " case D !\n";
+//	std::cout << " case D !\n";
 
 	std::vector<index_t> v_pairs;
 	for( index_t i=0; i<v_cand.size(); i++ )
@@ -391,33 +416,33 @@ CheckForTriplePattern_D( const std::vector<pos_vcand>& v_cand, NakedTriple& ret_
 		bool done(false);
 		auto v1a = v_cand[i].values[0];
 		auto v1b = v_cand[i].values[1];
-		std::cout << "i=" << i << " pair=" << (int)v_cand[i].values[0] << '-' << (int)v_cand[i].values[1] << '\n';
-		std::cout << " v1=" << (int)v1a << '\n';
+//		std::cout << "i=" << i << " pair=" << (int)v_cand[i].values[0] << '-' << (int)v_cand[i].values[1] << '\n';
+//		std::cout << " v1=" << (int)v1a << '\n';
 		for( index_t j=i+1; j<v_pairs.size() && !done; j++ )
 		{
-			std::cout << "  j=" << j << '\n';
+//			std::cout << "  j=" << j << '\n';
 			if( v1a == v_cand[j].values[0] || v1a == v_cand[j].values[1] )
 			{
 				auto v2 = v_cand[j].values[1];     // if a match is found, we take the complementary one as 'v2'
 				if( v1a == v_cand[j].values[1] )
 					v2 = v_cand[j].values[0];
 
-				std::cout << "   -chain with j=" << j << ", pair=" << (int)v_cand[j].values[0] << '-' << (int)v_cand[j].values[1] << '\n';
-				std::cout << "   -v2=" << (int)v2 << '\n';
+//				std::cout << "   -chain with j=" << j << ", pair=" << (int)v_cand[j].values[0] << '-' << (int)v_cand[j].values[1] << '\n';
+//				std::cout << "   -v2=" << (int)v2 << '\n';
 				for( index_t k=0; k<v_pairs.size() && !done; k++ )
 					if( k != i && k != j )
 					{
-						std::cout << "      k=" << k << '\n';
+//						std::cout << "      k=" << k << '\n';
 						if( v2 == v_cand[k].values[0] || v2 == v_cand[k].values[1] )
 						{
 							auto v3 = v_cand[k].values[1];     // if a match is found, we take the complementary one as 'v2'
 							if( v2 == v_cand[k].values[1] )
 								v3 = v_cand[k].values[0];
-							std::cout << "     -chain with k=" << k << ", pair=" << (int)v_cand[k].values[0] << '-' << (int)v_cand[k].values[1] << '\n';
-							std::cout << "     -v3=" << (int)v3 << '\n';
+//							std::cout << "     -chain with k=" << k << ", pair=" << (int)v_cand[k].values[0] << '-' << (int)v_cand[k].values[1] << '\n';
+//							std::cout << "     -v3=" << (int)v3 << '\n';
 							if( v3 == v1b ) // loop found !
 							{
-								std::cout << "     FOUND D PATTERN\n";
+//								std::cout << "     FOUND D PATTERN\n";
 								ret_val.foundPattern();
 								ret_val.cand_values[0] = v1a;
 								ret_val.cand_values[1] = v2;
@@ -438,7 +463,7 @@ CheckForTriplePattern_D( const std::vector<pos_vcand>& v_cand, NakedTriple& ret_
 	}
 }
 //----------------------------------------------------------------------------
-/// helper function for SearchTriplesPattern(), search for "pattern C"
+/// helper function for SearchTriplesPattern(), search for "type C" pattern
 void
 CheckForTriplePattern_C(
 	const std::vector<pos_vcand>& v_cand,
@@ -451,7 +476,7 @@ CheckForTriplePattern_C(
 	assert( v_triples.size() > 0 );
 	assert( ret_val.cand_values.size() == 3 );
 
-	std::cout << " CheckForTriplePattern_C()\n";
+//	std::cout << " CheckForTriplePattern_C()\n";
 
 	std::vector<index_t> value_count(3,0);
 	for( int k=0; k<3; k++ )                              // for each value of the triplet,
@@ -470,7 +495,7 @@ CheckForTriplePattern_C(
 		)
 			value_count[k]++;
 	}
-	PrintVector( value_count, "value_count");
+//	PrintVector( value_count, "value_count");
 	if(                                                                       // this is to test is
 		std::accumulate( value_count.begin(), value_count.end(), 0) == 4      // we have 1,1,2 or 1,2,1 or 2,1,1
 		&&
@@ -485,7 +510,7 @@ CheckForTriplePattern_C(
 	}
 }
 //----------------------------------------------------------------------------
-/// WIP !!! Naked triples, see http://www.sudokuwiki.org/Naked_Candidates#NP
+/// Naked triples, see http://www.sudokuwiki.org/Naked_Candidates#NP
 /**
 \verbatim
 The combinations of candidates for a Naked Triple will be one of the following:
@@ -532,7 +557,7 @@ SearchTriplesPattern( const std::vector<pos_vcand>& v_cand )
 			{
 				case 3:                    // case A, for sure
 				{
-					std::cout << " case A !\n";
+//					std::cout << " case A !\n";
 					return_value.foundPattern();
 					for( int k=0; k<3; k++ )
 						return_value.cand_pos[k] = v_triples[k];
@@ -543,7 +568,7 @@ SearchTriplesPattern( const std::vector<pos_vcand>& v_cand )
 				case 2:                 // maybe case B
 					if( !v_pairs.empty() )
 					{
-						std::cout << " case B !\n";
+//						std::cout << " case B !\n";
 						assert( v_pairs.size() == 1 );  // should be, I think. If not, triggering this assert will be a good way to find out ;-)
 						return_value.foundPattern();
 						for( int k=0; k<2; k++ )
@@ -557,7 +582,7 @@ SearchTriplesPattern( const std::vector<pos_vcand>& v_cand )
 				case 1:                 // maybe case C
 					if( v_pairs.size() == 2 )
 					{
-						std::cout << " case C !\n";
+//						std::cout << " case C !\n";
 						CheckForTriplePattern_C( v_cand, v_pairs, v_triples, return_value );
 						if( return_value.found )
 							return return_value;
@@ -596,7 +621,7 @@ SearchNakedTriples( Grid& g, EN_ORIENTATION orient )
 		if( v_cand.size() > 2 )  // if more than two cells with 2 or 3 candidates found, then search for "naked triple patterns"
 		{
 			auto tp = SearchTriplesPattern(v_cand);
-			std::cout <<" returned value: " << tp;
+//			std::cout <<" returned value: " << tp;
 			if( tp.found )                                    // if a naked triple was found, then
 				for( index_t i=0; i<9; i++ )                  // for all the other positions of the view, remove the candidates found
 				{

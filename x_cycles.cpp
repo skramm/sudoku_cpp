@@ -1,6 +1,31 @@
+/**************************************************************************
+
+    This file is part of sudoku_cpp.
+    homepage: https://github.com/skramm/sudoku_cpp
+
+    Author & Copyright 2017 Sebastien Kramm
+
+    Contact: firstname.lastname@univ-rouen.fr
+
+    Licence: LGPL v3
+
+    This library is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+	See included lgpl.txt and gpl.txt files.
+
+**************************************************************************/
+
 /**
 \file x_cycles.cpp
-\brief X cycles
+\brief X cycles algorithm implementation
 
 See:
 - http://www.sudokuwiki.org/X_Cycles
@@ -10,7 +35,9 @@ See:
 
 #include "grid.h"
 #include "header.h"
-#include "circvec.h"
+#include "x_cycles.h"
+
+//#include "circvec.h"
 
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/graphviz.hpp>
@@ -19,16 +46,6 @@ See:
 
 #define GENERATE_DOT_FILES
 
-//----------------------------------------------------------------------------
-/// Related to Cycle
-enum En_CycleType
-{
-	CT_undefined,
-	CT_Continuous,     ///< continuous cycle, pair nb of nodes, alternate Weak and Strong links
-	CT_Discont_2SL,    ///< Discontinuous cycle, odd nb of nodes, 2 chained Strong links
-	CT_Discont_2WL,     ///< Discontinuous cycle, odd nb of nodes, 2 chained Weak links
-	CT_Invalid
-};
 //----------------------------------------------------------------------------
 const char*
 GetString( En_CycleType ct )
@@ -43,40 +60,6 @@ GetString( En_CycleType ct )
 		default: assert(0);
 	}
 }
-//----------------------------------------------------------------------------
-/// To avoid a meaningless boolean
-enum En_LinkType
-{
-	LT_Strong, LT_Weak
-};
-//----------------------------------------------------------------------------
-/// A link between two cells, also holds the second cell position
-struct Link
-{
-	pos_t p1, p2;
-	En_LinkType type;
-	EN_ORIENTATION orient=OR_ROW;
-
-	friend bool operator == ( const Link& lA, const Link& lB )
-	{
-		if( lA.p1 == lB.p1 && lA.p2 == lB.p2 )
-			return true;
-		if( lA.p1 == lB.p2 && lA.p2 == lB.p1 )
-			return true;
-		return false;
-	}
-	Link( pos_t pA, pos_t pB, En_LinkType lt, EN_ORIENTATION o ): p1(pA), p2(pB), type(lt), orient(o)
-	{}
-#ifdef TESTMODE
-	Link( En_LinkType lt ): type(lt)
-	{}
-#endif
-	friend std::ostream& operator << ( std::ostream& s, const Link& l )
-	{
-		s << '{' << (l.type==LT_Strong ? 'S' : 'W') << ',' << l.p1 << "-" << l.p2 << ',' << GetString( l.orient ) <<  '}';
-		return s;
-	}
-};
 //----------------------------------------------------------------------------
 Cell&
 GetCommonCell( const Link& l1, const Link& l2, Grid& g )
@@ -312,30 +295,6 @@ FindVertex( pos_t pos, const graph_t& g )
 		return -1;
 	return *it_v;
 }
-
-//----------------------------------------------------------------------------
-/// A cycle is associated with a value and a set of links. We store this as a vector of positions associated with a link type
-struct Cycle: public circvec<Link>
-{
-//	value_t cycle_value;
-//	En_CycleType type = CT_undefined;
-//	private:
-//		std::vector<Link> v_links;
-//	public:
-//		size_t size() const           { return v_links.size();  }
-//		void AddLink( const Link& l ) {	v_links.push_back( l );	}
-//		Link&       GetLink( size_t idx )        { return v_links[ idx%v_links.size() ]; }
-//		const Link& GetLink( size_t idx ) const  { return v_links[ idx%v_links.size() ]; }
-
-	friend std::ostream& operator << ( std::ostream& s, const Cycle& cy )
-	{
-		s << "Cycle: size=" << cy.size() <<'\n';
-		for( size_t i=0; i<cy.size(); i++ )
-			s << cy.GetElem(i) << " - ";
-		s << '\n';
-		return s;
-	}
-};
 //----------------------------------------------------------------------------
 void
 PrintCycle( const std::vector<vertex_t>& cy, const graph_t& graph )
