@@ -39,6 +39,7 @@
 		<Unit filename="main.cpp" />
 		<Unit filename="test_catch.cpp" />
 		<Unit filename="x_cycles.cpp" />
+		<Unit filename="x_cycles.h" />
 		<Extensions>
 			<envvars />
 			<code_completion />

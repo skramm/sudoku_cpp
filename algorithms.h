@@ -57,7 +57,9 @@ GetString( EN_ALGO algo )
 		case ALG_POINTING_PT: return "PointingPairs/Triples"; break;
 		case ALG_BOX_RED: return "BoxReduction"; break;
 		case ALG_XY_WING: return "XY_Wing"; break;
+#ifndef BUILD_WITHOUT_UDGCD
 		case ALG_X_CYCLES: return "X_cycles"; break;
+#endif
 		default: assert(0);
 	}
 }
@@ -94,16 +96,14 @@ struct NakedTriple
 
 	friend std::ostream& operator << ( std::ostream& s, const NakedTriple& nt )
 	{
-		s << "NakedTriple: " << std::boolalpha << nt.found;
+		s << "NakedTriple: found=" << std::boolalpha << nt.found;
 		if( nt.found )
-		{
-			s << ", values=";
-			for( const auto& v: nt.cand_values )
-				s << (int)v << '-';
-			s << ", pos=";
+//		{
+			s << ", values=" << (int)nt.cand_values[0] << '-' << (int)nt.cand_values[1] << '-' << (int)nt.cand_values[2];
+/*			s << ", pos=";
 			for( const auto& v: nt.cand_pos )
 				s << (int)v << '-';
-		}
+		}*/
 		s << '\n';
 		return s;
 	}

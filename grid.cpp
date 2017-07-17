@@ -474,7 +474,9 @@ Grid::ProcessAlgorithm( EN_ALGO algo )
 		case ALG_POINTING_PT:    res = Algo_PointingPairsTriples( *this ); break;
 		case ALG_BOX_RED:        res = Algo_BoxReduction( *this ); break;
 		case ALG_XY_WING:        res = Algo_XY_Wing( *this ); break;
+#ifndef BUILD_WITHOUT_UDGCD
 		case ALG_X_CYCLES:       res = X_Cycles( *this ); break;
+#endif
 		default: assert(0);
 	}
 //	SearchSingles();

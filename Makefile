@@ -22,6 +22,16 @@ ifeq ($(TEST),Y)
 	CFLAGS += -DTESTMODE
 endif
 
+#----------------------------------------------
+# Build without udgcd
+ifeq "$(UDGCD)" ""
+	UDGCD=YES
+endif
+
+ifeq ($(UDGCD),NO)
+	CFLAGS += -DBUILD_WITHOUT_UDGCD
+endif
+
 program: sudoku
 	@echo "done target $@"
 

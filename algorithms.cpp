@@ -557,7 +557,7 @@ SearchTriplesPattern( const std::vector<pos_vcand>& v_cand )
 			{
 				case 3:                    // case A, for sure
 				{
-//					std::cout << " case A !\n";
+					COUT( "-Naked triple pattern type A:" << return_value );
 					return_value.foundPattern();
 					for( int k=0; k<3; k++ )
 						return_value.cand_pos[k] = v_triples[k];
@@ -575,6 +575,7 @@ SearchTriplesPattern( const std::vector<pos_vcand>& v_cand )
 							return_value.cand_pos[k] = v_triples[k];
 						return_value.cand_pos[2] = v_cand[v_pairs[0]].pos_index;
 						std::sort( std::begin(return_value.cand_pos), std::end(return_value.cand_pos) );
+						COUT( "-Naked triple pattern type B:" << return_value );
 						return return_value;
 					}
 				break;
@@ -585,7 +586,10 @@ SearchTriplesPattern( const std::vector<pos_vcand>& v_cand )
 //						std::cout << " case C !\n";
 						CheckForTriplePattern_C( v_cand, v_pairs, v_triples, return_value );
 						if( return_value.found )
+						{
+							COUT( "-Naked triple pattern type C:" << return_value );
 							return return_value;
+						}
 					}
 				break;
 
@@ -593,6 +597,9 @@ SearchTriplesPattern( const std::vector<pos_vcand>& v_cand )
 			}
 		}
 		CheckForTriplePattern_D( v_cand, return_value );
+		if( return_value.found )
+			COUT( "-Naked triple pattern type D:" << return_value );
+
 	}
 
 	return return_value;

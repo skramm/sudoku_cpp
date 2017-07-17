@@ -37,14 +37,17 @@ See:
 #include "header.h"
 #include "x_cycles.h"
 
-//#include "circvec.h"
-
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/graphviz.hpp>
 
+//#define GENERATE_DOT_FILES
+
+#ifdef BUILD_WITHOUT_UDGCD
+#warning Building solver without X cycles algorithm!
+#else
+
 #include "udgcd.hpp"
 
-#define GENERATE_DOT_FILES
 
 //----------------------------------------------------------------------------
 const char*
@@ -789,3 +792,4 @@ X_Cycles( Grid& g )
 	return false;
 }
 //----------------------------------------------------------------------------
+#endif

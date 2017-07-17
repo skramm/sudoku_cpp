@@ -14,6 +14,7 @@ Licence: GPLv3
 	#define DEBUG if(0) std::cout
 #endif
 
+#define COUT(a) { if( g_data.Verbose ) std::cout << a; }
 
 #define PRINT_MAIN_IDX( o ) \
 	{ \

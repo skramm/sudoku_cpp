@@ -8,7 +8,7 @@ A sudoku C++ solver
  * Input: a file name, holding the puzzle as a 9x9 character grid (see in samples folder for examples)
  * Ouput: the solved grid. Or more if verbose flag (-v) is given.
 * Uses basic strategies, and one more advanced one (XY-Wings).
-* Requirements: a C++11 compiler. For testing purposes, also uses [Catch](https://github.com/philsquared/Catch/), useful only if you want to contribute.
+* Requirements: a C++11 compiler (see below for dependencies).
 * Licence: GPL v3
 * Author: Sebastien Kramm (firstname.lastname@univ-rouen.fr)
 
@@ -18,6 +18,19 @@ In case of any bug, thanks for mailing (or open an issue).
 
 1. Build with `$ make`
 2. Run with (for example) `$ ./sudoku samples/grid2.sud`
+
+### dependencies
+
+The "X cycles" algorithm relies on another code of mine: **udgcd** (UnDirected Graph Cycle Detection),
+available [here on Github](https://github.com/skramm/udgcd). This library itself depends on BGL
+(Boost Graph Library).
+If you don't have, or want to build without it, just build with the following command-line:
+```
+$ make UDGCD=NO
+```
+
+For testing purposes, also uses [Catch](https://github.com/philsquared/Catch/), useful only if you want to contribute.
+
 
 The program comes with several samples. If you want to run them all, type:
 ```
