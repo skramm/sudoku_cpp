@@ -216,7 +216,7 @@ Algo_RemoveCandidates( Grid& g )
 //----------------------------------------------------------------------------
 /// Check in a 1d view if there is only one value missing. If so, then we can assign the missing value to that cell
 bool
-SeachForSingleMissing( Grid& g, EN_ORIENTATION orient )
+SearchSingleMissing( Grid& g, EN_ORIENTATION orient )
 {
 	PRINT_ALGO_START;
 
@@ -259,11 +259,11 @@ SeachForSingleMissing( Grid& g, EN_ORIENTATION orient )
 //----------------------------------------------------------------------------
 /// check in a view if there is only one value missing. If so, then we can assign a value to it
 bool
-Algo_SeachForSingleMissing( Grid& g )
+Algo_SearchSingleMissing( Grid& g )
 {
-	if( !SeachForSingleMissing( g, OR_ROW ) )
-		if( !SeachForSingleMissing( g, OR_COL ) )
-			if( !SeachForSingleMissing( g, OR_BLK ) )
+	if( !SearchSingleMissing( g, OR_ROW ) )
+		if( !SearchSingleMissing( g, OR_COL ) )
+			if( !SearchSingleMissing( g, OR_BLK ) )
 				return false;
 	return true;
 }

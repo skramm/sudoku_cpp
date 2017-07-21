@@ -321,7 +321,7 @@ PrintCycle( const std::vector<vertex_t>& cy, const graph_t& graph )
 void
 PrintCycles( std::vector<std::vector<vertex_t>> cycles, std::string msg, const graph_t& graph )
 {
-	std::cout << "Cycles: " << msg << '\n';
+	std::cout << "Cycles: " << msg << " nb=" << cycles.size() << '\n';
 	for( const auto& cy: cycles )
 		PrintCycle( cy, graph );
 }
@@ -403,7 +403,14 @@ Convert2Cycle( const std::vector<vertex_t>& in_cycle, const graph_t& graph )
 		auto idx2 = ( i+1!=in_cycle.size() ? in_cycle[i+1] : in_cycle[0] );
 		auto edge = boost::edge( idx1, idx2, graph ).first;
 
-		out_cycle.AddElem( Link( graph[idx1].pos, graph[idx2].pos, graph[edge].link_type, graph[edge].link_orient ) );
+		out_cycle.AddElem(
+			Link(
+				graph[idx1].pos,
+				graph[idx2].pos,
+				graph[edge].link_type,
+				graph[edge].link_orient
+			)
+		);
 	}
 	return out_cycle;
 }
@@ -500,14 +507,16 @@ FindCycles(
 	);
 #endif
 
+	std::cout << "FindCycles(): start udgcd::FindCycles()" << std::endl;
 	auto cycles = udgcd::FindCycles<graph_t,vertex_t>( graph );
 //	std::cout << "VAL=" << (int)val << " nb cycles=" << cycles.size() << '\n';
 //	PrintCycles( cycles, "v1", graph );
+	std::cout << " => found " << cycles.size() << " cycles\n";
 
 	auto cycles2 = FilterCycles( cycles, graph );
-	std::cout << "VAL=" << (int)val << " nb cycles2=" << cycles2.size() << '\n';
+//	std::cout << "FindCycles(): after filtering: VAL=" << (int)val << " nb cycles2=" << cycles2.size() << '\n';
 
-	PrintCycles( cycles2, "v2", graph );
+	PrintCycles( cycles2, "AFTER FILTERING", graph );
 //	std::cout << cycles2;
 
 	return Convert2Cycles( cycles2, graph );
@@ -693,7 +702,7 @@ ExploreCycle( Cycle& cy, Grid& g, value_t val )
 {
 	bool removalDone( false );
 	auto p = GetCycleType( cy );
-	std::cout << "Cycle type=" << GetString( p.first ) << " middle=" << (int)p.second << '\n';
+	std::cout << "ExploreCycle(): Cycle type=" << GetString( p.first ) << " middle=" << (int)p.second << '\n';
 
 	auto middle_idx = p.second;
 	assert( p.first != CT_undefined );
@@ -751,7 +760,7 @@ ExploreCycle( Cycle& cy, Grid& g, value_t val )
 		break;
 
 		case CT_Invalid: // don't do anything
-//			std::cout << "ERROR, invalid cycle !\n"; assert(0);
+			std::cout << "ERROR, invalid cycle !\n"; assert(0);
 		break;
 
 		default: assert(0);

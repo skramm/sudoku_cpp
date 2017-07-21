@@ -470,7 +470,7 @@ Grid::ProcessAlgorithm( EN_ALGO algo )
 		case ALG_SEARCH_PAIRS:   res = Algo_SearchNakedPairs( *this );     break;
 		case ALG_SEARCH_TRIPLES: res = Algo_SearchNakedTriples( *this );   break;
 		case ALG_SEARCH_SINGLE_CAND: res = Algo_SearchSingleCand( *this ); break;
-		case ALG_SEARCH_MISSING_SINGLE: res = Algo_SeachForSingleMissing( *this ); break;
+		case ALG_SEARCH_MISSING_SINGLE: res = Algo_SearchSingleMissing( *this ); break;
 		case ALG_POINTING_PT:    res = Algo_PointingPairsTriples( *this ); break;
 		case ALG_BOX_RED:        res = Algo_BoxReduction( *this ); break;
 		case ALG_XY_WING:        res = Algo_XY_Wing( *this ); break;
@@ -507,7 +507,7 @@ Grid::Solve()
 			nu_after = NbUnknows();
 //			std::cout << "  -loop 2: algo " << algo << "-" << GetString(algo) << ": res=" << res <<  ", nb unknowns left=" << nu_after << "\n";
 
-			if( g_data.Verbose )
+			if( g_data.Verbose && res )
 				PrintAll( std::cout, "iter " + std::to_string(iter) + ": after algo " + GetString(algo)  );
 
 			if( !res )                                                       // if no changes happened, then switch to next algorithm

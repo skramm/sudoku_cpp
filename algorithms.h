@@ -36,7 +36,7 @@
 bool Algo_PointingPairsTriples(  Grid& g );
 bool Algo_BoxReduction(          Grid& g );
 bool Algo_RemoveCandidates(      Grid& g );
-bool Algo_SeachForSingleMissing( Grid& g );
+bool Algo_SearchSingleMissing(   Grid& g );
 bool Algo_SearchSingleCand(      Grid& g );
 bool Algo_SearchNakedPairs(      Grid& g );
 bool Algo_SearchNakedTriples(    Grid& g );
@@ -50,8 +50,8 @@ GetString( EN_ALGO algo )
 	switch( algo )
 	{
 		case ALG_REMOVE_CAND: return "RemoveCand"; break;
-		case ALG_SEARCH_PAIRS: return "SearchPairs"; break;
-		case ALG_SEARCH_TRIPLES: return "SearchTriples"; break;
+		case ALG_SEARCH_PAIRS: return "SearchNakedPairs"; break;
+		case ALG_SEARCH_TRIPLES: return "SearchNakedTriples"; break;
 		case ALG_SEARCH_SINGLE_CAND: return "SearchSingleCand"; break;
 		case ALG_SEARCH_MISSING_SINGLE: return "MissingSingle"; break;
 		case ALG_POINTING_PT: return "PointingPairs/Triples"; break;

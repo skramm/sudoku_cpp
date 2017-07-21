@@ -1,7 +1,5 @@
 # sudoku_cpp
 
-Just a small weekend side project...
-
 A sudoku C++ solver
 
 * I/O is text only
@@ -14,7 +12,7 @@ A sudoku C++ solver
 
 In case of any bug, thanks for mailing (or open an issue).
 
-## Instructions
+## 1 - Instructions
 
 1. Build with `$ make`
 2. Run with (for example) `$ ./sudoku samples/grid2.sud`
@@ -28,6 +26,7 @@ If you don't have, or want to build without it, just build with the following co
 ```
 $ make UDGCD=NO
 ```
+The "X cycle" algorithm will be disabled in that case.
 
 For testing purposes, also uses [Catch](https://github.com/philsquared/Catch/), useful only if you want to contribute.
 
@@ -37,7 +36,7 @@ The program comes with several samples. If you want to run them all, type:
 $ make runall
 ```
 
-## Usage and options **
+## 2 - Usage and options
 
 `$ sudoku [options] file`
 
@@ -53,7 +52,7 @@ Return values:
 * 2 : failed to read input file
 * 3 : invalid puzzle
 
-## Motivation
+## 3 - Motivation
 
 Started ous as just a small weekend side project...
 
