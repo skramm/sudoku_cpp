@@ -30,6 +30,17 @@ class circvec
 				return _data[ (idx) % size() ];
 			return _data[idx];
 		}
+#if 0
+		std::iterator<T> begin()
+		{
+			return std::begin( _data );
+		}
+		auto end()
+		{
+			return std::end( _data );
+		}
+#endif
+
 /*		void RotateDown( size_t n )
 		{
 			assert( n<size() );

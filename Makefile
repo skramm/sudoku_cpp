@@ -69,6 +69,7 @@ show:
 
 clean:
 	-rm obj/*.o
+	-rm out/*
 
 cleandoc:
 	-rm -R html/*

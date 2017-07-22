@@ -33,21 +33,26 @@ See:
 
 */
 
-#include "grid.h"
-#include "header.h"
-#include "x_cycles.h"
 
-#include <boost/graph/adjacency_list.hpp>
-#include <boost/graph/graphviz.hpp>
-
-//#define GENERATE_DOT_FILES
+#define GENERATE_DOT_FILES
 
 #ifdef BUILD_WITHOUT_UDGCD
 #warning Building solver without X cycles algorithm!
 #else
 
+#include <fstream>
+
 #include "udgcd.hpp"
 
+#include "grid.h"
+#include "header.h"
+#include "x_cycles.h"
+
+//#include <boost/graph/adjacency_list.hpp>
+
+#ifdef GENERATE_DOT_FILES
+	#include <boost/graph/graphviz.hpp>
+#endif
 
 //----------------------------------------------------------------------------
 const char*
@@ -119,6 +124,7 @@ FindWeakLinks( const Grid& g, value_t val, pos_t current_pos, EN_ORIENTATION ori
 //	PrintVector( v_wl, "WeakLink positions" );
 }
 //----------------------------------------------------------------------------
+#if 0
 std::vector<Link>
 FindAllWeakLinks_or( const Grid& g, value_t val, pos_t current_pos, EN_ORIENTATION current_or )
 {
@@ -134,6 +140,7 @@ FindAllWeakLinks_or( const Grid& g, value_t val, pos_t current_pos, EN_ORIENTATI
 	PrintVector( v_wl2, "FindAllWeakLinks" );
 	return v_wl2;
 }
+#endif
 //----------------------------------------------------------------------------
 std::vector<Link>
 FindAllWeakLinks( const Grid& g, value_t val, pos_t current_pos )
@@ -300,7 +307,7 @@ FindVertex( pos_t pos, const graph_t& g )
 }
 //----------------------------------------------------------------------------
 void
-PrintCycle( const std::vector<vertex_t>& cy, const graph_t& graph )
+PrintGraphCycle( const std::vector<vertex_t>& cy, const graph_t& graph )
 {
 	for( int i=0; i<cy.size(); i++ )
 	{
@@ -319,11 +326,11 @@ PrintCycle( const std::vector<vertex_t>& cy, const graph_t& graph )
 }
 //----------------------------------------------------------------------------
 void
-PrintCycles( std::vector<std::vector<vertex_t>> cycles, std::string msg, const graph_t& graph )
+PrintGraphCycles( std::vector<std::vector<vertex_t>> cycles, std::string msg, const graph_t& graph )
 {
 	std::cout << "Cycles: " << msg << " nb=" << cycles.size() << '\n';
 	for( const auto& cy: cycles )
-		PrintCycle( cy, graph );
+		PrintGraphCycle( cy, graph );
 }
 //----------------------------------------------------------------------------
 /// returns true if the cycle \v_in has no more than 2 consecutive weak links
@@ -457,7 +464,8 @@ FindCycles(
 	}
 
 #ifdef GENERATE_DOT_FILES
-	std::ofstream file( "out/ls_" + std::to_string(val) + ".dot" );
+	static int c;
+	std::ofstream file( "out/ls_" + std::to_string(val) + '_' + std::to_string(c) + ".dot" );
 	assert( file.is_open() );
 	boost::write_graphviz(
 		file,
@@ -465,6 +473,7 @@ FindCycles(
 		make_node_writer( boost::get( &GraphNode::pos, graph ) ),
 		make_edge_writer( boost::get( &GraphEdge::link_type, graph ), boost::get( &GraphEdge::link_orient, graph ) )
 	);
+	c++;
 #endif
 
 // 2 - for each of the vertices, search if there are some weak links and add them
@@ -497,7 +506,8 @@ FindCycles(
 		}
 	}
 #ifdef GENERATE_DOT_FILES
-	std::ofstream file2( "out/la_" + std::to_string(val) + ".dot" );
+	static int c2;
+	std::ofstream file2( "out/la_" + std::to_string(val) + '_' + std::to_string(c2) + ".dot" );
 	assert( file2.is_open() );
 	boost::write_graphviz(
 		file2,
@@ -505,6 +515,7 @@ FindCycles(
 		make_node_writer( boost::get( &GraphNode::pos, graph ) ),
 		make_edge_writer( boost::get( &GraphEdge::link_type, graph ), boost::get( &GraphEdge::link_orient, graph ) )
 	);
+	c2++;
 #endif
 
 	std::cout << "FindCycles(): start udgcd::FindCycles()" << std::endl;
@@ -516,7 +527,7 @@ FindCycles(
 	auto cycles2 = FilterCycles( cycles, graph );
 //	std::cout << "FindCycles(): after filtering: VAL=" << (int)val << " nb cycles2=" << cycles2.size() << '\n';
 
-	PrintCycles( cycles2, "AFTER FILTERING", graph );
+	PrintGraphCycles( cycles2, "AFTER FILTERING", graph );
 //	std::cout << cycles2;
 
 	return Convert2Cycles( cycles2, graph );
@@ -704,6 +715,14 @@ ExploreCycle( Cycle& cy, Grid& g, value_t val )
 	auto p = GetCycleType( cy );
 	std::cout << "ExploreCycle(): Cycle type=" << GetString( p.first ) << " middle=" << (int)p.second << '\n';
 
+////////// ---  TEMP ---
+	if( p.first == CT_Invalid )
+	{
+//		PrintVector( cy, "INVALID CYCLE" );
+	}
+////////// --- /TEMP ---
+
+
 	auto middle_idx = p.second;
 	assert( p.first != CT_undefined );
 	switch( p.first )
@@ -760,7 +779,7 @@ ExploreCycle( Cycle& cy, Grid& g, value_t val )
 		break;
 
 		case CT_Invalid: // don't do anything
-			std::cout << "ERROR, invalid cycle !\n"; assert(0);
+//			std::cout << "ERROR, invalid cycle !\n"; assert(0);
 		break;
 
 		default: assert(0);
