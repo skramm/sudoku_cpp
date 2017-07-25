@@ -518,17 +518,19 @@ FindCycles(
 	c2++;
 #endif
 
-	std::cout << "FindCycles(): start udgcd::FindCycles()" << std::endl;
+	if( g_data.Verbose )
+		std::cout << "FindCycles(): start udgcd::FindCycles()" << std::endl;
 	auto cycles = udgcd::FindCycles<graph_t,vertex_t>( graph );
 //	std::cout << "VAL=" << (int)val << " nb cycles=" << cycles.size() << '\n';
 //	PrintCycles( cycles, "v1", graph );
-	std::cout << " => found " << cycles.size() << " cycles\n";
+	if( g_data.Verbose )
+		std::cout << " => found " << cycles.size() << " cycles\n";
 
 	auto cycles2 = FilterCycles( cycles, graph );
 //	std::cout << "FindCycles(): after filtering: VAL=" << (int)val << " nb cycles2=" << cycles2.size() << '\n';
 
-	PrintGraphCycles( cycles2, "AFTER FILTERING", graph );
-//	std::cout << cycles2;
+	if( g_data.Verbose )
+		PrintGraphCycles( cycles2, "AFTER FILTERING", graph );
 
 	return Convert2Cycles( cycles2, graph );
 }
@@ -713,51 +715,45 @@ ExploreCycle( Cycle& cy, Grid& g, value_t val )
 {
 	bool removalDone( false );
 	auto p = GetCycleType( cy );
-	std::cout << "ExploreCycle(): Cycle type=" << GetString( p.first ) << " middle=" << (int)p.second << '\n';
+	if( g_data.Verbose )
+		std::cout << "ExploreCycle(): Cycle type=" << GetString( p.first ) << " middle=" << (int)p.second << '\n';
 
-////////// ---  TEMP ---
-	if( p.first == CT_Invalid )
-	{
-//		PrintVector( cy, "INVALID CYCLE" );
-	}
-////////// --- /TEMP ---
-
-
-	auto middle_idx = p.second;
+//	auto middle_idx = p.second;
 	assert( p.first != CT_undefined );
 	switch( p.first )
 	{
 		case CT_Continuous:                          // then, do the "Nice Loops Rule 1"
-			std::cout << "Cycle continuous: " << cy << " Nice Loops Rule 1\n";
+			if( g_data.Verbose )
+				std::cout << "Cycle continuous: " << cy << " Nice Loops Rule 1\n";
 			for( size_t i=0; i<cy.size(); i++ )
 			{
 				const auto& link = cy.GetElem( i );
-//				if( link.type == LT_Weak ) // if link is weak, then:
-				{
-					View_1Dim_nc view;       // step 1 - get the corresponding view (row/col/block)
-					switch( link.orient )
-					{
-						case OR_ROW: view = g.GetView( link.orient, link.p1.first ); break;
-						case OR_COL: view = g.GetView( link.orient, link.p1.second ); break;
-						case OR_BLK: view = g.GetView( link.orient, GetBlockIndex( link.p1 ) ); break;
-						default: assert(0);
-					}
+				if( g_data.Verbose )
 					std::cout << "link: " << link << '\n';
 
-					for( index_t i=0; i<9; i++ ) // step 2 - parse the view and remove from the cells the value
-					{                            //          (except for the two cells part of the link)
-						auto& cell = view.GetCell( i );
-						if( cell.GetPos() != link.p1 && cell.GetPos() != link.p2 )
-							if( cell.RemoveCandidate( val ) )
-								removalDone = true;
-					}
+				View_1Dim_nc view;       // step 1 - get the corresponding view (row/col/block)
+				switch( link.orient )
+				{
+					case OR_ROW: view = g.GetView( link.orient, link.p1.first ); break;
+					case OR_COL: view = g.GetView( link.orient, link.p1.second ); break;
+					case OR_BLK: view = g.GetView( link.orient, GetBlockIndex( link.p1 ) ); break;
+					default: assert(0);
+				}
+
+				for( index_t i=0; i<9; i++ ) // step 2 - parse the view and remove from the cells the value
+				{                            //          (except for the two cells part of the link)
+					auto& cell = view.GetCell( i );
+					if( cell.GetPos() != link.p1 && cell.GetPos() != link.p2 )
+						if( cell.RemoveCandidate( val ) )
+							removalDone = true;
 				}
 			}
 		break;
 
 		case CT_Discont_2SL: // Nice Loops Rule 2
 		{
-			std::cout << "* Nice Loops Rule 2\n";
+			if( g_data.Verbose )
+				std::cout << "* Nice Loops Rule 2\n";
 			assert( p.second != 0 );
 			const auto& link1 = cy.GetElem( p.second-1);
 			const auto& link2 = cy.GetElem( p.second );
@@ -769,7 +765,8 @@ ExploreCycle( Cycle& cy, Grid& g, value_t val )
 
 		case CT_Discont_2WL: // Nice Loops Rule 3
 		{
-			std::cout << "* Nice Loops Rule 3\n";
+			if( g_data.Verbose )
+				std::cout << "* Nice Loops Rule 3\n";
 			const auto& link1 = cy.GetElem( p.second );
 			const auto& link2 = cy.GetElem( p.second+1 );
 			Cell& c = GetCommonCell( link1, link2, g );
@@ -779,7 +776,6 @@ ExploreCycle( Cycle& cy, Grid& g, value_t val )
 		break;
 
 		case CT_Invalid: // don't do anything
-//			std::cout << "ERROR, invalid cycle !\n"; assert(0);
 		break;
 
 		default: assert(0);
@@ -801,16 +797,20 @@ X_Cycles( Grid& g )
 {
 	for( value_t v=1; v<10; v++ )             // for each possible value, get strong links, then search cycles
 	{
-		std::cout << "\nX_Cycles: process value " << (int)v << '\n';
 		auto v_sl = FindStrongLinks( v, g );
-		PrintVector( v_sl, "Strong Links set" );
+		if( g_data.Verbose )
+		{
+			std::cout << "\nX_Cycles: process value " << (int)v << '\n';
+			PrintVector( v_sl, "Strong Links set" );
+		}
 //		const auto& sl_vect = msl.GetSLvect(v);
 //		std::cout << "considering value " << (int)v << ", vector has " << sl_vect.size() << " values\n";
 		if( v_sl.size() > 1 )
 		{
 			auto v_cyc = FindCycles( g, v, v_sl );
 //			std::cout << "VALUE=" << (int)v << " cycles:\n";
-			PrintVector( v_cyc, "v_cyc" );
+			if( g_data.Verbose )
+				PrintVector( v_cyc, "v_cyc" );
 			for( auto& cy: v_cyc )       // not const, because cycles will get tagged
 				if( ExploreCycle( cy, g, v ) )
 					return true;

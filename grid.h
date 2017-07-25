@@ -370,9 +370,10 @@ VectorRemoveDupes( std::vector<T>& vin )
 		if( std::find( std::begin(vout), std::end(vout), elem ) ==  std::end(vout) )
 			vout.push_back( elem );
 	}
-	auto n = vin.size() - vout.size();
+/*	auto n = vin.size() - vout.size();
 	if( n )
-		std::cout << "REMOVED " << n << " DUPES\n";
+		std::cout << "VectorRemoveDupes(): REMOVED " << n << " DUPES\n";
+*/
 	return vout;
 }
 //----------------------------------------------------------------------------
