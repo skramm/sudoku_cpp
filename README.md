@@ -42,8 +42,8 @@ $ make runall
 
 Options:
 
-* `-v`: verbose, will print out the mains steps and algorithms used. You'd better redirect in a file with that one, lots of output.
-* `-s`: will print the steps (elminating a candidate in a cell)
+* `-s`: will print the steps (eliminating a candidate in a cell)
+* `-v`: verbose, will print out the mains steps and algorithms used. You'd better redirect in a file with that one, lots of output. Implies option "-s".
 
 Return values:
 

@@ -649,57 +649,6 @@ GetCycleType( const Cycle& cy )
 	return std::make_pair(type,middle_index);
 }
 //----------------------------------------------------------------------------
-#ifdef TESTMODE
-/// used only for unit testing
-Cycle
-BuildCycle( const std::string& s )
-{
-	assert( s.size()%2 ); // length must be odd
-	Cycle c;
-	for( size_t i=0; i<s.size(); i+=2 )
-	{
-		assert( s.at(i)=='W' || s.at(i)=='S' );
-		Link link( s.at(i)=='W' ? LT_Weak :  LT_Strong );
-		c.AddElem(link);
-	}
-	return c;
-}
-
-void
-CheckCycle( const Cycle& c, En_CycleType ct, int pos=0 )
-{
-	std::cout << "CheckCycle: " << c;
-	Cycle c2(c);                      // copy, 'coz original is const
-	for( int i=0; i<c.size(); i++ )
-	{
-		std::rotate( std::begin( c2.data() ), std::begin( c2.data() )+1, std::end( c2.data() ) );
-		if( GetCycleType( c ).first != ct )
-		{
-			std::cout << "- Failure for cycle: " << c << ": Is not of required type\n";
-		}
-	}
-	if( ct != CT_Invalid )
-	{
-		if( GetCycleType( c ).second != pos )
-		{
-			std::cout << "- Failure for cycle: " << c << ": position not correct\n";
-		}
-	}
-}
-
-void
-TestCycleType()
-{
-	CheckCycle( BuildCycle( "W-S-W-W-W-S" ), CT_Invalid );
-	CheckCycle( BuildCycle( "W-S-W-S-W-S" ), CT_Continuous );
-	CheckCycle( BuildCycle( "W-S-W-W-S-W-S" ), CT_Discont_2WL, 2 );
-	CheckCycle( BuildCycle( "W-S-W-S-S-W-S" ), CT_Discont_2SL, 3 );
-
-	CheckCycle( BuildCycle( "W-S-W-S-S-W-S-S" ), CT_Invalid ); // twice 2 strong links
-	CheckCycle( BuildCycle( "W-W-S-W-S-W-W-S" ), CT_Invalid ); // twice 2 weak links
-}
-#endif
-//----------------------------------------------------------------------------
 /// Explore a cycle and do the corresponding action, that is either:
 /**
 - Nice Loops Rule 1

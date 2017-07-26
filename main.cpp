@@ -35,7 +35,6 @@ This file is part of https://github.com/skramm/sudoku_cpp
 
 using namespace std;
 
-#ifndef TESTMODE
 
 /// sudoku solver program
 int main( int argc, const char** argv )
@@ -56,6 +55,7 @@ int main( int argc, const char** argv )
 			if( std::string( argv[i+1] ) == std::string( "-v" ) )
 			{
 				g_data.Verbose = true;
+				g_data.LogSteps = true;
 				cout << " -Option -v (Verbose) activated\n";
 			}
 			if( std::string( argv[i+1] ) == std::string( "-s" ) )
@@ -87,11 +87,3 @@ int main( int argc, const char** argv )
 	cout << grid;
     return ret;
 }
-#else
-/// Test program
-int main( int argc, const char** argv )
-{
-	std::cout << "Test program\n";
-	TestCycleType();
-}
-#endif

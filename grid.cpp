@@ -505,7 +505,7 @@ Grid::Solve()
 		{
 			res = ProcessAlgorithm( algo );
 			nu_after = NbUnknows();
-//			std::cout << "  -loop 2: algo " << algo << "-" << GetString(algo) << ": res=" << res <<  ", nb unknowns left=" << nu_after << "\n";
+			std::cout << "  -loop 2: algo " << algo << "-" << GetString(algo) << ": res=" << res <<  ", nb unknowns left=" << nu_after << "\n";
 
 			if( g_data.Verbose && res )
 				PrintAll( std::cout, "iter " + std::to_string(iter) + ": after algo " + GetString(algo)  );
@@ -525,13 +525,15 @@ Grid::Solve()
 //		std::cout << "END of LOOP2, stop1=" << stop_1 << " nu_before=" << nu_before << " nu_after=" << nu_after << "\n";
 		iter++;
 
+// we stop if:
+// - no more unknowns
+// - OR no change in nb of unknowns and inner loop tells us there is no more algorithms to process
 		stop = false;
-		if( ( nu_before == nu_after || nu_after == 0 ) && stop_1==true )
+		if( ( nu_before == nu_after && stop_1==true ) || nu_after == 0  )
 			stop = true;
-//		std::cout << "END of LOOP1, stop1=" << stop_1 << " nu_before=" << nu_before << " nu_after=" << nu_after << "stop=" << stop << "\n";
+//		std::cout << "END of LOOP1, stop1=" << stop_1 << " nu_before=" << nu_before << " nu_after=" << nu_after << " stop=" << stop << "\n";
 
 	}
-//	while( n_before != n_after &&  n_after != 0 );
 	while( !stop );
 
 //	std::cout << "nb_unknowns=" << nu_after << "\n";
@@ -539,7 +541,6 @@ Grid::Solve()
 		return true;
 	return false;
 }
-
 
 //----------------------------------------------------------------------------
 Viewtable
