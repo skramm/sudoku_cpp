@@ -505,7 +505,7 @@ Grid::Solve()
 		{
 			res = ProcessAlgorithm( algo );
 			nu_after = NbUnknows();
-			std::cout << "  -loop 2: algo " << algo << "-" << GetString(algo) << ": res=" << res <<  ", nb unknowns left=" << nu_after << "\n";
+//			std::cout << "  -loop 2: algo " << algo << "-" << GetString(algo) << ": res=" << res <<  ", nb unknowns left=" << nu_after << "\n";
 
 			if( g_data.Verbose && res )
 				PrintAll( std::cout, "iter " + std::to_string(iter) + ": after algo " + GetString(algo)  );
