@@ -54,10 +54,10 @@ Return values:
 
 ## 3 - Motivation
 
-Started ous as just a small weekend side project...
+Started out as just a small weekend side project...
 
 I found out that solving a Sudoku puzzle is tougher than what I thought. Several techniques can be used,
 some very advanced (and difficult to use with only pen and paper!).
 For these, the best resource is [Andrew C. Stuart's' website](http://www.sudokuwiki.org/sudoku.htm), from whom I took a lot of inspiration.
-Unfortunately, although it give a very good explanation of the "algorithm", it doesn't actually describe that algorithm.
+Unfortunately, although it gives a very good explanation of the "algorithm", it doesn't actually describe that algorithm.
 So just consider this as some challenge to analyse and implement (some of) the techniques described on Andrew's site.
