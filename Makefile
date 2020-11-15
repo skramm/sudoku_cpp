@@ -36,7 +36,8 @@ program: sudoku
 	@echo "done target $@"
 
 runall: program
-	@for f in samples/*.sud; do echo "RUNNING $$f"; ./sudoku $$f; done
+	@echo "start solving all samples" > all_samples.log
+	@for f in samples/*.sud; do echo "RUNNING $$f"; ./sudoku -f $$f; echo "file $$f: success=$$?">>all_samples.log; done
 
 # linking binary
 sudoku: $(OBJ_FILES)

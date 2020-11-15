@@ -79,7 +79,7 @@ TEST_CASE( "test of naked triple search", "[triple]" )
 		v.emplace_back( 6, std::vector<value_t>{1,2,3} );
 
 		auto res = SearchTriplesPattern( v );
-		REQUIRE( res.found == true );
+		REQUIRE( res.found_NT == true );
 		REQUIRE( res.cand_values == trip_val );
 		REQUIRE( res.cand_pos == trip_pos );
 	}
@@ -92,7 +92,7 @@ TEST_CASE( "test of naked triple search", "[triple]" )
 		v.emplace_back( 6, std::vector<value_t>{1,2,3} );
 
 		auto res = SearchTriplesPattern( v );
-		REQUIRE( res.found == true );
+		REQUIRE( res.found_NT == true );
 		REQUIRE( res.cand_values == trip_val );
 		REQUIRE( res.cand_pos == trip_pos );
 	}
@@ -105,7 +105,7 @@ TEST_CASE( "test of naked triple search", "[triple]" )
 		v.emplace_back( 6, std::vector<value_t>{1,2,3} );
 
 		auto res = SearchTriplesPattern( v );
-		REQUIRE( res.found == false );
+		REQUIRE( res.found_NT == false );
 	}
 	{
 		INFO( "test case C - good" )
@@ -118,7 +118,7 @@ TEST_CASE( "test of naked triple search", "[triple]" )
 		v.emplace_back( 6, std::vector<value_t>{1,2,3} );
 
 		auto res = SearchTriplesPattern( v );
-		REQUIRE( res.found == true );
+		REQUIRE( res.found_NT == true );
 		REQUIRE( res.cand_values == trip_val );
 		REQUIRE( res.cand_pos == trip_pos );
 	}
@@ -132,7 +132,7 @@ TEST_CASE( "test of naked triple search", "[triple]" )
 		v.emplace_back( 6, std::vector<value_t>{7,8} );
 
 		auto res = SearchTriplesPattern( v );
-		REQUIRE( res.found == false );
+		REQUIRE( res.found_NT == false );
 	}
 	{
 		INFO( "test case D - good" )
@@ -145,7 +145,7 @@ TEST_CASE( "test of naked triple search", "[triple]" )
 		v.emplace_back( 6, std::vector<value_t>{2,3} );
 
 		auto res = SearchTriplesPattern( v );
-		REQUIRE( res.found == true );
+		REQUIRE( res.found_NT == true );
 		REQUIRE( res.cand_values == trip_val );
 		REQUIRE( res.cand_pos == trip_pos );
 	}

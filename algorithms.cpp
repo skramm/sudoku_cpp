@@ -257,7 +257,7 @@ SearchSingleMissing( Grid& g, EN_ORIENTATION orient )
 	return false;
 }
 //----------------------------------------------------------------------------
-/// check in a view if there is only one value missing. If so, then we can assign a value to it
+/// Check in a view if there is only one value missing. If so, then we can assign a value to it
 bool
 Algo_SearchSingleMissing( Grid& g )
 {
@@ -553,6 +553,7 @@ SearchTriplesPattern( const std::vector<pos_vcand>& v_cand )
 			for( int k=0; k<3; k++)                                        // we pre-fill the return value with the candidates that are in the
 				return_value.cand_values[k] = v_cand[i].values.at( k );    // triplet we found. If it's not a "naked triple" pattern, then it just gets lost
 
+// step 2: we determine what type the triplets are
 			switch( v_triples.size() )
 			{
 				case 3:                    // case A, for sure
@@ -585,7 +586,7 @@ SearchTriplesPattern( const std::vector<pos_vcand>& v_cand )
 					{
 //						std::cout << " case C !\n";
 						CheckForTriplePattern_C( v_cand, v_pairs, v_triples, return_value );
-						if( return_value.found )
+						if( return_value.found_NT )
 						{
 							COUT( "-Naked triple pattern type C:" << return_value );
 							return return_value;
@@ -597,9 +598,8 @@ SearchTriplesPattern( const std::vector<pos_vcand>& v_cand )
 			}
 		}
 		CheckForTriplePattern_D( v_cand, return_value );
-		if( return_value.found )
+		if( return_value.found_NT )
 			COUT( "-Naked triple pattern type D:" << return_value );
-
 	}
 
 	return return_value;
@@ -607,6 +607,9 @@ SearchTriplesPattern( const std::vector<pos_vcand>& v_cand )
 
 //----------------------------------------------------------------------------
 /// Naked triples attempt
+/**
+Returns true if a candidate has been removed
+*/
 bool
 SearchNakedTriples( Grid& g, EN_ORIENTATION orient )
 {
@@ -622,14 +625,14 @@ SearchNakedTriples( Grid& g, EN_ORIENTATION orient )
 		for( index_t j=0; j<9; j++ ) // for each cell in the view (and stop if found 'n' matches)
 		{
 			Cell& cell = v1d.GetCell(j);
-			if( cell.NbCandidates() == 2 || cell.NbCandidates() == 3 )     // if cell has 2 or 3 candidates
-				v_cand.emplace_back( j, cell.GetCandidates() );
+			if( cell.NbCandidates() == 2 || cell.NbCandidates() == 3 )     // if cell has 2 or 3 candidates,
+				v_cand.emplace_back( j, cell.GetCandidates() );            // then, store it.
 		}
 		if( v_cand.size() > 2 )  // if more than two cells with 2 or 3 candidates found, then search for "naked triple patterns"
 		{
-			auto tp = SearchTriplesPattern(v_cand);
+			auto tp = SearchTriplesPattern(v_cand); // search for triple pattern
 //			std::cout <<" returned value: " << tp;
-			if( tp.found )                                    // if a naked triple was found, then
+			if( tp.found_NT )                                    // if a naked triple was found, then
 				for( index_t i=0; i<9; i++ )                  // for all the other positions of the view, remove the candidates found
 				{
 //					std::cout << "i=" << i << '\n';
@@ -656,7 +659,7 @@ Algo_SearchNakedTriples( Grid& g )
 //----------------------------------------------------------------------------
 /// Filter vector \c v_pos so that it holds only positions of cells holding only one of the candidates that are in \c v_cand.
 /**
-T is a container holding elements of type \c pos_t (example: \c std::vector<pos_t> )
+Type \c T is a container holding elements of type \c pos_t (example: \c std::vector<pos_t> )
 */
 template<typename T>
 void
