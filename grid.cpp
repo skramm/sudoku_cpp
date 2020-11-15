@@ -31,12 +31,6 @@ Licence: GPLv3
 */
 
 
-
-// some optionnal symbols ('til I write a makefile...)
-//#define DEBUGMODE
-
-
-
 #include "grid.h"
 #include "algorithms.h"
 
@@ -55,6 +49,7 @@ LogStep( const Cell& cell, std::string msg )
 		std::cout << "*** step " << g_data.NbSteps << ": CELL " << cell._pos << ": " << msg << '\n';
 }
 //----------------------------------------------------------------------------
+/// \todo 20201115: is this used somewhere ???
 std::ostream&
 operator << ( std::ostream& s, const Viewtable& vt )
 {
@@ -115,6 +110,7 @@ PrintLineNumbers( std::ostream& s, int before, int after )
 	s << '\n';
 }
 //----------------------------------------------------------------------------
+/// Streams the grid \c g on \c s
 std::ostream&
 operator << ( std::ostream& s, const Grid& g )
 {
@@ -215,7 +211,7 @@ Grid::Grid()
 		}
 }
 //----------------------------------------------------------------------------
-/// returns false if puzzle is inconsistent
+/// Returns false if puzzle is inconsistent
 bool
 Grid::Check( EN_ORIENTATION orient ) const
 {
@@ -245,7 +241,7 @@ Grid::Check( EN_ORIENTATION orient ) const
 	return true;
 }
 //----------------------------------------------------------------------------
-/// returns false if puzzle is inconsistent
+/// Returns false if puzzle is inconsistent, tries all orientations
 bool
 Grid::Check() const
 {
@@ -284,7 +280,32 @@ Grid::InitCandidates()
 }
 //----------------------------------------------------------------------------
 bool
-Grid::Load( std::string fn )
+Grid::saveToFile( std::string fn ) const
+{
+	std::ofstream file( fn );
+	if( !file.is_open() )
+	{
+		std::cout << "Error: unable to open file " << fn << '\n';
+		return false;
+	}
+
+	for( index_t i=0; i<9; i++ )
+	{
+//		s << GetRowLetter(i) << " | ";
+		for( index_t j=0; j<9; j++ )
+		{
+			if( _data[i][j].GetValue() == 0 )
+				file << '.';
+			else
+				file << (char)('0' + _data[i][j].GetValue());
+		}
+		file << '\n';
+	}
+	return true;
+}
+//----------------------------------------------------------------------------
+bool
+Grid::loadFromFile( std::string fn )
 {
 	std::ifstream infile( fn );
 	if( !infile.is_open() )
@@ -325,6 +346,44 @@ Grid::Load( std::string fn )
 	return true;
 }
 //----------------------------------------------------------------------------
+/// Build grid from a string
+/**
+Empty cells are assume to be '.'
+\return: false if length is not 81 characters, or if some invalid characters have been met
+\warning does not check if grid is valid!
+*/
+bool
+Grid::buildFromString( std::string in )
+{
+	auto idx=0;
+	if( in.size() != 81 )
+	{
+		std::cout << "Error: Incorrect size of input string, has " << in.size() << " characters\n";
+		return false;
+	}
+	for( int li=0; li<9; li++ )
+	{
+		for( int col=0; col<9; col++ )
+		{
+			auto val = in[idx];
+			if( val >= '1' && val <= '9' )
+				_data[li][col].SetValue( val-'0' );
+			else
+			{
+				if( val == '.' )
+					_data[li][col].SetValue( 0 );
+				else
+				{
+					std::cout << "Error: Invalid character found in string: -" << val << "-\n";
+					return false;
+				}
+			}
+			idx++;
+		}
+	}
+	return true;
+}
+//----------------------------------------------------------------------------
 View_1Dim_c
 Grid::GetView( EN_ORIENTATION orient, index_t idx ) const
 {
@@ -351,7 +410,7 @@ Grid::GetView( EN_ORIENTATION orient, index_t idx )
 
 //----------------------------------------------------------------------------
 void
-Grid::PrintAll( std::ostream& s, std::string txt )
+Grid::PrintAll( std::ostream& s, std::string txt ) const
 {
 	if( g_data.Verbose )
 	{

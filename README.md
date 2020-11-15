@@ -38,16 +38,18 @@ $ make runall
 
 ## 2 - Usage and options
 
-`$ sudoku [options] file`
+`$ sudoku [options] -f file`
+`$ sudoku [options] grid`
 
-Options:
+Options: (must be separated, no grouping)
 
-* `-s`: will print the steps (eliminating a candidate in a cell)
+* `-l`: will log all the steps (eliminating a candidate in a cell)
 * `-v`: verbose, will print out the mains steps and algorithms used. You'd better redirect in a file with that one, lots of output. Implies option "-s".
+* `-s`: will save the grid to a file name `current.sud` (useful when entering grid from command-line)
 
 Return values:
 
-* 0: success (solved)
+* 0 : success (solved)
 * 1 : failed to solve puzzle
 * 2 : failed to read input file
 * 3 : invalid puzzle
@@ -61,3 +63,9 @@ some very advanced (and difficult to use with only pen and paper!).
 For these, the best resource is [Andrew C. Stuart's' website](http://www.sudokuwiki.org/sudoku.htm), from whom I took a lot of inspiration.
 Unfortunately, although it gives a very good explanation of the "algorithm", it doesn't actually describe that algorithm.
 So just consider this as some challenge to analyse and implement (some of) the techniques described on Andrew's site.
+
+## 4 - history
+
+* 20201115:
+ * changed usage: you can now enter grid directly from command-line.
+ * new option to save the grid

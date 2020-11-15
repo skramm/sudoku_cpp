@@ -30,6 +30,17 @@
 
 #include "algorithms.h"
 
+TEST_CASE( "test of reading grid from string", "[readstring]" )
+{
+	Grid g;
+	std::string s1( "777111222...777...111888999777111222...777...111888999777111222...777...111888999" );
+	CHECK( g.buildFromString( s1 ) );
+	std::string s2( "00111222...777...111888999777111222...777...111888999777111222...777...111888999" );
+	CHECK( !g.buildFromString( s2 ) );
+	std::string s3( " 0111222...777...111888999777111222...777...111888999777111222...777...111888999" );
+	CHECK( !g.buildFromString( s3 ) );
+}
+
 TEST_CASE( "test of overlap", "[overlap1]" )
 {
 	std::vector<int> v1{1,2,3};

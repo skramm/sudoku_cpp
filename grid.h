@@ -55,7 +55,7 @@ typedef std::pair<index_t,index_t> pos_t;
 typedef std::pair<pos_t,pos_t> pospair_t;
 
 /// each cell has such a map with 9 values, to hold candidates with true/false value
-typedef std::map<value_t,bool> cand_map_t;
+using cand_map_t=std::map<value_t,bool>;
 
 struct Cell;
 void LogStep( const Cell& cell, std::string msg );
@@ -156,6 +156,8 @@ struct Cell
 
 private:
 	value_t    _value = 0; ///< value
+
+	/// \todo Why is this data public ?
 	public:
 	cand_map_t _cand;      ///< candidate map
 	pos_t      _pos;       ///< position in grid [0-8]
@@ -412,14 +414,16 @@ class Grid
 
 	public:
 		Grid();
-		bool Load( std::string fn=std::string() );
+		bool loadFromFile( std::string fn=std::string() );
+		bool saveToFile( std::string ) const;
 		bool Check() const;
 		bool Solve();
 		void InitCandidates();
 //		void SetVerbose(bool b ) { _verbose = b; }
 		void PrintCandidates( std::ostream&, std::string=std::string() ) const;
-		void PrintAll( std::ostream&, std::string );
+		void PrintAll( std::ostream&, std::string ) const;
 
+		bool buildFromString( std::string );
 		Cell&       GetCellByPos( pos_t );
 		const Cell& GetCellByPos( pos_t ) const;
 

@@ -32,6 +32,7 @@ This file is part of https://github.com/skramm/sudoku_cpp
 
 #include "header.h"
 #include "algorithms.h"
+#include <fstream>
 
 using namespace std;
 
@@ -40,32 +41,69 @@ using namespace std;
 int main( int argc, const char** argv )
 {
 	Grid grid;
-	if( argc > 1 )
+	if( argc == 1 )
 	{
-		cout << "Reading file " << argv[argc-1];
-		if( !grid.Load( argv[argc-1] ) )
-		{
-			cout << ": failure\n";
-			return 2;
-		}
-		cout << ": success\n";
+		cout << "usage:\n $ sudoku [-s] [-v] <-f file>: load grid file"
+			<< "\n $ sudoku [-s] [-v] [grid]: read grid from command line (or use default grid)\n";
+		return 0;
+	}
 
-		for( int i=0; i<argc-1; i++ )
+	auto nbFlags = 0;
+	bool hasFileFlag = false;
+	bool saveGridToFile = false;
+	for( int i=1; i<argc; i++ )
+	{
+		if( std::string( argv[i] ) == std::string( "-f" ) )
 		{
-			if( std::string( argv[i+1] ) == std::string( "-v" ) )
+			if( i+1 < argc )
 			{
-				g_data.Verbose = true;
-				g_data.LogSteps = true;
-				cout << " -Option -v (Verbose) activated\n";
+				if( !grid.loadFromFile( argv[i+1] ) )
+				{
+					cout << "Error: unable to read input file " << argv[i+1] << "\n";
+					return 2;
+				}
+				hasFileFlag = true;
+				cout << "succesful input file reading\n";
 			}
-			if( std::string( argv[i+1] ) == std::string( "-s" ) )
+			else
 			{
-				g_data.LogSteps = true;
-				cout << " -Option -s (log Steps) activated\n";
+				cout << "Error: no input file provided after -f\n";
+				return 2;
+			}
+		}
+
+		if( std::string( argv[i] ) == std::string( "-v" ) )
+		{
+			nbFlags++;
+			g_data.Verbose = true;
+			g_data.LogSteps = true;
+			cout << " -Option -v (Verbose) activated\n";
+		}
+		if( std::string( argv[i] ) == std::string( "-l" ) )
+		{
+			nbFlags++;
+			g_data.LogSteps = true;
+			cout << " -Option -l (log steps) activated\n";
+		}
+		if( std::string( argv[i] ) == std::string( "-s" ) )
+		{
+			nbFlags++;
+			saveGridToFile = true;
+			cout << " -Option -s (save grid) activated\n";
+		}
+
+		if( !hasFileFlag && nbFlags+1 < argc )
+		{
+			if( !grid.buildFromString( argv[argc-1] ) )
+			{
+				cout << "Error: invalid grid string given\n";
+				return 4;
 			}
 		}
 	}
 	grid.InitCandidates();
+	if( saveGridToFile )
+		grid.saveToFile( "current.sud" );
 
     cout << "Starting grid:\n" << grid << endl;
     if( g_data.Verbose )
