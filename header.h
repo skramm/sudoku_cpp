@@ -6,6 +6,11 @@ This file is part of https://github.com/skramm/sudoku_cpp
 Licence: GPLv3
 */
 
+/**
+\mainpage sudoku_cpp refence pages
+
+See https://github.com/skramm/sudoku_cpp
+*/
 #include "grid.h"
 
 #ifdef DEBUGMODE

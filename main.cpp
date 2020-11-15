@@ -91,16 +91,17 @@ int main( int argc, const char** argv )
 			saveGridToFile = true;
 			cout << " -Option -s (save grid) activated\n";
 		}
+	}
 
-		if( !hasFileFlag && nbFlags+1 < argc )
+	if( !hasFileFlag && nbFlags+1 < argc )
+	{
+		if( !grid.buildFromString( argv[argc-1] ) )
 		{
-			if( !grid.buildFromString( argv[argc-1] ) )
-			{
-				cout << "Error: invalid grid string given\n";
-				return 4;
-			}
+			cout << "Error: invalid grid string given\n";
+			return 4;
 		}
 	}
+
 	grid.InitCandidates();
 	if( saveGridToFile )
 		grid.saveToFile( "current.sud" );

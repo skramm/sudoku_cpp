@@ -565,7 +565,7 @@ SearchTriplesPattern( const std::vector<pos_vcand>& v_cand )
 				}
 				break;
 
-				case 2:                 // maybe case B
+				case 2:                 // maybe case B, lets check!
 					if( !v_pairs.empty() )
 					{
 //						std::cout << " case B !\n";
@@ -580,7 +580,7 @@ SearchTriplesPattern( const std::vector<pos_vcand>& v_cand )
 					}
 				break;
 
-				case 1:                 // maybe case C
+				case 1:                 // maybe case C, lets check!
 					if( v_pairs.size() == 2 )
 					{
 //						std::cout << " case C !\n";
