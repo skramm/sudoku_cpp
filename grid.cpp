@@ -343,6 +343,11 @@ Grid::loadFromFile( std::string fn )
 				li++;
 			}
 	}
+	if( li != 9 )
+	{
+		std::cout << "Error: illegal number of lines (must be 9 lines)\n";
+		return false;
+	}
 	return true;
 }
 //----------------------------------------------------------------------------

@@ -45,14 +45,17 @@ Options: (must be separated, no grouping)
 
 * `-l`: will log all the steps (eliminating a candidate in a cell)
 * `-v`: verbose, will print out the mains steps and algorithms used. You'd better redirect in a file with that one, lots of output. Implies option "-s".
-* `-s`: will save the grid to a file name `current.sud` (useful when entering grid from command-line)
+* `-s`: will save the grid to a file name `current.sud` and to a timestamped file (useful when entering grid from command-line)
 
-Return values:
-
-* 0 : success (solved)
-* 1 : failed to solve puzzle
-* 2 : failed to read input file
-* 3 : invalid puzzle
+Return values (see `$ ./sudoku`):
+```
+ 0: success (solved puzzle)
+ 1: unable to read given filename (missing or format error)
+ 2: missing filename after -f
+ 3: invalid grid given (must be 81 characters, only digits or '.')
+ 4: invalid grid
+ 5: unable to solve
+```
 
 ## 3 - Motivation
 

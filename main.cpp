@@ -33,10 +33,23 @@ This file is part of https://github.com/skramm/sudoku_cpp
 
 #include "header.h"
 #include "algorithms.h"
+
 #include <fstream>
+#include <chrono>
+#include <sstream>
+#include <iomanip>
 
 using namespace std;
 
+enum ReturnValues: int
+{
+	RV_success
+	,RV_missingFile
+	,RV_missingFileName
+	,RV_missingCells
+	,RV_invalidGrid
+	,RV_solvingFailue
+};
 
 /// sudoku solver program
 int main( int argc, const char** argv )
@@ -44,9 +57,20 @@ int main( int argc, const char** argv )
 	Grid grid;
 	if( argc == 1 )
 	{
-		cout << "usage:\n $ sudoku [-s] [-v] <-f file>: load grid file"
-			<< "\n $ sudoku [-s] [-v] [grid]: read grid from command line (or use default grid)\n";
-		return 0;
+		cout << "A sudoku solver, see https://github.com/skramm/sudoku_cpp\n"
+			<< "-usage:\n $ sudoku [-s] [-v] <-f file>: load grid file"
+			<< "\n $ sudoku [-s] [-v] [grid]: read grid from command line (or use default grid)\n"
+			<< "-switches:\n -s: save grid to file (human readable), and can be loaded with -f"
+			<< "\n -v: verbose\n -l: log steps"
+			<< "\n-return value:\n "
+			<< RV_success << ": success (solved puzzle)\n "
+			<< RV_missingFile << ": unable to read given filename (missing or format error)\n "
+			<< RV_missingFileName << ": missing filename after -f\n "
+			<< RV_missingCells << ": invalid grid given (must be 81 characters, only digits or '.')\n "
+			<< RV_invalidGrid << ": invalid grid\n "
+			<< RV_solvingFailue << ": unable to solve\n";
+
+		return RV_success;
 	}
 
 	auto nbFlags = 0;
@@ -61,7 +85,7 @@ int main( int argc, const char** argv )
 				if( !grid.loadFromFile( argv[i+1] ) )
 				{
 					cout << "Error: unable to read input file " << argv[i+1] << "\n";
-					return 2;
+					return RV_missingFile;
 				}
 				hasFileFlag = true;
 				cout << "succesful input file reading\n";
@@ -69,7 +93,7 @@ int main( int argc, const char** argv )
 			else
 			{
 				cout << "Error: no input file provided after -f\n";
-				return 2;
+				return RV_missingFileName;
 			}
 		}
 
@@ -99,13 +123,22 @@ int main( int argc, const char** argv )
 		if( !grid.buildFromString( argv[argc-1] ) )
 		{
 			cout << "Error: invalid grid string given\n";
-			return 4;
+			return RV_missingCells;
 		}
 	}
 
 	grid.InitCandidates();
 	if( saveGridToFile )
+	{
 		grid.saveToFile( "current.sud" );
+		auto t = std::time(nullptr);
+		auto tm = *std::localtime(&t);
+		std::ostringstream oss;
+		oss << "current_"
+			<< std::put_time( &tm, "%Y%m%d_%H%M" )
+			<< ".sud";
+		grid.saveToFile( oss.str() );
+	}
 
     cout << "Starting grid:\n" << grid << endl;
     if( g_data.Verbose )
@@ -113,16 +146,16 @@ int main( int argc, const char** argv )
     if( !grid.Check() )
     {
 		std::cout << "Grid is invalid\n";
-		return 3;
+		return RV_invalidGrid;
     }
-    int ret = 0;
+    auto ret = RV_success;
     if( grid.Solve() )
 		cout << "-solved with " << g_data.NbSteps << " steps\n";
 	else
 	{
 		cout << "failure, used " << g_data.NbSteps << " steps\n";
 		grid.PrintCandidates( cout, "final" );
-		ret = 1;
+		ret = RV_solvingFailue;
 	}
 	cout << grid;
     return ret;
