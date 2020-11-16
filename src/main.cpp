@@ -29,6 +29,8 @@
 \brief main
 
 This file is part of https://github.com/skramm/sudoku_cpp
+
+\todo add generation of final report, giving initial nb of empty cells, nb of steps used, algorithms used, etc.
 */
 
 #include "header.h"
