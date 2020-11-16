@@ -28,18 +28,18 @@
 		<Unit filename="README.md">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
-		<Unit filename="algorithms.cpp" />
-		<Unit filename="algorithms.h" />
+		<Unit filename="src/algorithms.cpp" />
+		<Unit filename="src/algorithms.h" />
 		<Unit filename="build.sh" />
-		<Unit filename="circvec.h" />
+		<Unit filename="src/circvec.h" />
 		<Unit filename="doxyfile" />
-		<Unit filename="grid.cpp" />
-		<Unit filename="grid.h" />
-		<Unit filename="header.h" />
-		<Unit filename="main.cpp" />
-		<Unit filename="test_catch.cpp" />
-		<Unit filename="x_cycles.cpp" />
-		<Unit filename="x_cycles.h" />
+		<Unit filename="src/grid.cpp" />
+		<Unit filename="src/grid.h" />
+		<Unit filename="src/header.h" />
+		<Unit filename="src/main.cpp" />
+		<Unit filename="src/test_catch.cpp" />
+		<Unit filename="src/x_cycles.cpp" />
+		<Unit filename="src/x_cycles.h" />
 		<Extensions>
 			<envvars />
 			<code_completion />

@@ -171,7 +171,7 @@ CheckCycle( const Cycle& c, En_CycleType ct, int pos=0 )
 {
 	std::cout << "CheckCycle: " << c;
 	Cycle c2(c);                      // copy, 'coz original is const
-	for( int i=0; i<c.size(); i++ )
+	for( decltype(c.size()) i=0; i<c.size(); i++ )
 	{
 		std::rotate( std::begin( c2.data() ), std::begin( c2.data() )+1, std::end( c2.data() ) );
 		if( GetCycleType( c ).first != ct )

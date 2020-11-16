@@ -580,7 +580,7 @@ Grid::Solve()
 				stop_1 = false;
 
 		}
-// we stop this loop IF
+// we stop this loop if one of these conditions is met:
 // - some changes occurred
 // - we have processed the last algorithm
 // - no more unknowns
@@ -591,7 +591,7 @@ Grid::Solve()
 
 // we stop if:
 // - no more unknowns
-// - OR no change in nb of unknowns and inner loop tells us there is no more algorithms to process
+// - OR no change in nb of unknowns AND inner loop tells us there is no more algorithms to process
 		stop = false;
 		if( ( nu_before == nu_after && stop_1==true ) || nu_after == 0  )
 			stop = true;
@@ -600,10 +600,7 @@ Grid::Solve()
 	}
 	while( !stop );
 
-//	std::cout << "nb_unknowns=" << nu_after << "\n";
-	if( nu_after == 0 )
-		return true;
-	return false;
+	return( nu_after == 0 );
 }
 
 //----------------------------------------------------------------------------

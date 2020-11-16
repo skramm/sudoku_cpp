@@ -5,9 +5,9 @@
 DOT_FILES=$(wildcard out/*.dot)
 SVG_FILES = $(patsubst %.dot,%.svg,$(DOT_FILES))
 
-INPUT_FILES=grid.cpp x_cycles.cpp algorithms.cpp main.cpp test_catch.cpp
-OBJ_FILES = $(patsubst %.cpp,obj/%.o,$(INPUT_FILES))
-HEADERS=$(wildcard *.h)
+INPUT_FILES=$(wildcard src/*.cpp)
+OBJ_FILES = $(patsubst src/%.cpp,obj/%.o,$(INPUT_FILES))
+HEADERS=$(wildcard src/*.h)
 
 SAMPLE_FILES=$(wildcard samples/*.*)
 
@@ -49,7 +49,7 @@ test_catch: $(OBJ_FILES)
 	@echo "done target $@"
 
 # generic compile rule
-obj/%.o: %.cpp $(HEADERS) Makefile
+obj/%.o: src/%.cpp $(HEADERS) Makefile
 	$(CXX) $(CFLAGS) -o $@ -c $<
 
 dot: $(SVG_FILES)
