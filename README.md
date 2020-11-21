@@ -9,6 +9,7 @@ A sudoku C++ solver
 * Requirements: a C++11 compiler (see below for dependencies).
 * Licence: GPL v3
 * Author: Sebastien Kramm (firstname.lastname@univ-rouen.fr)
+* Home page: [github.com/skramm/sudoku_cpp](https://github.com/skramm/sudoku_cpp)
 
 In case of any bug, thanks for mailing (or open an issue).
 
