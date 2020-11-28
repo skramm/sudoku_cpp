@@ -171,7 +171,7 @@ FindStrongLinks( value_t val, EN_ORIENTATION orient, const Grid& g, std::vector<
 			const Cell& cell1 = v1d.GetCell(col1);
 			if( cell1.HasCandidate( val ) && candMap.Has( val ) )
 			{
-				uchar c = 0;
+				uint8_t c = 0;
 				index_t pos = 0;
 				for( index_t col2=col1+1; col2<9; col2++ )   // for each OTHER cell in the view
 				{
@@ -288,7 +288,7 @@ typedef typename boost::graph_traits<graph_t>::edge_descriptor   edge_t;
 
 //----------------------------------------------------------------------------
 /// find vertex (get iterator on the vertex that we are searching), given its position \c pos
-vertex_t
+int
 FindVertex( pos_t pos, const graph_t& g )
 {
     auto it_pair = boost::vertices(g);
@@ -303,13 +303,13 @@ FindVertex( pos_t pos, const graph_t& g )
 
     if( it_v == it_pair.second )                    // if not found,
 		return -1;
-	return *it_v;
+	return static_cast<int>(*it_v);
 }
 //----------------------------------------------------------------------------
 void
 PrintGraphCycle( const std::vector<vertex_t>& cy, const graph_t& graph )
 {
-	for( int i=0; i<cy.size(); i++ )
+	for( size_t i=0; i<cy.size(); i++ )
 	{
 		auto idx1 = cy[i];
 		auto idx2 = ( i+1!=cy.size() ? cy[i+1] : cy[0] );
@@ -404,7 +404,7 @@ Cycle
 Convert2Cycle( const std::vector<vertex_t>& in_cycle, const graph_t& graph )
 {
 	Cycle out_cycle;
-	for( int i=0; i<in_cycle.size(); i++ )
+	for( size_t i=0; i<in_cycle.size(); i++ )
 	{
 		auto idx1 = in_cycle[i];
 		auto idx2 = ( i+1!=in_cycle.size() ? in_cycle[i+1] : in_cycle[0] );

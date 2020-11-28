@@ -359,12 +359,12 @@ SearchNakedPairs( Grid& g, EN_ORIENTATION orient )
 		assert( v_pos.size() <= 2 );
 		if( v_pos.size() == 2 )
 		{
-			uchar Nb(0);
+			uint8_t Nb(0);
 			for( index_t j=0; j<9; j++ ) // for each cell in the view
 			{
 				Cell& cell = v1d.GetCell(j);
 				bool dontremove( false );
-				for( uchar p=0; p<2; p++ )
+				for( uint8_t p=0; p<2; p++ )
 					if( j == v_pos[p] )
 						dontremove = true;
 				if( !dontremove )

@@ -39,20 +39,18 @@
 #include <cassert>
 #include <type_traits>
 
-typedef unsigned char uchar;
 
 /// The values in the cells
-typedef uchar value_t;
+using value_t = uint8_t;
 
 /// index type
-//typedef uchar index_t;
-typedef uint index_t;
+using index_t = uint8_t;
 
 /// a position in the grid
-typedef std::pair<index_t,index_t> pos_t;
+using pos_t = std::pair<index_t,index_t>;
 
 /// a pair of (linked) positions
-typedef std::pair<pos_t,pos_t> pospair_t;
+using pospair_t = std::pair<pos_t,pos_t>;
 
 /// each cell has such a map with 9 values, to hold candidates with true/false value
 using cand_map_t=std::map<value_t,bool>;
@@ -131,7 +129,7 @@ inline
 char
 GetRowLetter( index_t i )
 {
-	uchar c = i+'A';
+	char c = i+'A';
 	if( i==8 )   // so we replace 'I' by 'J' for readability
 		c++;
 	return c;
@@ -192,7 +190,7 @@ private:
 	}
 	void RemoveAllCandidates()
 	{
-		for( int i=1; i<10; i++ )
+		for( value_t i=1; i<10; i++ )
 			_cand[i] = false;
 	}
 	bool RemoveCellCandidates( std::vector<value_t> v_cand )
@@ -226,7 +224,7 @@ private:
 	bool RemoveAllCandidatesBut( value_t val )
 	{
 		bool removalDone(false);
-		for( int i=1; i<10; i++ )
+		for( value_t i=1; i<10; i++ )
 			if( i != val )
 				if( RemoveCandidate( i ) )
 					removalDone = true;
@@ -235,15 +233,15 @@ private:
 	std::vector<value_t> GetCandidates() const
 	{
 		std::vector<value_t> v;
-		for( int i=1; i<10; i++ )
+		for( value_t i=1; i<10; i++ )
 			if( _cand.at(i) )
 				v.push_back( i );
 		return v;
 	}
-	uchar NbCandidates() const
+	uint8_t NbCandidates() const
 	{
-		int n = 0;
-		for( int i=1; i<10; i++ )
+		uint8_t n = 0;
+		for( value_t i=1; i<10; i++ )
 			if( _cand.at(i) )
 				n++;
 		return n;
@@ -301,10 +299,10 @@ struct View_T
 };
 //----------------------------------------------------------------------------
 
-typedef View_T<const Cell*> View_1Dim_c;
-typedef View_T<Cell*>       View_1Dim_nc;
+using View_1Dim_c  = View_T<const Cell*>;
+using View_1Dim_nc = View_T<Cell*>;
 
-typedef std::array<std::array<char,27>,27> Viewtable;
+using Viewtable = std::array<std::array<char,27>,27>;
 
 inline
 void
