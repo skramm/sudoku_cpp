@@ -115,9 +115,6 @@ std::ostream&
 operator << ( std::ostream& s, const Grid& g )
 {
 	s << "nb unknowns cells " << g.NbUnknows() << "\n";
-//	s << "nb unknowns (values) " << g.NbUnknows2() << "\n";
-//	s << "res:\n";
-
 	PrintLineNumbers( s, 3, 0 );
 
 	DrawLine( s, '-', true );

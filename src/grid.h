@@ -32,6 +32,7 @@
 #define GRID_H
 
 #include <array>
+#include <sstream>
 #include <vector>
 #include <map>
 #include <algorithm>
@@ -110,19 +111,56 @@ struct CandMap
 		cand_map_t cmap;
 
 };
+
 //----------------------------------------------------------------------------
-/// Helper function
+/// orientation : column, row or block
+enum EN_ORIENTATION { OR_COL=0, OR_ROW, OR_BLK };
+
+inline
+const char*
+GetString( EN_ORIENTATION orient )
+{
+	switch( orient )
+	{
+		case OR_COL: return "COL"; break;
+		case OR_ROW: return "ROW"; break;
+		case OR_BLK: return "BLK"; break;
+		default: assert(0);
+	}
+}
+
+//----------------------------------------------------------------------------
+/// Returns index inside block from (row,col)
+/** See opposite: getPosFromBlockIndex() */
 inline
 index_t
 GetBlockIndex( index_t row, index_t col )
 {
 	return row/3*3 + col/3;
 }
+
+/// Returns index inside block from position (row,col)
+/** See opposite: getPosFromBlockIndex() */
 inline
 index_t
 GetBlockIndex( pos_t p )
 {
 	return GetBlockIndex( p.first, p.second );
+}
+
+/// Returns position inside block from index
+/** See opposite: GetBlockIndex() */
+inline
+pos_t
+getPosFromBlockIndex(
+	index_t blockId,  ///< Block index
+	index_t idx       ///< Index of cell inside the block
+)
+{
+	pos_t pos( blockId/3*3, blockId%3*3 );
+	pos.first  += idx/3;
+	pos.second += idx%3;
+	return pos;
 }
 //----------------------------------------------------------------------------
 inline
@@ -135,12 +173,54 @@ GetRowLetter( index_t i )
 	return c;
 }
 //----------------------------------------------------------------------------
+/// Stream cell position as "A1", "B2", ...
 inline
 std::ostream& operator << ( std::ostream& s, const pos_t& p )
 {
 	s << GetRowLetter(p.first) << p.second+1;
 	return s;
 }
+
+//----------------------------------------------------------------------------
+/// Reason to remove a candidate, see \c Because
+enum BecauseType
+{
+	B_noReason
+	,B_ValuePresent
+};
+
+/// Holds explanation of why we remove a candidate
+struct Because
+{
+	Because() {}
+	Because( BecauseType bt, index_t idx1, index_t idx2, EN_ORIENTATION orient )
+		: _bt(bt), _idx1(idx1), _idx2(idx2), _orient( orient )
+	{}
+	std::string getString() const
+	{
+		std::stringstream oss;
+
+		oss << "is present in " << GetString( _orient )
+			<< " at position ";
+		pos_t pos;
+		switch( _orient )
+		{
+			case OR_ROW: pos = pos_t( _idx1, _idx2 ); break;
+			case OR_COL: pos = pos_t( _idx2, _idx1 ); break;
+			case OR_BLK: pos = getPosFromBlockIndex( _idx1, _idx2 ); break;
+			default: assert(0);
+		}
+		oss << pos;
+//		oss << "index " << (int)_idx << " orient=" << GetString( _orient );
+		return oss.str();
+	}
+	BecauseType    _bt = B_noReason;
+	index_t        _idx1;
+	index_t        _idx2;
+	EN_ORIENTATION _orient;
+};
+
+
 //----------------------------------------------------------------------------
 /// Holds a cell, has either a value, either a set of candidates (in which case the value is 0)
 struct Cell
@@ -204,11 +284,14 @@ private:
 		}
 		return b;
 	}
-	bool RemoveCandidate( value_t val )
+	bool RemoveCandidate( value_t val, Because bec=Because() )
 	{
 		if( _cand[val] )
 		{
-			LogStep( *this, "remove candidate " + std::to_string(val) );
+			if(bec._bt != B_noReason )
+				LogStep( *this, "remove candidate " + std::to_string(val) + " because " + bec.getString() );
+			else
+				LogStep( *this, "remove candidate " + std::to_string(val) );
 			_cand[val] = false;
 			if( NbCandidates() == 1 )
 			{
@@ -326,21 +409,6 @@ PrintView( std::ostream& s, View_1Dim_nc& v )
 /// used in Grid::GetOtherCells()
 enum EN_GOCMODE { GOCM_NB_CAND, GOCM_CAND_VALUE };
 
-/// orientation : column, row or block
-enum EN_ORIENTATION { OR_COL=0, OR_ROW, OR_BLK };
-
-inline
-const char*
-GetString( EN_ORIENTATION orient )
-{
-	switch( orient )
-	{
-		case OR_COL: return "COL"; break;
-		case OR_ROW: return "ROW"; break;
-		case OR_BLK: return "BLK"; break;
-		default: assert(0);
-	}
-}
 
 enum EN_ALGO
 {

@@ -196,14 +196,14 @@ RemoveCandidates( Grid& g, EN_ORIENTATION orient )
 //				std::cout << "pos=" << cell.GetPos() << " : currentValue=" << (int)currentValue << '\n';
 				for( index_t k=0; k<9; k++ ) // for each other cell in the view
 					if( v1d.GetCell(k).HasCandidate( currentValue ) )
-						res = v1d.GetCell(k).RemoveCandidate( currentValue );
+						res = v1d.GetCell(k).RemoveCandidate( currentValue, Because( B_ValuePresent, i, j, orient ) );
 			}
 		}
 	}
 	return res;
 }
 //----------------------------------------------------------------------------
-/// remove candidates on rows/cols/blocks that have a value in another cell
+/// Remove candidates on rows/cols/blocks that have a value in another cell
 bool
 Algo_RemoveCandidates( Grid& g )
 {

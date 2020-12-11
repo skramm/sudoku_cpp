@@ -60,7 +60,7 @@ dot: $(SVG_FILES)
 
 dox: html/index.html
 
-html/index.html: $(INPUT_FILES) $(HEADERS) doxyfile
+html/index.html: $(INPUT_FILES) $(HEADERS) doxyfile Makefile
 	doxygen doxyfile
 
 

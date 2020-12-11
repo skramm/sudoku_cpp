@@ -30,6 +30,40 @@
 
 #include "algorithms.h"
 
+TEST_CASE( "test of position/index conversions", "tposi" )
+{
+	pos_t p(3,3);
+	CHECK( GetBlockIndex( pos_t(0,0) ) == 0 );
+	CHECK( GetBlockIndex( pos_t(0,1) ) == 0 );
+	CHECK( GetBlockIndex( pos_t(0,2) ) == 0 );
+	CHECK( GetBlockIndex( pos_t(1,2) ) == 0 );
+
+	CHECK( GetBlockIndex( pos_t(3,0) ) == 3 );
+	CHECK( GetBlockIndex( pos_t(4,1) ) == 3 );
+
+	CHECK( GetBlockIndex( pos_t(4,4) ) == 4 );
+
+	CHECK( GetBlockIndex( pos_t(8,8) ) == 8 );
+
+
+	CHECK( getPosFromBlockIndex( 0, 0 ) == pos_t(0,0) );
+	CHECK( getPosFromBlockIndex( 0, 1 ) == pos_t(0,1) );
+	CHECK( getPosFromBlockIndex( 0, 2 ) == pos_t(0,2) );
+	CHECK( getPosFromBlockIndex( 0, 3 ) == pos_t(1,0) );
+	CHECK( getPosFromBlockIndex( 0, 4 ) == pos_t(1,1) );
+	CHECK( getPosFromBlockIndex( 0, 5 ) == pos_t(1,2) );
+	CHECK( getPosFromBlockIndex( 0, 6 ) == pos_t(2,0) );
+	CHECK( getPosFromBlockIndex( 0, 7 ) == pos_t(2,1) );
+	CHECK( getPosFromBlockIndex( 0, 8 ) == pos_t(2,2) );
+
+	CHECK( getPosFromBlockIndex( 1, 0 ) == pos_t(0,3) );
+	CHECK( getPosFromBlockIndex( 1, 1 ) == pos_t(0,4) );
+
+	CHECK( getPosFromBlockIndex( 3, 0 ) == pos_t(3,0) );
+	CHECK( getPosFromBlockIndex( 3, 1 ) == pos_t(3,1) );
+
+}
+
 TEST_CASE( "test of reading grid from string", "[readstring]" )
 {
 	Grid g;
