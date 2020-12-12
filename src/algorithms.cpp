@@ -166,6 +166,7 @@ PointingPairsTriples( Grid& g, EN_ORIENTATION orient )
 }
 //----------------------------------------------------------------------------
 /// Pointing pairs/triples. See http://www.sudokuwiki.org/Intersection_Removal
+/** \warning This Algorithm operates on rows or cols only, not blocks */
 bool
 Algo_PointingPairsTriples( Grid& g )
 {

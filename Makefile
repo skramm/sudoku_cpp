@@ -1,6 +1,6 @@
 # standard Linux makefile
 
-.PHONY=program
+.PHONY=program test runall
 
 DOT_FILES=$(wildcard out/*.dot)
 SVG_FILES = $(patsubst %.dot,%.svg,$(DOT_FILES))
@@ -21,6 +21,13 @@ endif
 ifeq ($(TEST),Y)
 	CFLAGS += -DTESTMODE
 endif
+
+help:
+	@echo "Available targets:"
+	@echo " -test: build & run unit tests"
+	@echo " -dox: build doxygen pages"
+	@echo " -runall: build  program and run it on all the provided samples"
+
 
 #----------------------------------------------
 # Build without udgcd

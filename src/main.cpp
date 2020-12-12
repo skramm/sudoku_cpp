@@ -60,8 +60,8 @@ int main( int argc, const char** argv )
 	if( argc == 1 )
 	{
 		cout << "A sudoku solver, see https://github.com/skramm/sudoku_cpp\n"
-			<< "-usage:\n $ sudoku [-s] [-v] <-f file>: load grid file"
-			<< "\n $ sudoku [-s] [-v] [grid]: read grid from command line (or use default grid)\n"
+			<< "-usage:\n sudoku [-s] [-v] <-f file>: load grid file"
+			<< "\n sudoku [-s] [-v] grid: read grid from command line\n"
 			<< "-switches:\n -s: save grid to file (human readable), and can be loaded with -f"
 			<< "\n -v: verbose\n -l: log steps"
 			<< "\n-return value:\n "

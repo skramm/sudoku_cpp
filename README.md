@@ -46,7 +46,8 @@ Options: (must be separated, no grouping)
 
 * `-l`: will log all the steps (eliminating a candidate in a cell)
 * `-v`: verbose, will print out the mains steps and algorithms used. You'd better redirect in a file with that one, lots of output. Implies option "-s".
-* `-s`: will save the grid to a file name `current.sud` and to a timestamped file (useful when entering grid from command-line)
+* `-s`: will save the grid to a file name `current.sud` and to a timestamped file (`current_YYYYMMDD_HHMM.sud`).
+This is useful when entering grid from command-line, so you can get back to it.
 
 Return values (see `$ ./sudoku`):
 ```
@@ -62,8 +63,8 @@ Return values (see `$ ./sudoku`):
 
 Started out as just a small weekend side project...
 
-I found out that solving a Sudoku puzzle is tougher than what I thought. Several techniques can be used,
-some very advanced (and difficult to use with only pen and paper!).
+I found out that solving a Sudoku puzzle is tougher than what I thought.
+Several techniques can be used, some very advanced (and difficult to use with only pen and paper!).
 For these, the best resource is [Andrew C. Stuart's' website](http://www.sudokuwiki.org/sudoku.htm), from whom I took a lot of inspiration.
 Unfortunately, although it gives a very good explanation of the "algorithm", it doesn't actually describe that algorithm.
 So just consider this as some challenge to analyse and implement (some of) the techniques described on Andrew's site.
