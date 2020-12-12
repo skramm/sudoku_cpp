@@ -114,7 +114,7 @@ struct CandMap
 
 //----------------------------------------------------------------------------
 /// orientation : column, row or block
-enum EN_ORIENTATION { OR_COL=0, OR_ROW, OR_BLK };
+enum EN_ORIENTATION { OR_COL=0, OR_ROW, OR_BLK, OR_INVALID };
 
 inline
 const char*
@@ -187,12 +187,21 @@ enum BecauseType
 {
 	B_noReason
 	,B_ValuePresent
+	,B_NakedTriples
+	,B_PointingPairsTriples
+	,B_NakedPair
 };
 
 /// Holds explanation of why we remove a candidate
 struct Because
 {
 	Because() {}
+	Because( BecauseType bt,  EN_ORIENTATION orient )
+		: _bt(bt), _orient( orient )
+	{}
+	Because( BecauseType bt, const std::vector<value_t>& np, EN_ORIENTATION orient )
+		: _bt(bt), _np(np), _orient( orient )
+	{}
 	Because( BecauseType bt, index_t idx1, index_t idx2, EN_ORIENTATION orient )
 		: _bt(bt), _idx1(idx1), _idx2(idx2), _orient( orient )
 	{}
@@ -200,24 +209,47 @@ struct Because
 	{
 		std::stringstream oss;
 
-		oss << "is present in " << GetString( _orient )
-			<< " at position ";
-		pos_t pos;
-		switch( _orient )
+		switch( _bt )
 		{
-			case OR_ROW: pos = pos_t( _idx1, _idx2 ); break;
-			case OR_COL: pos = pos_t( _idx2, _idx1 ); break;
-			case OR_BLK: pos = getPosFromBlockIndex( _idx1, _idx2 ); break;
+
+			case B_ValuePresent:
+			{
+				oss << "is present in " << GetString( _orient )
+					<< " at position ";
+				pos_t pos;
+				switch( _orient )
+				{
+					case OR_ROW: pos = pos_t( _idx1, _idx2 ); break;
+					case OR_COL: pos = pos_t( _idx2, _idx1 ); break;
+					case OR_BLK: pos = getPosFromBlockIndex( _idx1, _idx2 ); break;
+					default: assert(0);
+				}
+				oss << pos;
+			}
+			break;
+
+			case B_NakedTriples:
+				oss << "Naked Triples in " << GetString( _orient );
+			break;
+
+			case B_PointingPairsTriples:
+				oss << "Pointing Pairs or Triples in " << GetString( _orient );
+			break;
+
+			case B_NakedPair:
+				oss << "Naked pair (" << (int)_np[0] << '-' << (int)_np[1] << ") in " << GetString( _orient );
+			break;
+
+			case B_noReason: break;
 			default: assert(0);
 		}
-		oss << pos;
-//		oss << "index " << (int)_idx << " orient=" << GetString( _orient );
 		return oss.str();
 	}
 	BecauseType    _bt = B_noReason;
 	index_t        _idx1;
 	index_t        _idx2;
-	EN_ORIENTATION _orient;
+	std::vector<value_t> _np;    ///< holds naked pair
+	EN_ORIENTATION _orient = OR_INVALID;
 };
 
 
@@ -273,22 +305,23 @@ private:
 		for( value_t i=1; i<10; i++ )
 			_cand[i] = false;
 	}
-	bool RemoveCellCandidates( std::vector<value_t> v_cand )
+	bool RemoveCellCandidates( std::vector<value_t> v_cand, Because bec=Because() )
 	{
 		bool b = false;
 		for( auto v: v_cand )
 		{
-			bool b1 = RemoveCandidate( v );
+			bool b1 = RemoveCandidate( v, bec );
 			if( b1 )
 				b = true;
 		}
 		return b;
 	}
+/// Remove candidate \c val in the cell, returns true if the cell did hold that value as candidate, false if not
 	bool RemoveCandidate( value_t val, Because bec=Because() )
 	{
 		if( _cand[val] )
 		{
-			if(bec._bt != B_noReason )
+			if( bec._bt != B_noReason )
 				LogStep( *this, "remove candidate " + std::to_string(val) + " because " + bec.getString() );
 			else
 				LogStep( *this, "remove candidate " + std::to_string(val) );

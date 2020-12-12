@@ -156,7 +156,7 @@ PointingPairsTriples( Grid& g, EN_ORIENTATION orient )
 					{
 						Cell& cell = v1d.GetCell(j);
 						if( j/3 != b )
-							if( cell.RemoveCandidate( v ) )
+							if( cell.RemoveCandidate( v, Because( B_PointingPairsTriples, orient ) ) )
 								ret_val = true;
 					}
 				}
@@ -368,15 +368,14 @@ SearchNakedPairs( Grid& g, EN_ORIENTATION orient )
 					if( j == v_pos[p] )
 						dontremove = true;
 				if( !dontremove )
-					if( cell.RemoveCellCandidates( v_cand_1 ) )
+					if( cell.RemoveCellCandidates( v_cand_1, Because( B_NakedPair, v_cand_1, orient ) ) )
 					{
 						res = true;
 						Nb++;
 					}
 			}
-			if( g_data.Verbose && Nb )
-//				std::cout << " - found a " << (n==2 ? "pair" : "triple") << ", removed " << (int)Nb << " candidates from others cells in same view\n";
-				std::cout << " - found a pair, removed " << (int)Nb << " candidates from others cells in same view\n";
+//			if( g_data.Verbose && Nb )
+//				std::cout << " - found a pair, removed " << (int)Nb << " candidates from others cells in same view\n";
 		}
 	}
 	return res;
@@ -606,7 +605,7 @@ SearchTriplesPattern( const std::vector<pos_vcand>& v_cand )
 }
 
 //----------------------------------------------------------------------------
-/// Naked triples attempt
+/// Search for Naked Triples, and remove candidates accordingly
 /**
 Returns true if a candidate has been removed
 */
@@ -638,7 +637,7 @@ SearchNakedTriples( Grid& g, EN_ORIENTATION orient )
 //					std::cout << "i=" << i << '\n';
 					if( std::find( std::begin(tp.cand_pos), std::end(tp.cand_pos), i ) == std::end(tp.cand_pos) )
 						for( int k=0; k<3; k++ )
-							if( v1d.GetCell(i).RemoveCandidate( tp.cand_values[k] ) )
+							if( v1d.GetCell(i).RemoveCandidate( tp.cand_values[k], Because( B_NakedTriples, orient ) ) )
 								retval = true;
 				}
 		}
