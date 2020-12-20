@@ -78,15 +78,18 @@ GetString( EN_ALGO algo )
 
 //----------------------------------------------------------------------------
 /// Used in the "naked triples" algorithm. See SearchTriplesPattern() and SearchNakedTriples()
-struct pos_vcand
+struct Pos_vcand
 {
-	index_t pos_index;
-	std::vector<value_t> values;
-	pos_vcand( size_t p, const std::vector<value_t>& vect ) : pos_index(p), values(vect) {}
+	index_t pos_index;            ///< Cell index in the row/col/block
+	std::vector<value_t> values;  ///< Candidates for that cell
+	Pos_vcand( size_t p, const std::vector<value_t>& vect )
+		: pos_index(p), values(vect)
+	{}
 };
 
+#if 0
 //----------------------------------------------------------------------------
-/// Return type of SearchTriplesPattern(). Holds the naked triples values and positions in the
+/// Return type of SearchTriplesPattern(). Holds the naked triples values and positions in the row/col/block
 struct NakedTriple
 {
 	bool found_NT = false;
@@ -103,8 +106,8 @@ struct NakedTriple
 		return s;
 	}
 };
-
-NakedTriple SearchTriplesPattern( const std::vector<pos_vcand>& v_cand );
+#endif
+NakedTriple SearchTriplesPattern( const std::vector<Pos_vcand>& v_cand );
 
 //----------------------------------------------------------------------------
 template<typename T>

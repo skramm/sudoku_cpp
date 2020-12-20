@@ -26,9 +26,9 @@ See https://github.com/skramm/sudoku_cpp
 		if( g_data.Verbose ) {\
 			std::cout << " -" << (o==OR_ROW ? "row" : (o==OR_COL?"col":"block") ) << '='; \
 			if( o==OR_ROW ) \
-				std::cout << GetRowLetter(i); \
+				std::cout << GetRowLetter(idx); \
 			else \
-				std::cout << (int)i+1; \
+				std::cout << (int)idx+1; \
 			std::cout << '\n'; \
 		} \
 	}

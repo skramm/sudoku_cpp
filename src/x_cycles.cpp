@@ -161,10 +161,10 @@ FindAllWeakLinks( const Grid& g, value_t val, pos_t current_pos )
 void
 FindStrongLinks( value_t val, EN_ORIENTATION orient, const Grid& g, std::vector<Link>& v_link )
 {
-	for( index_t i=0; i<9; i++ )  // for each row/col/block
+	for( index_t idx=0; idx<9; idx++ )  // for each row/col/block
 	{
 		PRINT_MAIN_IDX(orient);
-		View_1Dim_c v1d = g.GetView( orient, i );
+		View_1Dim_c v1d = g.GetView( orient, idx );
 		CandMap candMap;
 		for( index_t col1=0; col1<8; col1++ )   // for each cell in the view
 		{

@@ -60,6 +60,7 @@ struct Cell;
 void LogStep( int level, const Cell& cell, std::string msg );
 
 
+
 #ifdef NDEBUG
 	#define ASSERT_1( a, b ) ;
 #else
@@ -110,6 +111,26 @@ struct CandMap
 	private:
 		cand_map_t cmap;
 
+};
+//----------------------------------------------------------------------------
+/// Return type of SearchTriplesPattern(). Holds the naked triples values and positions in the row/col/block
+struct NakedTriple
+{
+	bool found_NT = false;
+	std::array<value_t,3> cand_values;
+	std::array<index_t,3> cand_pos;
+	void foundPattern() { found_NT = true; }
+
+	friend std::ostream& operator << ( std::ostream& s, const NakedTriple& nt )
+	{
+//		s << "NakedTriple: found=" << std::boolalpha << nt.found_NT;
+		if( nt.found_NT )
+			s << '(' << (int)nt.cand_values[0] << '-' << (int)nt.cand_values[1] << '-' << (int)nt.cand_values[2] << ')';
+		else
+			s << "(--NONE!--)";
+//		s << '\n';
+		return s;
+	}
 };
 
 //----------------------------------------------------------------------------
@@ -196,9 +217,14 @@ enum BecauseType
 struct Because
 {
 	Because() {}
-	Because( BecauseType bt,  EN_ORIENTATION orient )
+	Because( BecauseType bt, EN_ORIENTATION orient )
 		: _bt(bt), _orient( orient )
 	{}
+
+	Because( BecauseType bt, EN_ORIENTATION orient, NakedTriple tp )
+		: _bt(bt), _orient( orient ), _nakedTriple(tp)
+	{}
+
 	Because( BecauseType bt, const std::vector<value_t>& np, EN_ORIENTATION orient )
 		: _bt(bt), _np(np), _orient( orient )
 	{}
@@ -229,7 +255,7 @@ struct Because
 			break;
 
 			case B_NakedTriples:
-				oss << "Naked Triples in " << GetString( _orient );
+				oss << "Naked Triples in " << GetString( _orient ) << ": " << _nakedTriple;
 			break;
 
 			case B_PointingPairsTriples:
@@ -250,6 +276,7 @@ struct Because
 	index_t        _idx2;
 	std::vector<value_t> _np;    ///< holds naked pair
 	EN_ORIENTATION _orient = OR_INVALID;
+	NakedTriple    _nakedTriple;
 };
 
 

@@ -106,7 +106,7 @@ TEST_CASE( "test of naked triple search", "[triple]" )
 	std::array<index_t,3> trip_pos{4,5,6} ;
 	{
 		INFO( "test case A" )
-		std::vector<pos_vcand> v;
+		std::vector<Pos_vcand> v;
 		v.emplace_back( 3, std::vector<value_t>{4,5} );
 		v.emplace_back( 4, std::vector<value_t>{1,2,3} );
 		v.emplace_back( 5, std::vector<value_t>{1,2,3} );
@@ -119,7 +119,7 @@ TEST_CASE( "test of naked triple search", "[triple]" )
 	}
 	{
 		INFO( "test case B" )
-		std::vector<pos_vcand> v;
+		std::vector<Pos_vcand> v;
 		v.emplace_back( 3, std::vector<value_t>{4,5} );
 		v.emplace_back( 4, std::vector<value_t>{1,2} );
 		v.emplace_back( 5, std::vector<value_t>{1,2,3} );
@@ -132,7 +132,7 @@ TEST_CASE( "test of naked triple search", "[triple]" )
 	}
 	{
 		INFO( "test case C - no good" )
-		std::vector<pos_vcand> v;
+		std::vector<Pos_vcand> v;
 		v.emplace_back( 3, std::vector<value_t>{4,5} );
 		v.emplace_back( 4, std::vector<value_t>{1,2} );
 		v.emplace_back( 5, std::vector<value_t>{1,2} );
@@ -145,7 +145,7 @@ TEST_CASE( "test of naked triple search", "[triple]" )
 		INFO( "test case C - good" )
 		std::vector<value_t> vC{2,3};
 
-		std::vector<pos_vcand> v;
+		std::vector<Pos_vcand> v;
 		v.emplace_back( 3, std::vector<value_t>{4,5} );
 		v.emplace_back( 4, std::vector<value_t>{1,2} );
 		v.emplace_back( 5, std::vector<value_t>{2,3} );
@@ -159,7 +159,7 @@ TEST_CASE( "test of naked triple search", "[triple]" )
 	{
 		INFO( "test case D - no good" )
 		std::cout << "test case D - no good\n";
-		std::vector<pos_vcand> v;
+		std::vector<Pos_vcand> v;
 		v.emplace_back( 3, std::vector<value_t>{4,5} );
 		v.emplace_back( 4, std::vector<value_t>{1,6} );
 		v.emplace_back( 5, std::vector<value_t>{1,2} );
@@ -171,7 +171,7 @@ TEST_CASE( "test of naked triple search", "[triple]" )
 	{
 		INFO( "test case D - good" )
 		std::cout << "test case D - good\n";
-		std::vector<pos_vcand> v;
+		std::vector<Pos_vcand> v;
 		v.emplace_back( 2, std::vector<value_t>{1,4} );
 		v.emplace_back( 3, std::vector<value_t>{4,5} );
 		v.emplace_back( 4, std::vector<value_t>{1,3} );

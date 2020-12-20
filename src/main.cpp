@@ -107,7 +107,7 @@ int main( int argc, const char** argv )
 		{
 			nbFlags++;
 			g_data.Verbose = true;
-			g_data.LogSteps = 2;
+			g_data.LogSteps = 3;
 			cout << " -Option -v (Verbose) activated\n";
 		}
 

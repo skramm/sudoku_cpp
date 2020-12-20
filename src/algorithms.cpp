@@ -38,10 +38,10 @@ BoxReduction( EN_ORIENTATION orient, Grid& g )
 {
 	PRINT_ALGO_START;
 
-	for( index_t i=0; i<9; i++ )  // for each row/col
+	for( index_t idx=0; idx<9; idx++ )  // for each row/col
 	{
 		PRINT_MAIN_IDX(orient);
-		View_1Dim_nc v1d = g.GetView( orient, i );
+		View_1Dim_nc v1d = g.GetView( orient, idx );
 		for( value_t val=1; val<10; val++ )          // for each candidate value
 		{
 			std::vector<pos_t> v_cand;
@@ -70,9 +70,9 @@ BoxReduction( EN_ORIENTATION orient, Grid& g )
 					{
 						Cell& c = block.GetCell( j );
 						if(
-							( orient == OR_ROW && c.GetPos().first != i )
+							( orient == OR_ROW && c.GetPos().first != idx )
 							||
-							( orient == OR_COL && c.GetPos().second != i )
+							( orient == OR_COL && c.GetPos().second != idx )
 						)
 						{
 							if( c.RemoveCandidate( val ) )
@@ -132,10 +132,10 @@ PointingPairsTriples( Grid& g, EN_ORIENTATION orient )
 	assert( orient == OR_ROW || orient == OR_COL );
 
 	bool ret_val(false);
-	for( index_t i=0; i<9; i++ )  // for each row/col
+	for( index_t idx=0; idx<9; idx++ )  // for each row/col
 	{
 		PRINT_MAIN_IDX(orient);
-		View_1Dim_nc v1d = g.GetView( orient, i );
+		View_1Dim_nc v1d = g.GetView( orient, idx );
 
 		for( index_t b=0; b<3; b++ ) // for each of the 3 blocks dividing the view
 		{
@@ -183,10 +183,10 @@ RemoveCandidates( Grid& g, EN_ORIENTATION orient )
 	PRINT_ALGO_START;
 
 	bool res = false;
-	for( index_t i=0; i<9; i++ )  // for each row/col/block
+	for( index_t idx=0; idx<9; idx++ )  // for each row/col/block
 	{
 		PRINT_MAIN_IDX(orient);
-		View_1Dim_nc v1d = g.GetView( orient, i );
+		View_1Dim_nc v1d = g.GetView( orient, idx );
 
 		for( index_t j=0; j<9; j++ ) // for each cell in the view
 		{
@@ -197,7 +197,7 @@ RemoveCandidates( Grid& g, EN_ORIENTATION orient )
 //				std::cout << "pos=" << cell.GetPos() << " : currentValue=" << (int)currentValue << '\n';
 				for( index_t k=0; k<9; k++ ) // for each other cell in the view
 					if( v1d.GetCell(k).HasCandidate( currentValue ) )
-						res = v1d.GetCell(k).RemoveCandidate( currentValue, Because( B_ValuePresent, i, j, orient ) );
+						res = v1d.GetCell(k).RemoveCandidate( currentValue, Because( B_ValuePresent, idx, j, orient ) );
 			}
 		}
 	}
@@ -221,10 +221,10 @@ SearchSingleMissing( Grid& g, EN_ORIENTATION orient )
 {
 	PRINT_ALGO_START;
 
-	for( index_t i=0; i<9; i++ )  // for each row/col/block
+	for( index_t idx=0; idx<9; idx++ )  // for each row/col/block
 	{
 		PRINT_MAIN_IDX(orient);
-		View_1Dim_nc v1d = g.GetView( orient, i );
+		View_1Dim_nc v1d = g.GetView( orient, idx );
 
 		std::vector<index_t>   v_zero;
 
@@ -269,7 +269,8 @@ Algo_SearchSingleMissing( Grid& g )
 	return true;
 }
 //----------------------------------------------------------------------------
-/// Search for cells in a row/col/block where a candidate appears in only one cell. If so, then it has to be the value in that cell
+/// Search for cells in a row/col/block where a candidate appears in only one cell.
+/// If so, then it has to be the value in that cell
 bool
 SearchSingleCand( Grid& g, EN_ORIENTATION orient )
 {
@@ -277,12 +278,12 @@ SearchSingleCand( Grid& g, EN_ORIENTATION orient )
 
 	bool res = false;
 	bool stop = false;
-	for( index_t i=0; i<9 && stop==false; i++ )  // for each row/col/block
+	for( index_t idx=0; idx<9 && stop==false; idx++ )  // for each row/col/block
 	{
 		PRINT_MAIN_IDX(orient);
-		View_1Dim_nc v1d = g.GetView( orient, i );
+		View_1Dim_nc v1d = g.GetView( orient, idx );
 
-		auto cand_count = CoundCandidates( g, orient, i );
+		auto cand_count = CoundCandidates( g, orient, idx );
 
 		for( index_t val=1; val<10; val++ )  // analyse results
 		{
@@ -327,11 +328,11 @@ SearchNakedPairs( Grid& g, EN_ORIENTATION orient )
 	PRINT_ALGO_START;
 
 	bool res = false;
-	for( index_t i=0; i<9; i++ )  // for each row/col/block
+	for( index_t idx=0; idx<9; idx++ )  // for each row/col/block
 	{
 		PRINT_MAIN_IDX(orient);
 		std::vector<index_t> v_pos(1);
-		View_1Dim_nc v1d = g.GetView( orient, i );
+		View_1Dim_nc v1d = g.GetView( orient, idx );
 		std::vector<value_t> v_cand_1;
 
 		for( index_t j=0; j<8 && (v_pos.size()!=2); j++ ) // for each cell in the view (and stop if found 'n' matches)
@@ -395,7 +396,7 @@ Algo_SearchNakedPairs( Grid& g )
 //----------------------------------------------------------------------------
 /// helper function for SearchTriplesPattern(), search for "pattern D"
 void
-CheckForTriplePattern_D( const std::vector<pos_vcand>& v_cand, NakedTriple& ret_val )
+CheckForTriplePattern_D( const std::vector<Pos_vcand>& v_cand, NakedTriple& ret_val )
 {
 //	std::cout << " case D !\n";
 
@@ -466,7 +467,7 @@ CheckForTriplePattern_D( const std::vector<pos_vcand>& v_cand, NakedTriple& ret_
 /// helper function for SearchTriplesPattern(), search for "type C" pattern
 void
 CheckForTriplePattern_C(
-	const std::vector<pos_vcand>& v_cand,
+	const std::vector<Pos_vcand>& v_cand,
 	const std::vector<index_t>& v_pairs,
 	const std::vector<index_t>& v_triples,
 	NakedTriple& ret_val
@@ -521,11 +522,11 @@ The combinations of candidates for a Naked Triple will be one of the following:
 - case D: (12) (23) (13) - {2/2/2}
 \endverbatim
 
-- Input: a set of candidates, described with \ref pos_vcand
+- Input: a set of candidates, described with \ref Pos_vcand
 - output: a NakedTriple object, holding a boolean, the triple pattern values and positions
 */
 NakedTriple
-SearchTriplesPattern( const std::vector<pos_vcand>& v_cand )
+SearchTriplesPattern( const std::vector<Pos_vcand>& v_cand )
 {
 	NakedTriple return_value;
 
@@ -608,7 +609,8 @@ SearchTriplesPattern( const std::vector<pos_vcand>& v_cand )
 //----------------------------------------------------------------------------
 /// Search for Naked Triples, and remove candidates accordingly
 /**
-Returns true if a candidate has been removed
+- Returns true if a candidate has been removed
+- Related: \c Pos_vcand
 */
 bool
 SearchNakedTriples( Grid& g, EN_ORIENTATION orient )
@@ -616,29 +618,29 @@ SearchNakedTriples( Grid& g, EN_ORIENTATION orient )
 	PRINT_ALGO_START;
 
 	bool retval = false;
-	for( index_t i=0; i<9; i++ )  // for each row/col/block
+	for( index_t idx=0; idx<9; idx++ )  // for each row/col/block
 	{
 		PRINT_MAIN_IDX(orient);
-		View_1Dim_nc v1d = g.GetView( orient, i );
-		std::vector<pos_vcand> v_cand;
+		View_1Dim_nc v1d = g.GetView( orient, idx );
+		std::vector<Pos_vcand> v_cand;
 
 		for( index_t j=0; j<9; j++ ) // for each cell in the view (and stop if found 'n' matches)
 		{
 			Cell& cell = v1d.GetCell(j);
 			if( cell.NbCandidates() == 2 || cell.NbCandidates() == 3 )     // if cell has 2 or 3 candidates,
-				v_cand.emplace_back( j, cell.GetCandidates() );            // then, store it.
+				v_cand.emplace_back( j, cell.GetCandidates() );            // then, store its index and the set of candidates.
 		}
 		if( v_cand.size() > 2 )  // if more than two cells with 2 or 3 candidates found, then search for "naked triple patterns"
 		{
 			auto tp = SearchTriplesPattern(v_cand); // search for triple pattern
 //			std::cout <<" returned value: " << tp;
-			if( tp.found_NT )                                    // if a naked triple was found, then
+			if( tp.found_NT )                                 // if a naked triple was found, then:
 				for( index_t i=0; i<9; i++ )                  // for all the other positions of the view, remove the candidates found
 				{
 //					std::cout << "i=" << i << '\n';
 					if( std::find( std::begin(tp.cand_pos), std::end(tp.cand_pos), i ) == std::end(tp.cand_pos) )
 						for( int k=0; k<3; k++ )
-							if( v1d.GetCell(i).RemoveCandidate( tp.cand_values[k], Because( B_NakedTriples, orient ) ) )
+							if( v1d.GetCell(i).RemoveCandidate( tp.cand_values[k], Because( B_NakedTriples, orient, tp ) ) )
 								retval = true;
 				}
 		}
@@ -857,10 +859,10 @@ Algo_XY_Wing( Grid& g )
 	PRINT_ALGO_START_2;
 
 	bool retval(false);
-	for( index_t i=0; i<9; i++ )  // for each row
+	for( index_t idx=0; idx<9; idx++ )  // for each row
 	{
 		PRINT_MAIN_IDX(OR_ROW);
-		View_1Dim_nc v1d = g.GetView( OR_ROW, i );
+		View_1Dim_nc v1d = g.GetView( OR_ROW, idx );
 		for( index_t col=0; col<9; col++ )   // for each col
 		{
 			Cell& key = v1d.GetCell(col);
