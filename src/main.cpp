@@ -36,9 +36,9 @@ This file is part of https://github.com/skramm/sudoku_cpp
 #include "header.h"
 #include "algorithms.h"
 
-#include <fstream>
+//#include <fstream>
 //#include <chrono>
-#include <sstream>
+//#include <sstream>
 #include <iomanip>
 
 using namespace std;
@@ -50,7 +50,8 @@ enum ReturnValues: int
 	,RV_missingFileName
 	,RV_missingCells
 	,RV_invalidGrid
-	,RV_solvingFailue
+	,RV_solvingFailure
+	,RV_invalidSwitch
 };
 
 /// sudoku solver program
@@ -70,7 +71,8 @@ int main( int argc, const char** argv )
 			<< RV_missingFileName << ": missing filename after -f\n "
 			<< RV_missingCells << ": invalid grid given (must be 81 characters, only digits or '.')\n "
 			<< RV_invalidGrid << ": invalid grid\n "
-			<< RV_solvingFailue << ": unable to solve\n";
+			<< RV_solvingFailure << ": unable to solve\n"
+			<< RV_invalidSwitch << ": invalid switch\n";
 
 		return RV_success;
 	}
@@ -78,9 +80,11 @@ int main( int argc, const char** argv )
 	auto nbFlags = 0;
 	bool hasFileFlag = false;
 	bool saveGridToFile = false;
+
 	for( int i=1; i<argc; i++ )
 	{
-		if( std::string( argv[i] ) == std::string( "-f" ) )
+		auto arg = std::string( argv[i] );
+		if( arg == "-f" )
 		{
 			if( i+1 < argc )
 			{
@@ -99,20 +103,30 @@ int main( int argc, const char** argv )
 			}
 		}
 
-		if( std::string( argv[i] ) == std::string( "-v" ) )
+		if( arg == "-v" )
 		{
 			nbFlags++;
 			g_data.Verbose = true;
-			g_data.LogSteps = true;
+			g_data.LogSteps = 2;
 			cout << " -Option -v (Verbose) activated\n";
 		}
-		if( std::string( argv[i] ) == std::string( "-l" ) )
+
+		if( arg.substr(0,2) == "-l" )     // logging options
 		{
 			nbFlags++;
-			g_data.LogSteps = true;
+			g_data.LogSteps = 1;
 			cout << " -Option -l (log steps) activated\n";
+			if( arg.size() > 2 )
+				switch( arg.back() )
+				{
+					case '1': break;
+					case '2': g_data.LogSteps = 2; break;
+					case '3': g_data.LogSteps = 3; break;
+					default: std::cerr << "invalid switch !\n"; exit(RV_invalidSwitch);
+				}
 		}
-		if( std::string( argv[i] ) == std::string( "-s" ) )
+
+		if( arg == "-s" )
 		{
 			nbFlags++;
 			saveGridToFile = true;
@@ -157,7 +171,7 @@ int main( int argc, const char** argv )
 	{
 		cout << "failure, used " << g_data.NbSteps << " steps\n";
 		grid.PrintCandidates( cout, "final" );
-		ret = RV_solvingFailue;
+		ret = RV_solvingFailure;
 	}
 	cout << grid;
     return ret;

@@ -42,14 +42,15 @@ GlobData g_data;
 
 //----------------------------------------------------------------------------
 void
-LogStep( const Cell& cell, std::string msg )
+LogStep( int level, const Cell& cell, std::string msg )
 {
 	++g_data.NbSteps;
-	if( g_data.LogSteps )
+	if( level <= g_data.LogSteps )
 		std::cout << "*** step " << g_data.NbSteps << ": CELL " << cell._pos << ": " << msg << '\n';
 }
 //----------------------------------------------------------------------------
 /// \todo 20201115: is this used somewhere ???
+#if 0
 std::ostream&
 operator << ( std::ostream& s, const Viewtable& vt )
 {
@@ -66,8 +67,8 @@ operator << ( std::ostream& s, const Viewtable& vt )
 		}
 		s << '\n';
 	}
-
 }
+#endif
 //----------------------------------------------------------------------------
 void
 DrawLine( std::ostream& s, char ch, bool PrintValues )
@@ -114,7 +115,8 @@ PrintLineNumbers( std::ostream& s, int before, int after )
 std::ostream&
 operator << ( std::ostream& s, const Grid& g )
 {
-	s << "nb unknowns cells " << g.NbUnknows() << "\n";
+	if( g.NbUnknows() )
+		s << "nb unknowns cells " << g.NbUnknows() << "\n";
 	PrintLineNumbers( s, 3, 0 );
 
 	DrawLine( s, '-', true );
@@ -144,7 +146,6 @@ Grid::PrintCandidates( std::ostream& s, std::string txt ) const
 {
 	s << "Candidates: " << txt << '\n';
 	s << " -nb unknowns (cand) " << NbUnknows() << "\n";
-//	s << " -nb unknowns (values) " << NbUnknows2() << "\n";
 
 	Viewtable vt = BuildViewtable();
 
@@ -542,7 +543,6 @@ Grid::ProcessAlgorithm( EN_ALGO algo )
 	}
 //	SearchSingles();
 //	PrintAll( std::cout, std::string( "after algo " + std::string( GetString(algo) ) ) );
-//	assert( NbUnknows() == NbUnknows2() );
 	return res;
 }
 //----------------------------------------------------------------------------

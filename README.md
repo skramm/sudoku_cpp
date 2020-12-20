@@ -42,14 +42,28 @@ $ make runall
 `$ sudoku [options] -f file`
 `$ sudoku [options] grid`
 
-Options: (must be separated, no grouping)
+### 2.1 - Options:
 
-* `-l`: will log all the steps (eliminating a candidate in a cell)
-* `-v`: verbose, will print out the mains steps and algorithms used. You'd better redirect in a file with that one, lots of output. Implies option "-s".
+The following switches are available.
+Must be separated, no grouping.
+
+* `-l` or `-lx`: activate logging (see below).
+* `-v`: verbose, will print out the mains steps and algorithms used.
+You'd better redirect in a file with that one, lots of output. Implies option "-l2".
 * `-s`: will save the grid to a file name `current.sud` and to a timestamped file (`current_YYYYMMDD_HHMM.sud`).
 This is useful when entering grid from command-line, so you can get back to it.
 
-Return values (see `$ ./sudoku`):
+### 2.2 - Logging
+
+The "steps" can be either removing a candidate in a cell, that has a set of candidates, or assigning a value to a cell.
+The latter is done automatically when there is only one candidate left.
+
+Two logging levels are available:
+* With `-l` or `-l1`, only the steps where a value is assigned to a cell are printed
+* With `-l2`, all the steps are printed
+* With `-l3`, the algorithm used is printed
+
+### 2.3 Return values (see `$ ./sudoku`):
 ```
  0: success (solved puzzle)
  1: unable to read given filename (missing or format error)

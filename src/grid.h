@@ -57,7 +57,7 @@ using pospair_t = std::pair<pos_t,pos_t>;
 using cand_map_t=std::map<value_t,bool>;
 
 struct Cell;
-void LogStep( const Cell& cell, std::string msg );
+void LogStep( int level, const Cell& cell, std::string msg );
 
 
 #ifdef NDEBUG
@@ -77,7 +77,7 @@ void LogStep( const Cell& cell, std::string msg );
 /// holds some global vars
 struct GlobData
 {
-	bool LogSteps = false;
+	int  LogSteps = 0;
 	bool Verbose  = false;
 	int  NbSteps  = 0;
 };
@@ -322,15 +322,15 @@ private:
 		if( _cand[val] )
 		{
 			if( bec._bt != B_noReason )
-				LogStep( *this, "remove candidate " + std::to_string(val) + " because " + bec.getString() );
+				LogStep( 2, *this, "remove candidate " + std::to_string(val) + " because " + bec.getString() );
 			else
-				LogStep( *this, "remove candidate " + std::to_string(val) );
+				LogStep( 2, *this, "remove candidate " + std::to_string(val) );
 			_cand[val] = false;
 			if( NbCandidates() == 1 )
 			{
 				_value = GetValueFromCandidate();
 				_cand[_value] = false;
-				LogStep( *this, "assign value " + std::to_string(_value) );
+				LogStep( 1, *this, "assign value " + std::to_string(_value) );
 			}
 			return true;
 		}

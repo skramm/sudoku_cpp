@@ -66,13 +66,13 @@ GetString( EN_ALGO algo )
 
 #define PRINT_ALGO_START \
 	{ \
-		if( g_data.Verbose ) \
+		if( g_data.LogSteps > 2 ) \
 			std::cout << "START ALGO: " << __FUNCTION__ << ", orient=" << GetString( orient ) << '\n'; \
 	}
 
 #define PRINT_ALGO_START_2 \
 	{ \
-		if( g_data.Verbose ) \
+		if( g_data.LogSteps > 2 ) \
 			std::cout << "START ALGO: " << __FUNCTION__ << '\n'; \
 	}
 

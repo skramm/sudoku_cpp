@@ -22,13 +22,6 @@ ifeq ($(TEST),Y)
 	CFLAGS += -DTESTMODE
 endif
 
-help:
-	@echo "Available targets:"
-	@echo " -test: build & run unit tests"
-	@echo " -dox: build doxygen pages"
-	@echo " -runall: build  program and run it on all the provided samples"
-
-
 #----------------------------------------------
 # Build without udgcd
 ifeq "$(UDGCD)" ""
@@ -84,4 +77,11 @@ cleandoc:
 
 test: test_catch
 	./test_catch -s
+
+help:
+	@echo "Available targets:"
+	@echo " -test: build & run unit tests"
+	@echo " -dox: build doxygen pages"
+	@echo " -runall: build  program and run it on all the provided samples"
+
 
