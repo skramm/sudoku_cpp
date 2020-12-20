@@ -52,6 +52,7 @@ Must be separated, no grouping.
 You'd better redirect in a file with that one, lots of output. Implies option "-l2".
 * `-s`: will save the grid to a file name `current.sud` and to a timestamped file (`current_YYYYMMDD_HHMM.sud`).
 This is useful when entering grid from command-line, so you can get back to it.
+* `-c`: checking grid validity at every step (useful to catch bugs!)
 
 ### 2.2 - Logging
 
@@ -83,7 +84,12 @@ For these, the best resource is [Andrew C. Stuart's' website](http://www.sudokuw
 Unfortunately, although it gives a very good explanation of the "algorithm", it doesn't actually describe that algorithm.
 So just consider this as some challenge to analyse and implement (some of) the techniques described on Andrew's site.
 
-## 4 - history
+## 4 - History
+
+* Latest (20201220)
+ * added `-c` option (checking)
+ * extended logging options
+ * found bug in X-Cycle, see `samples/grid3.sud`
 
 * 20201115:
  * changed usage: you can now enter grid directly from command-line.

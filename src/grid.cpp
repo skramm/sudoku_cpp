@@ -209,13 +209,13 @@ Grid::Grid()
 		}
 }
 //----------------------------------------------------------------------------
-/// Returns false if puzzle is inconsistent
+/// Returns false if puzzle is inconsistent, and prints message
 bool
 Grid::Check( EN_ORIENTATION orient ) const
 {
-	for( index_t i=0; i<9; i++ )  // for each row/col/block
+	for( index_t idx=0; idx<9; idx++ )  // for each row/col/block
 	{
-		View_1Dim_c v1d = GetView( orient, i );
+		View_1Dim_c v1d = GetView( orient, idx );
 
 		for( index_t j=0; j<9; j++ ) // for each cell in the view
 		{
@@ -229,7 +229,14 @@ Grid::Check( EN_ORIENTATION orient ) const
 					auto val_2 = cell_2.GetValue();
 					if( k != j && val_1 == val_2 )
 					{
-						std::cout << "Error, cell at " << cell_1._pos << " and at " << cell_2._pos << " have same value: " << (int)val_1 << '\n';
+						std::cout << "Checking " << GetString( orient ) << ' ';
+						if( orient == OR_ROW )
+							std::cout << GetRowLetter( idx );
+						else
+							std::cout << (int)idx+1;
+						std::cout << ": Error, cell " << cell_1._pos
+							<< " and " << cell_2._pos
+							<< " have same value: " << (int)val_1 << '\n';
 						return false;
 					}
 				}
@@ -415,16 +422,19 @@ Grid::GetView( EN_ORIENTATION orient, index_t idx )
 void
 Grid::PrintAll( std::ostream& s, std::string txt ) const
 {
-	if( g_data.Verbose )
-	{
+//	if( g_data.Verbose )
+//	{
 		s << "Values: " << txt << "\n" << *this;
-		PrintCandidates( std::cout, txt );
-	}
-	if( !Check() )
-	{
-		std::cout << "grid invalid !\n";
-		assert(0);
-	}
+		PrintCandidates( s, txt );
+//	}
+/*
+	if( g_data.doChecking )
+		if( !Check() )
+		{
+			std::cout << "grid invalid !\n";
+			assert(0);
+		}
+*/
 }
 //----------------------------------------------------------------------------
 /// Returns a set of cell positions that are on same row/col/block as \c src and share some common properties
@@ -568,8 +578,13 @@ Grid::Solve()
 			nu_after = NbUnknows();
 //			std::cout << "  -loop 2: algo " << algo << "-" << GetString(algo) << ": res=" << res <<  ", nb unknowns left=" << nu_after << "\n";
 
-			if( g_data.Verbose && res )
-				PrintAll( std::cout, "iter " + std::to_string(iter) + ": after algo " + GetString(algo)  );
+			if( res )
+			{
+				if( g_data.Verbose )
+					PrintAll( std::cout, "iter " + std::to_string(iter) + ": after algo " + GetString(algo)  );
+				if( g_data.doChecking )
+					assert( Check() );
+			}
 
 			if( !res )                                                       // if no changes happened, then switch to next algorithm
 				algo = static_cast<EN_ALGO>( static_cast<int>(algo) +1 );

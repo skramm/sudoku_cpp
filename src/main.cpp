@@ -111,6 +111,13 @@ int main( int argc, const char** argv )
 			cout << " -Option -v (Verbose) activated\n";
 		}
 
+		if( arg == "-c" )      // checking at every step
+		{
+			nbFlags++;
+			g_data.doChecking = true;
+			cout << " -Option -c (Checking) activated\n";
+		}
+
 		if( arg.substr(0,2) == "-l" )     // logging options
 		{
 			nbFlags++;
@@ -146,11 +153,11 @@ int main( int argc, const char** argv )
 	grid.InitCandidates();
 	if( saveGridToFile )
 	{
-		grid.saveToFile( "current.sud" );
+		grid.saveToFile( "grid_start.sud" );
 		auto t = std::time(nullptr);
 		auto tm = *std::localtime(&t);
 		std::ostringstream oss;
-		oss << "current_"
+		oss << "grid_start_"
 			<< std::put_time( &tm, "%Y%m%d_%H%M" )
 			<< ".sud";
 		grid.saveToFile( oss.str() );
@@ -166,7 +173,13 @@ int main( int argc, const char** argv )
     }
     auto ret = RV_success;
     if( grid.Solve() )
+	{
 		cout << "-solved with " << g_data.NbSteps << " steps\n";
+		if( saveGridToFile )
+		{
+			grid.saveToFile( "grid_solved.sud" );
+		}
+	}
 	else
 	{
 		cout << "failure, used " << g_data.NbSteps << " steps\n";

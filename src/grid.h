@@ -81,6 +81,7 @@ struct GlobData
 	int  LogSteps = 0;
 	bool Verbose  = false;
 	int  NbSteps  = 0;
+	bool doChecking = false;
 };
 extern GlobData g_data;
 
