@@ -203,6 +203,7 @@ BuildCycle( const std::string& s )
 void
 CheckCycle( const Cycle& c, En_CycleType ct, int pos=0 )
 {
+	bool fail = false;
 	std::cout << "CheckCycle: " << c;
 	Cycle c2(c);                      // copy, 'coz original is const
 	for( decltype(c.size()) i=0; i<c.size(); i++ )
@@ -211,6 +212,7 @@ CheckCycle( const Cycle& c, En_CycleType ct, int pos=0 )
 		if( GetCycleType( c ).first != ct )
 		{
 			std::cout << "- Failure for cycle: " << c << ": Is not of required type\n";
+			fail = true;
 		}
 	}
 	if( ct != CT_Invalid )
@@ -218,12 +220,16 @@ CheckCycle( const Cycle& c, En_CycleType ct, int pos=0 )
 		if( GetCycleType( c ).second != pos )
 		{
 			std::cout << "- Failure for cycle: " << c << ": position not correct\n";
+			fail = true;
 		}
 	}
+	CHECK( !fail );
 }
 
 TEST_CASE( "test of cycle detection", "[cycles]" )
 {
+	CheckCycle( BuildCycle( "W-W-S-S" ), CT_Invalid );
+
 	CheckCycle( BuildCycle( "W-S-W-W-W-S" ), CT_Invalid );
 	CheckCycle( BuildCycle( "W-S-W-S-W-S" ), CT_Continuous );
 	CheckCycle( BuildCycle( "W-S-W-W-S-W-S" ), CT_Discont_2WL, 2 );

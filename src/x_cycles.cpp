@@ -47,8 +47,8 @@ See:
 #include "grid.h"
 #include "header.h"
 #include "x_cycles.h"
+#include "algorithms.h"
 
-//#include <boost/graph/adjacency_list.hpp>
 
 #ifdef GENERATE_DOT_FILES
 	#include <boost/graph/graphviz.hpp>
@@ -79,7 +79,7 @@ GetCommonCell( const Link& l1, const Link& l2, Grid& g )
 	assert(0); // should never be here...
 }
 //----------------------------------------------------------------------------
-/// Searches from pos \c pos for all the weak links based on value \c val. Result is added to \c v_wl
+/// Searches from position \c pos for all the weak links based on value \c val. Result is \b added to \c v_wl
 void
 FindWeakLinks( const Grid& g, value_t val, pos_t current_pos, EN_ORIENTATION orient, std::vector<Link>& v_wl )
 {
@@ -123,24 +123,6 @@ FindWeakLinks( const Grid& g, value_t val, pos_t current_pos, EN_ORIENTATION ori
 //	std::cout << "after WeakLink search from pos " << current_pos << " with value -" << (int)val << "- with orientation " << GetString( orient ) << '\n';
 //	PrintVector( v_wl, "WeakLink positions" );
 }
-//----------------------------------------------------------------------------
-#if 0
-std::vector<Link>
-FindAllWeakLinks_or( const Grid& g, value_t val, pos_t current_pos, EN_ORIENTATION current_or )
-{
-	std::vector<Link> v_wl;
-	if( current_or != OR_ROW )
-		FindWeakLinks( g, val, current_pos, OR_ROW, v_wl );
-	if( current_or != OR_COL )
-		FindWeakLinks( g, val, current_pos, OR_COL, v_wl );
-	if( current_or != OR_BLK )
-		FindWeakLinks( g, val, current_pos, OR_BLK, v_wl );
-	auto v_wl2 = VectorRemoveDupes( v_wl );
-
-	PrintVector( v_wl2, "FindAllWeakLinks" );
-	return v_wl2;
-}
-#endif
 //----------------------------------------------------------------------------
 std::vector<Link>
 FindAllWeakLinks( const Grid& g, value_t val, pos_t current_pos )
@@ -206,7 +188,7 @@ FindStrongLinks( value_t val, const Grid& g )
 	return v_link2;
 }
 //----------------------------------------------------------------------------
-/// Vertex datatype, with BGL. Holds a cell positions
+/// Vertex datatype, with BGL. Holds a cell position
 struct GraphNode
 {
 	pos_t pos;
@@ -220,10 +202,10 @@ struct GraphEdge
 //-------------------------------------------------------------------
 /// A functor class used to printout the properties of the edges
 template <class T1,class T2>
-class edge_writer_2
+class EdgeWriter_2
 {
 	public:
-		edge_writer_2(T1 v1, T2 v2) : _v1(v1),_v2(v2) {}
+		EdgeWriter_2(T1 v1, T2 v2) : _v1(v1),_v2(v2) {}
 		template <class Edge>
 		void operator()( std::ostream &out, const Edge& e ) const
 		{
@@ -243,10 +225,10 @@ class edge_writer_2
 //-------------------------------------------------------------------
 /// A functor class used to printout the properties of the nodes
 template <class T1>
-class node_writer
+class NodeWriter
 {
 	public:
-		node_writer(T1 v1) : _v1(v1) {}
+		NodeWriter(T1 v1) : _v1(v1) {}
 		template <class Vertex>
 		void operator()( std::ostream &out, const Vertex& v ) const
 		{
@@ -259,19 +241,19 @@ class node_writer
 /// Helper function to printout nodes in the graph, used by boost::write_graphviz()
 template <class T1>
 inline
-node_writer<T1>
+NodeWriter<T1>
 make_node_writer( T1 v1 )
 {
-	return node_writer<T1>(v1);
+	return NodeWriter<T1>(v1);
 }
 //-------------------------------------------------------------------
 /// Helper function to printout edges in the graph, used by boost::write_graphviz()
 template <class T1,class T2>
 inline
-edge_writer_2<T1,T2>
+EdgeWriter_2<T1,T2>
 make_edge_writer( T1 v1, T2 v2 )
 {
-	return edge_writer_2<T1,T2>(v1,v2);
+	return EdgeWriter_2<T1,T2>(v1,v2);
 }
 //-------------------------------------------------------------------
 /// A graph datatype, with BGL
@@ -287,7 +269,7 @@ typedef typename boost::graph_traits<graph_t>::vertex_descriptor vertex_t;
 typedef typename boost::graph_traits<graph_t>::edge_descriptor   edge_t;
 
 //----------------------------------------------------------------------------
-/// find vertex (get iterator on the vertex that we are searching), given its position \c pos
+/// Find vertex (get iterator on the vertex that we are searching), given its position \c pos
 int
 FindVertex( pos_t pos, const graph_t& g )
 {
@@ -333,7 +315,7 @@ PrintGraphCycles( std::vector<std::vector<vertex_t>> cycles, std::string msg, co
 		PrintGraphCycle( cy, graph );
 }
 //----------------------------------------------------------------------------
-/// returns true if the cycle \v_in has no more than 2 consecutive weak links
+/// Returns true if the cycle \v_in has no more than 2 consecutive weak links
 bool
 CycleIsOk( const std::vector<vertex_t>& cy, const graph_t& graph )
 {
@@ -434,6 +416,16 @@ Convert2Cycles( const std::vector<std::vector<vertex_t>>& v_cycle, const graph_t
 //----------------------------------------------------------------------------
 /// Finds all the cycles in the grid for value \c val.
 /// Needs as input the set of Strong Links that have been found
+/**
+This function relies on the udgcd library.
+
+If GENERATE_DOT_FILES is defined, this function will generate dot files for the graphs found.
+You can plot them with <tt>make dot</tt>. Strong links will be bold, and weak links not.
+
+For each value, two graph dot files will be generated:
+- \c ls_V_X.dot: holds strong-links only graph, for value V
+- \c la_V_X.dot: holds graph completed with weak links
+*/
 std::vector<Cycle>
 FindCycles(
 	const Grid&              g,
@@ -441,6 +433,9 @@ FindCycles(
 	const std::vector<Link>& v_StrongLinks
 )
 {
+	static std::array<int,9> dot_counter;
+
+	COUT( __FUNCTION__ << " val=" << val );
 // 1 - add all the strong links to the graph
 	graph_t graph;
 	for( const auto& sl: v_StrongLinks )
@@ -464,8 +459,7 @@ FindCycles(
 	}
 
 #ifdef GENERATE_DOT_FILES
-	static int c;
-	std::ofstream file( "out/ls_" + std::to_string(val) + '_' + std::to_string(c) + ".dot" );
+	std::ofstream file( "out/ls_" + std::to_string(val) + '_' + std::to_string(dot_counter[val]) + ".dot" );
 	assert( file.is_open() );
 	boost::write_graphviz(
 		file,
@@ -473,7 +467,6 @@ FindCycles(
 		make_node_writer( boost::get( &GraphNode::pos, graph ) ),
 		make_edge_writer( boost::get( &GraphEdge::link_type, graph ), boost::get( &GraphEdge::link_orient, graph ) )
 	);
-	c++;
 #endif
 
 // 2 - for each of the vertices, search if there are some weak links and add them
@@ -506,8 +499,7 @@ FindCycles(
 		}
 	}
 #ifdef GENERATE_DOT_FILES
-	static int c2;
-	std::ofstream file2( "out/la_" + std::to_string(val) + '_' + std::to_string(c2) + ".dot" );
+	std::ofstream file2( "out/la_" + std::to_string(val) + '_' + std::to_string(dot_counter[val]) + ".dot" );
 	assert( file2.is_open() );
 	boost::write_graphviz(
 		file2,
@@ -515,7 +507,7 @@ FindCycles(
 		make_node_writer( boost::get( &GraphNode::pos, graph ) ),
 		make_edge_writer( boost::get( &GraphEdge::link_type, graph ), boost::get( &GraphEdge::link_orient, graph ) )
 	);
-	c2++;
+	dot_counter[val]++;
 #endif
 
 	if( g_data.Verbose )
@@ -567,8 +559,8 @@ GetCycleType( const Cycle& cy )
 {
 	En_CycleType type = CT_undefined;
 
-	size_t count_WL = 0;
-	size_t count_SL = 0;
+	size_t count_WL = 0; // Nb of Weak Links
+	size_t count_SL = 0; // Nb of Strong Links
 	bool   has2WL(false);
 	bool   has2SL(false);
 	int    middle_index = -1;
@@ -662,6 +654,7 @@ Returns true if some removals has been processed
 bool
 ExploreCycle( Cycle& cy, Grid& g, value_t val )
 {
+	COUT( __FUNCTION__ << "(): " << cy );
 	bool removalDone( false );
 	auto p = GetCycleType( cy );
 	if( g_data.Verbose )
@@ -744,8 +737,10 @@ See http://www.sudokuwiki.org/X_Cycles
 bool
 X_Cycles( Grid& g )
 {
+	PRINT_ALGO_START_2;
 	for( value_t v=1; v<10; v++ )             // for each possible value, get strong links, then search cycles
 	{
+		COUT( "* base value: " << (int)v << '\n');
 		auto v_sl = FindStrongLinks( v, g );
 		if( g_data.Verbose )
 		{

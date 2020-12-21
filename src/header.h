@@ -1,6 +1,6 @@
 /**
 \file
-\brief man header file, holds some common stuff
+\brief main header file, holds some common stuff
 
 This file is part of https://github.com/skramm/sudoku_cpp
 Licence: GPLv3
@@ -11,7 +11,10 @@ Licence: GPLv3
 
 See https://github.com/skramm/sudoku_cpp
 */
-#include "grid.h"
+#ifndef HG_HEADER_H
+#define HG_HEADER_H
+
+//#include "grid.h"
 
 #ifdef DEBUGMODE
 	#define DEBUG if(1) std::cout
@@ -34,4 +37,6 @@ See https://github.com/skramm/sudoku_cpp
 	}
 
 void TestCycleType();
+
+#endif // HG_HEADER_H
 
