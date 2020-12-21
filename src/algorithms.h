@@ -81,10 +81,18 @@ GetString( EN_ALGO algo )
 struct Pos_vcand
 {
 	index_t pos_index;            ///< Cell index in the row/col/block
-	std::vector<value_t> values;  ///< Candidates for that cell
+	std::vector<value_t> _values;  ///< Candidates for that cell
 	Pos_vcand( size_t p, const std::vector<value_t>& vect )
-		: pos_index(p), values(vect)
+		: pos_index(p), _values(vect)
 	{}
+	friend std::ostream& operator << ( std::ostream& s, const Pos_vcand& pvc )
+	{
+		s << "Pos_vcand: idx=" << (int)pvc.pos_index << ", values=";
+		for( auto v: pvc._values)
+			s << (int)v << '-';
+		s << ' ';
+		return s;
+	}
 };
 
 #if 0

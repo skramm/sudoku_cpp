@@ -554,19 +554,22 @@ size  0 1 2 3 4 5
 
 \endverbatim
 */
-std::pair<En_CycleType,int>
+CycleType
+//std::pair<En_CycleType,int>
 GetCycleType( const Cycle& cy )
 {
-	En_CycleType type = CT_undefined;
+//	En_CycleType type = CT_undefined;
+//	CycleType ct;
 
-	size_t count_WL = 0; // Nb of Weak Links
-	size_t count_SL = 0; // Nb of Strong Links
-	bool   has2WL(false);
-	bool   has2SL(false);
-	int    middle_index = -1;
+	size_t count_WL = 0;   ///< Nb of Weak Links
+	size_t count_SL = 0;   ///< Nb of Strong Links
+	bool   has2WL(false);  ///< Has 2 Weak Links
+	bool   has2SL(false);  ///< Has 2 Strong Links
+	int    idx = -1;
 
 // first check if even and only strong links => then, is continuous
-	if( cy.size()%2 == 0 )
+	if( cy.size()%2 == 0 )     // if even
+	{
 		if( std::find_if(
 				std::begin( cy.data() ),
 				std::end(   cy.data() ),
@@ -575,7 +578,8 @@ GetCycleType( const Cycle& cy )
 			==
 			std::end(  cy.data() )
 		)
-			return std::make_pair(CT_Continuous,0 );
+			return CycleType( CT_Continuous );
+	}
 
 	for( size_t i=0; i<cy.size(); i++ )
 	{
@@ -595,50 +599,51 @@ GetCycleType( const Cycle& cy )
 		{
 			if( has2WL ) // if had previously counted 2
 			{
-				return std::make_pair(CT_Invalid,-1);
+				return CycleType( CT_Invalid );
 			}
 			else
 			{
 				has2WL = true;
-				middle_index = i;
+				idx = i-1;
 			}
 		}
 
 		if( count_SL == 2 )
 		{
 			if( has2SL ) // if had previously counted 2
-				return std::make_pair(CT_Invalid,-1);
+				return CycleType( CT_Invalid );
 			else
 			{
 				has2SL = true;
-				middle_index = i;
+				idx = i-1;
 			}
 		}
 
 		if( count_WL == 3 )
 		{
-			return std::make_pair(CT_Invalid,-1);
+			return CycleType( CT_Invalid );
 		}
 	}
 
-	if( type != CT_Invalid )
+//	if( type != CT_Invalid )
+	En_CycleType cyctype = CT_undefined;
 	{
 		if( has2WL )
 		{
 			if( has2SL )
-				type = CT_Invalid;
+				cyctype = CT_Invalid;
 			else
-				type = CT_Discont_2WL;
+				cyctype = CT_Discont_2WL;
 		}
 		else
 		{
 			if( has2SL )
-				type = CT_Discont_2SL;
+				cyctype = CT_Discont_2SL;
 			else
-				type = CT_Continuous;
+				cyctype = CT_Continuous;
 		}
 	}
-	return std::make_pair(type,middle_index);
+	return CycleType( cyctype, idx );
 }
 //----------------------------------------------------------------------------
 /// Explore a cycle and do the corresponding action, that is either:
@@ -649,29 +654,26 @@ GetCycleType( const Cycle& cy )
 
 See http://www.sudokuwiki.org/X_Cycles for details
 
-Returns true if some removals has been processed
+Returns true if some removals have been processed
 */
 bool
 ExploreCycle( Cycle& cy, Grid& g, value_t val )
 {
 	COUT( __FUNCTION__ << "(): " << cy );
 	bool removalDone( false );
-	auto p = GetCycleType( cy );
-	if( g_data.Verbose )
-		std::cout << "ExploreCycle(): Cycle type=" << GetString( p.first ) << " middle=" << (int)p.second << '\n';
+	auto gct = GetCycleType( cy );
+	COUT( "Cycle type=" << GetString( gct._ctype ) << " idx=" << gct._idx );
 
 //	auto middle_idx = p.second;
-	assert( p.first != CT_undefined );
-	switch( p.first )
+	assert( gct._ctype != CT_undefined );
+	switch( gct._ctype )
 	{
 		case CT_Continuous:                          // then, do the "Nice Loops Rule 1"
-			if( g_data.Verbose )
-				std::cout << "Cycle continuous: " << cy << " Nice Loops Rule 1\n";
+			COUT( "Cycle continuous: " << cy << " Nice Loops Rule 1" );
 			for( size_t i=0; i<cy.size(); i++ )
 			{
 				const auto& link = cy.GetElem( i );
-				if( g_data.Verbose )
-					std::cout << "link: " << link << '\n';
+				COUT( "link: " << link << '\n' );
 
 				View_1Dim_nc view;       // step 1 - get the corresponding view (row/col/block)
 				switch( link.orient )
@@ -694,11 +696,10 @@ ExploreCycle( Cycle& cy, Grid& g, value_t val )
 
 		case CT_Discont_2SL: // Nice Loops Rule 2
 		{
-			if( g_data.Verbose )
-				std::cout << "* Nice Loops Rule 2\n";
-			assert( p.second != 0 );
-			const auto& link1 = cy.GetElem( p.second-1);
-			const auto& link2 = cy.GetElem( p.second );
+			COUT( "* Nice Loops Rule 2" );
+			assert( gct._idx != 0 );
+			const auto& link1 = cy.GetElem( gct._idx);
+			const auto& link2 = cy.GetElem( gct._idx+1 );
 			Cell& c = GetCommonCell( link1, link2, g );
 			if( c.RemoveAllCandidatesBut( val ) )
 				removalDone = true;
@@ -707,11 +708,12 @@ ExploreCycle( Cycle& cy, Grid& g, value_t val )
 
 		case CT_Discont_2WL: // Nice Loops Rule 3
 		{
-			if( g_data.Verbose )
-				std::cout << "* Nice Loops Rule 3\n";
-			const auto& link1 = cy.GetElem( p.second );
-			const auto& link2 = cy.GetElem( p.second+1 );
+			const auto& link1 = cy.GetElem( gct._idx );
+			const auto& link2 = cy.GetElem( gct._idx+1 );
+			COUT( "* Nice Loops Rule 3: link1=" << link1 << " link2=" << link2 );
+
 			Cell& c = GetCommonCell( link1, link2, g );
+			COUT( "Common cell=" << c );
 			if( c.RemoveCandidate( val ) )
 				removalDone = true;
 		}
@@ -740,7 +742,7 @@ X_Cycles( Grid& g )
 	PRINT_ALGO_START_2;
 	for( value_t v=1; v<10; v++ )             // for each possible value, get strong links, then search cycles
 	{
-		COUT( "* base value: " << (int)v << '\n');
+		COUT( "* base value: " << (int)v );
 		auto v_sl = FindStrongLinks( v, g );
 		if( g_data.Verbose )
 		{

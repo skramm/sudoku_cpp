@@ -157,8 +157,8 @@ TEST_CASE( "test of naked triple search", "[triple]" )
 		REQUIRE( res.cand_pos == trip_pos );
 	}
 	{
-		INFO( "test case D - no good" )
-		std::cout << "test case D - no good\n";
+		INFO( "test case D1 - no good" )
+		std::cout << "case D1 - no good\n";
 		std::vector<Pos_vcand> v;
 		v.emplace_back( 3, std::vector<value_t>{4,5} );
 		v.emplace_back( 4, std::vector<value_t>{1,6} );
@@ -169,8 +169,8 @@ TEST_CASE( "test of naked triple search", "[triple]" )
 		REQUIRE( res.found_NT == false );
 	}
 	{
-		INFO( "test case D - good" )
-		std::cout << "test case D - good\n";
+		INFO( "test case D2 - good" )
+		std::cout << "case D2 - good\n";
 		std::vector<Pos_vcand> v;
 		v.emplace_back( 2, std::vector<value_t>{1,4} );
 		v.emplace_back( 3, std::vector<value_t>{4,5} );
@@ -183,6 +183,20 @@ TEST_CASE( "test of naked triple search", "[triple]" )
 		REQUIRE( res.cand_values == trip_val );
 		REQUIRE( res.cand_pos == trip_pos );
 	}
+
+	{
+		INFO( "test case D3 - no good" )
+		std::cout << "case D3 - no good\n";
+		std::vector<Pos_vcand> v;
+		v.emplace_back( 3, std::vector<value_t>{3,9} );
+		v.emplace_back( 4, std::vector<value_t>{6,9} );
+		v.emplace_back( 5, std::vector<value_t>{3,6,8} );
+		v.emplace_back( 6, std::vector<value_t>{3,5} );
+
+		auto res = SearchTriplesPattern( v );
+		CHECK( res.found_NT == false );
+	}
+
 }
 
 /// used only for unit testing
@@ -201,25 +215,28 @@ BuildCycle( const std::string& s )
 }
 
 void
-CheckCycle( const Cycle& c, En_CycleType ct, int pos=0 )
+CheckCycle( int n, const Cycle& c, En_CycleType ct, int pos=0 )
 {
 	bool fail = false;
-	std::cout << "CheckCycle: " << c;
+	std::cout << n << ": CheckCycle: " << c;
 	Cycle c2(c);                      // copy, 'coz original is const
 	for( decltype(c.size()) i=0; i<c.size(); i++ )
 	{
 		std::rotate( std::begin( c2.data() ), std::begin( c2.data() )+1, std::end( c2.data() ) );
-		if( GetCycleType( c ).first != ct )
+		if( GetCycleType( c )._ctype != ct )
 		{
 			std::cout << "- Failure for cycle: " << c << ": Is not of required type\n";
 			fail = true;
 		}
 	}
-	if( ct != CT_Invalid )
+
+	if( ct != CT_Invalid && ct != CT_Continuous )   // position makes no sense for invalid or continuous cycles
 	{
-		if( GetCycleType( c ).second != pos )
+		auto computed_pos = GetCycleType( c )._idx;
+		if( computed_pos != pos )
 		{
-			std::cout << "- Failure for cycle: " << c << ": position not correct\n";
+			std::cout << "- Failure: position not correct, should be " << pos
+				<< " but is " << computed_pos << "\n";
 			fail = true;
 		}
 	}
@@ -228,14 +245,15 @@ CheckCycle( const Cycle& c, En_CycleType ct, int pos=0 )
 
 TEST_CASE( "test of cycle detection", "[cycles]" )
 {
-	CheckCycle( BuildCycle( "W-W-S-S" ), CT_Invalid );
+	int n=0;
+	CheckCycle( n++, BuildCycle( "W-W-S-S" ), CT_Invalid );
 
-	CheckCycle( BuildCycle( "W-S-W-W-W-S" ), CT_Invalid );
-	CheckCycle( BuildCycle( "W-S-W-S-W-S" ), CT_Continuous );
-	CheckCycle( BuildCycle( "W-S-W-W-S-W-S" ), CT_Discont_2WL, 2 );
-	CheckCycle( BuildCycle( "W-S-W-S-S-W-S" ), CT_Discont_2SL, 3 );
+	CheckCycle( n++, BuildCycle( "W-S-W-W-W-S" ), CT_Invalid );
+	CheckCycle( n++, BuildCycle( "W-S-W-S-W-S" ), CT_Continuous );
+	CheckCycle( n++, BuildCycle( "W-S-W-W-S-W-S" ), CT_Discont_2WL, 2 );
+	CheckCycle( n++, BuildCycle( "W-S-W-S-S-W-S" ), CT_Discont_2SL, 3 );
 
-	CheckCycle( BuildCycle( "W-S-W-S-S-W-S-S" ), CT_Invalid ); // twice 2 strong links
-	CheckCycle( BuildCycle( "W-W-S-W-S-W-W-S" ), CT_Invalid ); // twice 2 weak links
+	CheckCycle( n++, BuildCycle( "W-S-W-S-S-W-S-S" ), CT_Invalid ); // twice 2 strong links
+	CheckCycle( n++, BuildCycle( "W-W-S-W-S-W-W-S" ), CT_Invalid ); // twice 2 weak links
 }
 

@@ -40,8 +40,18 @@ enum En_CycleType
 	CT_undefined,
 	CT_Continuous,     ///< continuous cycle, pair nb of nodes, alternate Weak and Strong links
 	CT_Discont_2SL,    ///< Discontinuous cycle, odd nb of nodes, 2 chained Strong links
-	CT_Discont_2WL,     ///< Discontinuous cycle, odd nb of nodes, 2 chained Weak links
+	CT_Discont_2WL,    ///< Discontinuous cycle, odd nb of nodes, 2 chained Weak links
 	CT_Invalid
+};
+//----------------------------------------------------------------------------
+struct CycleType
+{
+	En_CycleType _ctype = CT_undefined;
+	int _idx = -1;
+	CycleType( En_CycleType ct ) : _ctype(ct)
+	{}
+	CycleType( En_CycleType ct, int idx ) : _ctype(ct), _idx(idx)
+	{}
 };
 //----------------------------------------------------------------------------
 /// To avoid a meaningless boolean
@@ -95,6 +105,7 @@ struct Cycle: public circvec<Link>
 //----------------------------------------------------------------------------
 
 bool X_Cycles( Grid& g );
-std::pair<En_CycleType,int> GetCycleType( const Cycle& cy );
+//std::pair<En_CycleType,int> GetCycleType( const Cycle& cy );
+CycleType GetCycleType( const Cycle& cy );
 
 #endif

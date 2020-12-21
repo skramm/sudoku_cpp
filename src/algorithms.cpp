@@ -394,7 +394,115 @@ Algo_SearchNakedPairs( Grid& g )
 	return true;
 }
 //----------------------------------------------------------------------------
-/// helper function for SearchTriplesPattern(), search for "pattern D"
+/// Returns true if the values in \c v1 are in one of the tree values of \c v2.
+/// Helper function for CheckForTriplePattern_D()
+/**
+Example:
+\verbatim
+v1={ 4, 6 }
+v2={ 4, 6, 8 }
+=> true
+
+v1={ 4, 5 }
+v2={ 4, 6, 8 }
+=> false
+\endverbatim
+*/
+bool
+isSameValues( const std::vector<value_t>& v1, const	std::array<value_t,3>& v2 )
+{
+	bool found1 = false;
+	bool found2 = false;
+	assert( v1.size() == 2 );
+	assert( v1[0] != v1[1] );
+	if( v1[0] == v2[0] || v1[0] == v2[1] || v1[0] == v2[2] )
+		found1 = true;
+	if( v1[1] == v2[0] || v1[1] == v2[1] || v1[1] == v2[2] )
+		found2 = true;
+	return found1 & found2;
+}
+//----------------------------------------------------------------------------
+#if 0
+/// Helper function for SearchTriplesPattern(), search for "pattern D"
+/**
+A Triple Pattern of type D is a set of candidates where 3 cells hold each 2 candidates
+that are the same.
+
+For example, say we have this set of candidates in a unit:
+\verbatim
+(1,2) - (3,5) - (5,6,7,8) - (4,5) - (3,4)
+\endverbatim
+then we have the Triple Pattern (3,5)-(4,5)-(3,4)
+*/
+void
+CheckForTriplePattern_D( const std::vector<Pos_vcand>& v_cand, NakedTriple& retval )
+{
+	COUT( " case D !" );
+//	retval.cand_values.clear();
+//	assert( retval.cand_pos.empty() );
+
+	std::vector<index_t> v_pairs;
+	for( index_t i=0; i<v_cand.size(); i++ )
+	{
+		if( v_cand[i]._values.size() == 2 )  // if 2 candidates
+			v_pairs.push_back(i);
+	}
+
+//	PrintVector( v_pairs, "vpairs");
+
+	if( v_pairs.size() < 3 )       // if less than 3 cells with 2 candidates found,
+	{                              // then, no pattern!
+		retval.found_NT = false;
+		return;
+	}
+
+// step 1 - fill the 9 counters with number of values
+	std::array<int,9> counters;
+	std::fill( std::begin(counters), std::end(counters), 0 );
+
+	for( auto pa: v_pairs )
+	{
+		counters.at( v_cand.at( pa )._values[0]-1 )++;
+		counters.at( v_cand.at( pa )._values[1]-1 )++;
+	}
+
+// step 2 - search for counters that are=2
+	std::vector<int> pos_2; // holds the positions of counters (=grid values-1) with a value of 2
+	for(int i=0; i<9; i++ ) // i holds values (-1, because it is an index on array)
+	{
+		std::cout << "c" << i+1 << ": " << counters[i] << '\n';
+		if( counters[i] == 2 )
+			pos_2.push_back(i);
+	}
+
+	if( pos_2.size() == 3 ) // if we have found 3 counters with a value of 2, then this is a "type D" triple pattern
+	{
+		retval.found_NT = true;
+		int x = 0;
+		for( auto i: pos_2 )
+		{
+			retval.cand_values[x++] = i+1;
+			COUT( "value: " << i+1 );
+		}
+
+		x=0;
+		for( auto i: v_pairs )
+		{
+			std::cout << "i=" << (int)i << "/" << v_pairs.size() << '\n';
+			if( isSameValues( v_cand[i]._values, retval.cand_values ) )
+			{
+				retval.cand_pos[x++] = v_cand[i].pos_index;
+				std::cout << "pos=" << (int)v_cand[i].pos_index << "\n";
+			}
+			assert( x < 4 );
+		}
+	}
+//	return retval;
+}
+#endif
+//----------------------------------------------------------------------------
+#if 1
+/// Helper function for SearchTriplesPattern(), search for "pattern D"
 void
 CheckForTriplePattern_D( const std::vector<Pos_vcand>& v_cand, NakedTriple& ret_val )
 {
@@ -403,30 +511,30 @@ CheckForTriplePattern_D( const std::vector<Pos_vcand>& v_cand, NakedTriple& ret_
 	std::vector<index_t> v_pairs;
 	for( index_t i=0; i<v_cand.size(); i++ )
 	{
-		if( v_cand[i].values.size() == 2 )  // if 2 candidates
+		if( v_cand[i]._values.size() == 2 )  // if 2 candidates
 			v_pairs.push_back(i);
 	}
 
 //	PrintVector( v_pairs, "vpairs");
 
-	if( v_pairs.size() < 3 )   // if at least 3 cells with 2 candidates found
+	if( v_pairs.size() < 3 )   // if less than 3 cells with 2 candidates found
 		return;
 
 	for( index_t i=0; i<v_pairs.size()-1; i++ )
 	{
 		bool done(false);
-		auto v1a = v_cand[i].values[0];
-		auto v1b = v_cand[i].values[1];
+		auto v1a = v_cand[i]._values[0];
+		auto v1b = v_cand[i]._values[1];
 //		std::cout << "i=" << i << " pair=" << (int)v_cand[i].values[0] << '-' << (int)v_cand[i].values[1] << '\n';
 //		std::cout << " v1=" << (int)v1a << '\n';
 		for( index_t j=i+1; j<v_pairs.size() && !done; j++ )
 		{
 //			std::cout << "  j=" << j << '\n';
-			if( v1a == v_cand[j].values[0] || v1a == v_cand[j].values[1] )
+			if( v1a == v_cand[j]._values[0] || v1a == v_cand[j]._values[1] )
 			{
-				auto v2 = v_cand[j].values[1];     // if a match is found, we take the complementary one as 'v2'
-				if( v1a == v_cand[j].values[1] )
-					v2 = v_cand[j].values[0];
+				auto v2 = v_cand[j]._values[1];     // if a match is found, we take the complementary one as 'v2'
+				if( v1a == v_cand[j]._values[1] )
+					v2 = v_cand[j]._values[0];
 
 //				std::cout << "   -chain with j=" << j << ", pair=" << (int)v_cand[j].values[0] << '-' << (int)v_cand[j].values[1] << '\n';
 //				std::cout << "   -v2=" << (int)v2 << '\n';
@@ -434,11 +542,11 @@ CheckForTriplePattern_D( const std::vector<Pos_vcand>& v_cand, NakedTriple& ret_
 					if( k != i && k != j )
 					{
 //						std::cout << "      k=" << k << '\n';
-						if( v2 == v_cand[k].values[0] || v2 == v_cand[k].values[1] )
+						if( v2 == v_cand[k]._values[0] || v2 == v_cand[k]._values[1] )
 						{
-							auto v3 = v_cand[k].values[1];     // if a match is found, we take the complementary one as 'v2'
-							if( v2 == v_cand[k].values[1] )
-								v3 = v_cand[k].values[0];
+							auto v3 = v_cand[k]._values[1];     // if a match is found, we take the complementary one as 'v2'
+							if( v2 == v_cand[k]._values[1] )
+								v3 = v_cand[k]._values[0];
 //							std::cout << "     -chain with k=" << k << ", pair=" << (int)v_cand[k].values[0] << '-' << (int)v_cand[k].values[1] << '\n';
 //							std::cout << "     -v3=" << (int)v3 << '\n';
 							if( v3 == v1b ) // loop found !
@@ -463,6 +571,7 @@ CheckForTriplePattern_D( const std::vector<Pos_vcand>& v_cand, NakedTriple& ret_
 		}
 	}
 }
+#endif
 //----------------------------------------------------------------------------
 /// helper function for SearchTriplesPattern(), search for "type C" pattern
 void
@@ -484,15 +593,15 @@ CheckForTriplePattern_C(
 	{
 //		std::cout << k << ": searching for value " << (int)ret_val.cand_values[k] << "\n";
 		if(
-			ret_val.cand_values[k] == v_cand[v_pairs[0]].values[0]
+			ret_val.cand_values[k] == v_cand[v_pairs[0]]._values[0]
 			||
-			ret_val.cand_values[k] == v_cand[v_pairs[0]].values[1]
+			ret_val.cand_values[k] == v_cand[v_pairs[0]]._values[1]
 		)
 			value_count[k]++;
 		if(
-			ret_val.cand_values[k] == v_cand[v_pairs[1]].values[0]
+			ret_val.cand_values[k] == v_cand[v_pairs[1]]._values[0]
 			||
-			ret_val.cand_values[k] == v_cand[v_pairs[1]].values[1]
+			ret_val.cand_values[k] == v_cand[v_pairs[1]]._values[1]
 		)
 			value_count[k]++;
 	}
@@ -529,53 +638,58 @@ NakedTriple
 SearchTriplesPattern( const std::vector<Pos_vcand>& v_cand )
 {
 	NakedTriple return_value;
+	if( v_cand.size() < 3 )
+			return return_value;
 
+	COUT( "v_cand size=" << v_cand.size() );
 	for( index_t i=0; i<v_cand.size(); i++ )
 	{
+		COUT( "i=" << (int)i << " cand=" << v_cand[i] );
 //		std::cout << "* main pos=" << i << " size=" << v_cand[i].values.size() << '\n';
-		if( v_cand[i].values.size() == 3 )  // if 3 candidates (useful for patterns A,B,C)
+		if( v_cand[i]._values.size() == 3 )  // if 3 candidates (useful for patterns A,B,C)
 		{
-			std::vector<index_t> v_pairs;
-			std::vector<index_t> v_triples(1);
-			v_triples[0] = v_cand[i].pos_index;
+			std::vector<index_t> v_pairsPos;
+			std::vector<index_t> v_triplesPos(1);
+			v_triplesPos[0] = v_cand[i].pos_index;
 
-			for( index_t j=0; j<v_cand.size(); j++ )
+			for( index_t j=0; j<v_cand.size(); j++ )  // iterate over other candidates
 				if( i != j )
 				{
-					if( v_cand[i].values == v_cand[j].values )                    // if found two triples (case A and B)
-						v_triples.push_back( v_cand[j].pos_index );
-					if( v_cand[j].values.size() == 2 )                                // if 2 candidates
-						if( VectorsOverlap( v_cand[i].values, v_cand[j].values, 2 ) ) // AND if the 2 values are in the triplet
-							v_pairs.push_back( j );
+					if( v_cand[i]._values == v_cand[j]._values )                    // if found two triples (case A and B)
+						v_triplesPos.push_back( v_cand[j].pos_index );
+
+					if( v_cand[j]._values.size() == 2 )                                // if 2 candidates
+						if( VectorsOverlap( v_cand[i]._values, v_cand[j]._values, 2 ) ) // AND if the 2 values are in the triplet
+							v_pairsPos.push_back( j );
 				}
 //			PrintVector( v_triples, "v_triples" );
 //			PrintVector( v_pairs,   "v_pairs" );
 
 			for( int k=0; k<3; k++)                                        // we pre-fill the return value with the candidates that are in the
-				return_value.cand_values[k] = v_cand[i].values.at( k );    // triplet we found. If it's not a "naked triple" pattern, then it just gets lost
+				return_value.cand_values[k] = v_cand[i]._values.at( k );    // triplet we found. If it's not a "naked triple" pattern, then it just gets lost
 
 // step 2: we determine what type the triplets are
-			switch( v_triples.size() )
+			switch( v_triplesPos.size() )
 			{
 				case 3:                    // case A, for sure
 				{
 					COUT( "-Naked triple pattern type A:" << return_value );
 					return_value.foundPattern();
 					for( int k=0; k<3; k++ )
-						return_value.cand_pos[k] = v_triples[k];
+						return_value.cand_pos[k] = v_triplesPos[k];
 					return return_value;
 				}
 				break;
 
 				case 2:                 // maybe case B, lets check!
-					if( !v_pairs.empty() )
+					if( !v_pairsPos.empty() )
 					{
 //						std::cout << " case B !\n";
-						assert( v_pairs.size() == 1 );  // should be, I think. If not, triggering this assert will be a good way to find out ;-)
+						assert( v_pairsPos.size() == 1 );  // should be, I think. If not, triggering this assert will be a good way to find out ;-)
 						return_value.foundPattern();
 						for( int k=0; k<2; k++ )
-							return_value.cand_pos[k] = v_triples[k];
-						return_value.cand_pos[2] = v_cand[v_pairs[0]].pos_index;
+							return_value.cand_pos[k] = v_triplesPos[k];
+						return_value.cand_pos[2] = v_cand[v_pairsPos[0]].pos_index;
 						std::sort( std::begin(return_value.cand_pos), std::end(return_value.cand_pos) );
 						COUT( "-Naked triple pattern type B:" << return_value );
 						return return_value;
@@ -583,10 +697,10 @@ SearchTriplesPattern( const std::vector<Pos_vcand>& v_cand )
 				break;
 
 				case 1:                 // maybe case C, lets check!
-					if( v_pairs.size() == 2 )
+					if( v_pairsPos.size() == 2 )
 					{
 //						std::cout << " case C !\n";
-						CheckForTriplePattern_C( v_cand, v_pairs, v_triples, return_value );
+						CheckForTriplePattern_C( v_cand, v_pairsPos, v_triplesPos, return_value );
 						if( return_value.found_NT )
 						{
 							COUT( "-Naked triple pattern type C:" << return_value );
@@ -598,10 +712,10 @@ SearchTriplesPattern( const std::vector<Pos_vcand>& v_cand )
 				default: assert(0);
 			}
 		}
-		CheckForTriplePattern_D( v_cand, return_value );
-		if( return_value.found_NT )
-			COUT( "-Naked triple pattern type D:" << return_value );
 	}
+	CheckForTriplePattern_D( v_cand, return_value );
+	if( return_value.found_NT )
+		COUT( "-Naked triple pattern type D:" << return_value );
 
 	return return_value;
 }
@@ -630,20 +744,16 @@ SearchNakedTriples( Grid& g, EN_ORIENTATION orient )
 			if( cell.NbCandidates() == 2 || cell.NbCandidates() == 3 )     // if cell has 2 or 3 candidates,
 				v_cand.emplace_back( j, cell.GetCandidates() );            // then, store its index and the set of candidates.
 		}
-		if( v_cand.size() > 2 )  // if more than two cells with 2 or 3 candidates found, then search for "naked triple patterns"
-		{
-			auto tp = SearchTriplesPattern(v_cand); // search for triple pattern
-//			std::cout <<" returned value: " << tp;
-			if( tp.found_NT )                                 // if a naked triple was found, then:
-				for( index_t i=0; i<9; i++ )                  // for all the other positions of the view, remove the candidates found
-				{
-//					std::cout << "i=" << i << '\n';
-					if( std::find( std::begin(tp.cand_pos), std::end(tp.cand_pos), i ) == std::end(tp.cand_pos) )
-						for( int k=0; k<3; k++ )
-							if( v1d.GetCell(i).RemoveCandidate( tp.cand_values[k], Because( B_NakedTriples, orient, tp ) ) )
-								retval = true;
-				}
-		}
+
+		auto trp = SearchTriplesPattern(v_cand); // search for triple pattern
+		if( trp.found_NT )                                // if a naked triple was found, then:
+			for( index_t i=0; i<9; i++ )                  // for all the other positions of the view, remove the candidates found
+			{
+				if( std::find( std::begin(trp.cand_pos), std::end(trp.cand_pos), i ) == std::end(trp.cand_pos) ) // remove candidate in OTHER cells
+					for( int k=0; k<3; k++ ) // 3, because "Naked Triples" always implies 3 values
+						if( v1d.GetCell(i).RemoveCandidate( trp.cand_values[k], Because( B_NakedTriples, orient, trp ) ) )
+							retval = true;
+			}
 	}
 	return retval;
 }
