@@ -64,8 +64,8 @@ enum En_LinkType
 struct Link
 {
 	pos_t p1, p2;
-	En_LinkType type;
-	EN_ORIENTATION orient=OR_ROW;
+	En_LinkType    _ltype;
+	EN_ORIENTATION _lorient = OR_ROW;
 
 	friend bool operator == ( const Link& lA, const Link& lB )
 	{
@@ -75,15 +75,15 @@ struct Link
 			return true;
 		return false;
 	}
-	Link( pos_t pA, pos_t pB, En_LinkType lt, EN_ORIENTATION o ): p1(pA), p2(pB), type(lt), orient(o)
+	Link( pos_t pA, pos_t pB, En_LinkType lt, EN_ORIENTATION o ): p1(pA), p2(pB), _ltype(lt), _lorient(o)
 	{}
 //#ifdef TESTMODE
-	Link( En_LinkType lt ): type(lt)
+	Link( En_LinkType lt ): _ltype(lt)
 	{}
 //#endif
 	friend std::ostream& operator << ( std::ostream& s, const Link& l )
 	{
-		s << '{' << (l.type==LT_Strong ? 'S' : 'W') << ',' << l.p1 << "-" << l.p2 << ',' << GetString( l.orient ) <<  '}';
+		s << '{' << (l._ltype==LT_Strong ? 'S' : 'W') << ',' << l.p1 << "-" << l.p2 << ',' << GetString( l._lorient ) <<  '}';
 		return s;
 	}
 };

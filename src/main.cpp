@@ -36,9 +36,6 @@ This file is part of https://github.com/skramm/sudoku_cpp
 #include "header.h"
 #include "algorithms.h"
 
-//#include <fstream>
-//#include <chrono>
-//#include <sstream>
 #include <iomanip>
 
 using namespace std;
@@ -66,13 +63,13 @@ int main( int argc, const char** argv )
 			<< "-switches:\n -s: save grid to file (human readable), and can be loaded with -f"
 			<< "\n -v: verbose\n -l: log steps"
 			<< "\n-return value:\n "
-			<< RV_success << ": success (solved puzzle)\n "
-			<< RV_missingFile << ": unable to read given filename (missing or format error)\n "
+			<< RV_success         << ": success (solved puzzle)\n "
+			<< RV_missingFile     << ": unable to read given filename (missing or format error)\n "
 			<< RV_missingFileName << ": missing filename after -f\n "
-			<< RV_missingCells << ": invalid grid given (must be 81 characters, only digits or '.')\n "
-			<< RV_invalidGrid << ": invalid grid\n "
-			<< RV_solvingFailure << ": unable to solve\n"
-			<< RV_invalidSwitch << ": invalid switch\n";
+			<< RV_missingCells    << ": invalid grid given (must be 81 characters, only digits or '.')\n "
+			<< RV_invalidGrid     << ": invalid grid\n "
+			<< RV_solvingFailure  << ": unable to solve\n "
+			<< RV_invalidSwitch   << ": invalid switch\n";
 
 		return RV_success;
 	}

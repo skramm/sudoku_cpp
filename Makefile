@@ -45,7 +45,7 @@ sudoku: $(OBJ_FILES)
 	@echo "done target $@"
 
 test_catch: $(OBJ_FILES)
-	$(CXX) -o test_catch obj/algorithms.o obj/grid.o obj/x_cycles.o obj/test_catch.o  -s
+	$(CXX) -o test_catch obj/algorithms.o obj/grid.o obj/x_cycles.o obj/test_catch.o -DTESTMODE -s
 	@echo "done target $@"
 
 # generic compile rule
@@ -74,6 +74,8 @@ clean:
 
 cleandoc:
 	-rm -R html/*
+
+test: CFLAGS += -DTESTMODE
 
 test: test_catch
 	./test_catch -s

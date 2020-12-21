@@ -150,8 +150,7 @@ PointingPairsTriples( Grid& g, EN_ORIENTATION orient )
 			for( value_t v=1; v<10; v++ )          // for each candidate value,
 				if( cc2[v] > 1 && cc1[v] == cc2[v] )  // if we have 2 or 3 identical candidates, AND no other in the others cells of the same block
 				{
-					if( g_data.Verbose )
-						std::cout << " - value: " << (int)v << " : found " << (cc2[v]==2 ? '2' : '3') << " alone in block " << (int)b+1 << '\n';
+					COUT( " - value: " << (int)v << " : found " << (cc2[v]==2 ? '2' : '3') << " alone in block " << (int)b+1)
 					for( index_t j=0; j<9; j++ )  // for each cell of the view
 					{
 						Cell& cell = v1d.GetCell(j);
@@ -290,8 +289,7 @@ SearchSingleCand( Grid& g, EN_ORIENTATION orient )
 			auto c = cand_count[val];
 			if( c == 1 )
 			{
-				if( g_data.Verbose )
-					std::cout << "found single: " << (int)val << '\n';
+				COUT( "found single: " << (int)val );
                 for( index_t j=0; j<9; j++ ) // for each cell in the view
 				{
 					Cell& cell = v1d.GetCell(j);
@@ -470,7 +468,7 @@ CheckForTriplePattern_D( const std::vector<Pos_vcand>& v_cand, NakedTriple& retv
 	std::vector<int> pos_2; // holds the positions of counters (=grid values-1) with a value of 2
 	for(int i=0; i<9; i++ ) // i holds values (-1, because it is an index on array)
 	{
-		std::cout << "c" << i+1 << ": " << counters[i] << '\n';
+		COUT( "c" << i+1 << ": " << counters[i] );
 		if( counters[i] == 2 )
 			pos_2.push_back(i);
 	}
@@ -488,11 +486,11 @@ CheckForTriplePattern_D( const std::vector<Pos_vcand>& v_cand, NakedTriple& retv
 		x=0;
 		for( auto i: v_pairs )
 		{
-			std::cout << "i=" << (int)i << "/" << v_pairs.size() << '\n';
+//			std::cout << "i=" << (int)i << "/" << v_pairs.size() << '\n';
 			if( isSameValues( v_cand[i]._values, retval.cand_values ) )
 			{
 				retval.cand_pos[x++] = v_cand[i].pos_index;
-				std::cout << "pos=" << (int)v_cand[i].pos_index << "\n";
+//				std::cout << "pos=" << (int)v_cand[i].pos_index << "\n";
 			}
 			assert( x < 4 );
 		}
@@ -503,8 +501,9 @@ CheckForTriplePattern_D( const std::vector<Pos_vcand>& v_cand, NakedTriple& retv
 //----------------------------------------------------------------------------
 #if 1
 /// Helper function for SearchTriplesPattern(), search for "pattern D"
+/// \todo 20201221: this seems buggy, see "make test"
 void
-CheckForTriplePattern_D( const std::vector<Pos_vcand>& v_cand, NakedTriple& ret_val )
+CheckForTriplePattern_D( const std::vector<Pos_vcand>& v_cand, NakedTriple& retval )
 {
 //	std::cout << " case D !\n";
 
@@ -517,49 +516,57 @@ CheckForTriplePattern_D( const std::vector<Pos_vcand>& v_cand, NakedTriple& ret_
 
 //	PrintVector( v_pairs, "vpairs");
 
-	if( v_pairs.size() < 3 )   // if less than 3 cells with 2 candidates found
+	if( v_pairs.size() < 3 )       // if less than 3 cells with 2 candidates found,
+	{                              // then, no pattern!
+		retval.found_NT = false;
 		return;
+	}
 
 	for( index_t i=0; i<v_pairs.size()-1; i++ )
 	{
+		auto idx1 = v_pairs[i];
 		bool done(false);
-		auto v1a = v_cand[i]._values[0];
-		auto v1b = v_cand[i]._values[1];
-//		std::cout << "i=" << i << " pair=" << (int)v_cand[i].values[0] << '-' << (int)v_cand[i].values[1] << '\n';
+		auto v1a = v_cand[idx1]._values[0];
+		auto v1b = v_cand[idx1]._values[1];
+//		std::cout << "i=" << (int)i << " idx1=" << (int)idx1 << " pair=" << (int)v_cand[i]._values[0] << '-' << (int)v_cand[i]._values[1] << '\n';
 //		std::cout << " v1=" << (int)v1a << '\n';
 		for( index_t j=i+1; j<v_pairs.size() && !done; j++ )
 		{
-//			std::cout << "  j=" << j << '\n';
-			if( v1a == v_cand[j]._values[0] || v1a == v_cand[j]._values[1] )
+			auto idx2 = v_pairs[j];
+//			std::cout << "  j=" << (int)j << " idx2=" << (int)idx2 << '\n';
+			if( v1a == v_cand[idx2]._values[0] || v1a == v_cand[idx2]._values[1] )
 			{
-				auto v2 = v_cand[j]._values[1];     // if a match is found, we take the complementary one as 'v2'
-				if( v1a == v_cand[j]._values[1] )
-					v2 = v_cand[j]._values[0];
+				auto v2 = v_cand[idx2]._values[1];     // if a match is found, we take the complementary one as 'v2'
+				if( v1a == v_cand[idx2]._values[1] )
+					v2 = v_cand[idx2]._values[0];
 
-//				std::cout << "   -chain with j=" << j << ", pair=" << (int)v_cand[j].values[0] << '-' << (int)v_cand[j].values[1] << '\n';
+//				std::cout << "   -chain with j=" << (int)j << ", pair=" << (int)v_cand[idx2]._values[0] << '-' << (int)v_cand[idx2]._values[1] << '\n';
 //				std::cout << "   -v2=" << (int)v2 << '\n';
 				for( index_t k=0; k<v_pairs.size() && !done; k++ )
-					if( k != i && k != j )
+				{
+					auto idx3 = v_pairs[k];
+
+					if( idx3 != idx1 && idx3 != idx2 )
 					{
-//						std::cout << "      k=" << k << '\n';
-						if( v2 == v_cand[k]._values[0] || v2 == v_cand[k]._values[1] )
+//						std::cout << "      k=" << (int)k << '\n';
+						if( v2 == v_cand[idx3]._values[0] || v2 == v_cand[idx3]._values[1] )
 						{
-							auto v3 = v_cand[k]._values[1];     // if a match is found, we take the complementary one as 'v2'
-							if( v2 == v_cand[k]._values[1] )
-								v3 = v_cand[k]._values[0];
-//							std::cout << "     -chain with k=" << k << ", pair=" << (int)v_cand[k].values[0] << '-' << (int)v_cand[k].values[1] << '\n';
+							auto v3 = v_cand[idx3]._values[1];     // if a match is found, we take the complementary one as 'v2'
+							if( v2 == v_cand[idx3]._values[1] )
+								v3 = v_cand[idx3]._values[0];
+//							std::cout << "     -chain with k=" << (int)k << " idx3=" << (int)idx3<< ", pair=" << (int)v_cand[idx3]._values[0] << '-' << (int)v_cand[idx3]._values[1] << '\n';
 //							std::cout << "     -v3=" << (int)v3 << '\n';
 							if( v3 == v1b ) // loop found !
 							{
 //								std::cout << "     FOUND D PATTERN\n";
-								ret_val.foundPattern();
-								ret_val.cand_values[0] = v1a;
-								ret_val.cand_values[1] = v2;
-								ret_val.cand_values[2] = v3;
+								retval.foundPattern();
+								retval.cand_values[0] = v1a;
+								retval.cand_values[1] = v2;
+								retval.cand_values[2] = v3;
 
-								ret_val.cand_pos[0] = v_cand[v_pairs[i]].pos_index;
-								ret_val.cand_pos[1] = v_cand[v_pairs[j]].pos_index;
-								ret_val.cand_pos[2] = v_cand[v_pairs[k]].pos_index;
+								retval.cand_pos[0] = v_cand[idx1].pos_index;
+								retval.cand_pos[1] = v_cand[idx2].pos_index;
+								retval.cand_pos[2] = v_cand[idx3].pos_index;
 
 								return;
 							}
@@ -567,6 +574,7 @@ CheckForTriplePattern_D( const std::vector<Pos_vcand>& v_cand, NakedTriple& ret_
 								done=true;
 						}
 					}
+				}
 			}
 		}
 	}
@@ -817,13 +825,13 @@ FindMatch( const std::vector<value_t>& v_key, const std::vector<value_t>& v_cand
 }
 //----------------------------------------------------------------------------
 /// Holds results of FindSymmetricalMatches()
-struct symMatches
+struct SymMatches
 {
 	pos_t pA;
 	pos_t pB;
 	value_t value;
-	symMatches( pos_t _pA, pos_t _pB, value_t _v ) : pA(_pA),pB(_pB),value(_v) {}
-	friend std::ostream& operator << ( std::ostream& s, const symMatches& sm )
+	SymMatches( pos_t _pA, pos_t _pB, value_t _v ) : pA(_pA),pB(_pB),value(_v) {}
+	friend std::ostream& operator << ( std::ostream& s, const SymMatches& sm )
 	{
 		s << "(cells:" << sm.pA << ',' << sm.pB << " val=" << (int)sm.value << ") ";
 		return s;
@@ -844,7 +852,7 @@ and the set of cells holds these:
 \endverbatim
 then we see that we have a match with elems 3 and 4, and the common candidates (that will get removed in further steps) is 2
 */
-std::vector<symMatches>
+std::vector<SymMatches>
 FindSymmetricalMatches(
 	const Grid& grid,
 	const std::vector<value_t>& v_key_cand,  ///< input: vector of 2 values (candidates of key cell)
@@ -853,7 +861,7 @@ FindSymmetricalMatches(
 {
 	assert( v_key_cand.size() == 2 );
 
-	std::vector<symMatches> v_out;
+	std::vector<SymMatches> v_out;
 //	PrintVector( v_cells, "v_cells" ); std::cout << "Key cand: " << v_key_cand[0] << '-' << v_key_cand[1] << '\n';
 
 	for( size_t i=0; i<v_cells.size()-1; i++ )
@@ -885,12 +893,12 @@ FindSymmetricalMatches(
 					p_out.second = pB;
 					value_t common_value = v_cand_A[!match_idx_A.second];
 //					std::cout << "FOUND: pA=" << pA << " pB=" << pB <<  " common value=" << common_value << '\n';
-					v_out.push_back( symMatches( pA,pB,common_value) );
+					v_out.push_back( SymMatches( pA,pB,common_value) );
 				}
 			}
 		}
 	}
-//	std::cout << "symMatches size=" << v_out.size() << '\n';
+//	std::cout << "SymMatches size=" << v_out.size() << '\n';
 	return v_out;
 }
 //----------------------------------------------------------------------------
@@ -991,7 +999,7 @@ Algo_XY_Wing( Grid& g )
 					FilterByCand( g, v_cand, v_cells );                 // remove the ones that don't use any of the 2 candidates
 					if( v_cells.size() > 1 )
 					{
-						std::vector<symMatches> v_matches = FindSymmetricalMatches( g, v_cand, v_cells );
+						std::vector<SymMatches> v_matches = FindSymmetricalMatches( g, v_cand, v_cells );
 						if( g_data.Verbose && v_matches.size() > 0 )
 						{
 							std::cout << "key cell: " << key._pos << '\n';
@@ -1003,10 +1011,7 @@ Algo_XY_Wing( Grid& g )
 							if( RemoveCandidatesFromRegion( g, v_region, p_match.value, key ) )
 								retval = true;
 							else
-							{
-								if(g_data.Verbose )
-									std::cout << "No removals\n";
-							}
+								COUT( "No removals" );
 						}
 					}
 				}

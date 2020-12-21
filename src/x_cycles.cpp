@@ -315,7 +315,7 @@ PrintGraphCycles( std::vector<std::vector<vertex_t>> cycles, std::string msg, co
 		PrintGraphCycle( cy, graph );
 }
 //----------------------------------------------------------------------------
-/// Returns true if the cycle \v_in has no more than 2 consecutive weak links
+/// Returns true if the cycle \c cy has no more than 2 consecutive weak links
 bool
 CycleIsOk( const std::vector<vertex_t>& cy, const graph_t& graph )
 {
@@ -435,7 +435,7 @@ FindCycles(
 {
 	static std::array<int,9> dot_counter;
 
-	COUT( __FUNCTION__ << " val=" << val );
+	COUT( " val=" << (int)val );
 // 1 - add all the strong links to the graph
 	graph_t graph;
 	for( const auto& sl: v_StrongLinks )
@@ -455,7 +455,7 @@ FindCycles(
 
         auto e = boost::add_edge( v1, v2, graph ).first;
 		graph[e].link_type   = LT_Strong;
-		graph[e].link_orient = sl.orient;
+		graph[e].link_orient = sl._lorient;
 	}
 
 #ifdef GENERATE_DOT_FILES
@@ -494,7 +494,7 @@ FindCycles(
 			{
 				auto e = boost::add_edge( src, v, graph ).first;
 				graph[e].link_type   = LT_Weak;
-				graph[e].link_orient = wl.orient;
+				graph[e].link_orient = wl._lorient;
 			}
 		}
 	}
@@ -573,7 +573,7 @@ GetCycleType( const Cycle& cy )
 		if( std::find_if(
 				std::begin( cy.data() ),
 				std::end(   cy.data() ),
-				[](const Link& l){return l.type==LT_Weak; }
+				[](const Link& l){return l._ltype==LT_Weak; }
 			)
 			==
 			std::end(  cy.data() )
@@ -584,7 +584,7 @@ GetCycleType( const Cycle& cy )
 	for( size_t i=0; i<cy.size(); i++ )
 	{
 		const auto& bl = cy.GetElem(i);
-		if( bl.type == LT_Weak )
+		if( bl._ltype == LT_Weak )
 		{
 			count_WL++;
 			count_SL = 0;
@@ -628,9 +628,9 @@ GetCycleType( const Cycle& cy )
 //	if( type != CT_Invalid )
 	En_CycleType cyctype = CT_undefined;
 	{
-		if( has2WL )
+		if( has2WL )                         // if has 2 weak links
 		{
-			if( has2SL )
+			if( has2SL || cy.size()%2 == 0 ) // AND also 2 strong links or is even
 				cyctype = CT_Invalid;
 			else
 				cyctype = CT_Discont_2WL;
@@ -673,14 +673,14 @@ ExploreCycle( Cycle& cy, Grid& g, value_t val )
 			for( size_t i=0; i<cy.size(); i++ )
 			{
 				const auto& link = cy.GetElem( i );
-				COUT( "link: " << link << '\n' );
+				COUT( "link: " << link );
 
 				View_1Dim_nc view;       // step 1 - get the corresponding view (row/col/block)
-				switch( link.orient )
+				switch( link._lorient )
 				{
-					case OR_ROW: view = g.GetView( link.orient, link.p1.first ); break;
-					case OR_COL: view = g.GetView( link.orient, link.p1.second ); break;
-					case OR_BLK: view = g.GetView( link.orient, GetBlockIndex( link.p1 ) ); break;
+					case OR_ROW: view = g.GetView( link._lorient, link.p1.first ); break;
+					case OR_COL: view = g.GetView( link._lorient, link.p1.second ); break;
+					case OR_BLK: view = g.GetView( link._lorient, GetBlockIndex( link.p1 ) ); break;
 					default: assert(0);
 				}
 

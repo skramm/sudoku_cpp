@@ -10,6 +10,7 @@ Licence: GPLv3
 \mainpage sudoku_cpp refence pages
 
 See https://github.com/skramm/sudoku_cpp
+and README.md
 */
 #ifndef HG_HEADER_H
 #define HG_HEADER_H

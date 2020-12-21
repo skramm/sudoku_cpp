@@ -113,9 +113,9 @@ TEST_CASE( "test of naked triple search", "[triple]" )
 		v.emplace_back( 6, std::vector<value_t>{1,2,3} );
 
 		auto res = SearchTriplesPattern( v );
-		REQUIRE( res.found_NT == true );
-		REQUIRE( res.cand_values == trip_val );
-		REQUIRE( res.cand_pos == trip_pos );
+		CHECK( res.found_NT == true );
+		CHECK( res.cand_values == trip_val );
+		CHECK( res.cand_pos == trip_pos );
 	}
 	{
 		INFO( "test case B" )
@@ -126,9 +126,9 @@ TEST_CASE( "test of naked triple search", "[triple]" )
 		v.emplace_back( 6, std::vector<value_t>{1,2,3} );
 
 		auto res = SearchTriplesPattern( v );
-		REQUIRE( res.found_NT == true );
-		REQUIRE( res.cand_values == trip_val );
-		REQUIRE( res.cand_pos == trip_pos );
+		CHECK( res.found_NT == true );
+		CHECK( res.cand_values == trip_val );
+		CHECK( res.cand_pos == trip_pos );
 	}
 	{
 		INFO( "test case C - no good" )
@@ -139,7 +139,7 @@ TEST_CASE( "test of naked triple search", "[triple]" )
 		v.emplace_back( 6, std::vector<value_t>{1,2,3} );
 
 		auto res = SearchTriplesPattern( v );
-		REQUIRE( res.found_NT == false );
+		CHECK( res.found_NT == false );
 	}
 	{
 		INFO( "test case C - good" )
@@ -152,9 +152,9 @@ TEST_CASE( "test of naked triple search", "[triple]" )
 		v.emplace_back( 6, std::vector<value_t>{1,2,3} );
 
 		auto res = SearchTriplesPattern( v );
-		REQUIRE( res.found_NT == true );
-		REQUIRE( res.cand_values == trip_val );
-		REQUIRE( res.cand_pos == trip_pos );
+		CHECK( res.found_NT == true );
+		CHECK( res.cand_values == trip_val );
+		CHECK( res.cand_pos == trip_pos );
 	}
 	{
 		INFO( "test case D1 - no good" )
@@ -166,7 +166,7 @@ TEST_CASE( "test of naked triple search", "[triple]" )
 		v.emplace_back( 6, std::vector<value_t>{7,8} );
 
 		auto res = SearchTriplesPattern( v );
-		REQUIRE( res.found_NT == false );
+		CHECK( res.found_NT == false );
 	}
 	{
 		INFO( "test case D2 - good" )
@@ -179,9 +179,9 @@ TEST_CASE( "test of naked triple search", "[triple]" )
 		v.emplace_back( 6, std::vector<value_t>{2,3} );
 
 		auto res = SearchTriplesPattern( v );
-		REQUIRE( res.found_NT == true );
-		REQUIRE( res.cand_values == trip_val );
-		REQUIRE( res.cand_pos == trip_pos );
+		CHECK( res.found_NT == true );
+		CHECK( res.cand_values == trip_val );
+		CHECK( res.cand_pos == trip_pos );
 	}
 
 	{
@@ -229,7 +229,8 @@ CheckCycle( int n, const Cycle& c, En_CycleType ct, int pos=0 )
 			fail = true;
 		}
 	}
-
+	CHECK( !fail );
+	fail = false;
 	if( ct != CT_Invalid && ct != CT_Continuous )   // position makes no sense for invalid or continuous cycles
 	{
 		auto computed_pos = GetCycleType( c )._idx;

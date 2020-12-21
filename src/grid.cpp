@@ -325,10 +325,9 @@ Grid::loadFromFile( std::string fn )
 		if( !line.empty() )
 			if( ( line[0] >= '0' &&  line[0] <= '9') || line[0]=='.' || line[0]=='_' || line[0]==' ' ) // lines starting with other characters are ignored
 			{
-
-				if( line.size() != 9  && li < 9 )
+				if( line.size() != 9 && li < 9 )
 				{
-					std::cout << "Error: line " << li<< " has a length of " << line.size() << ": -" << line << "-\n";;
+					std::cout << "Error: line " << li+1 << " has a length of " << line.size() << ": -" << line << "-\n";;
 					return false;
 				}
 				for( size_t col=0; col<line.size(); col++ )
@@ -350,7 +349,7 @@ Grid::loadFromFile( std::string fn )
 	}
 	if( li != 9 )
 	{
-		std::cout << "Error: illegal number of lines (must be 9 lines)\n";
+		std::cout << "Error: illegal number of lines: " << li << " (must be 9 lines)\n";
 		return false;
 	}
 	return true;

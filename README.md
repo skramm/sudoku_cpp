@@ -86,10 +86,11 @@ So just consider this as some challenge to analyse and implement (some of) the t
 
 ## 4 - History
 
-* Latest (20201220)
+* Latest (20201221)
   * added `-c` option (checking)
   * extended logging options
-  * found bug in XY-Wing, see `samples/grid3.sud`
+  * fixed many bugs
+  * performance: all the provided samples are solved, except for 3
 * 20201115:
   * changed usage: you can now enter grid directly from command-line.
   * new option to save the grid

@@ -28,8 +28,8 @@
 
 */
 
-#ifndef GRID_H
-#define GRID_H
+#ifndef HG_GRID_H
+#define HG_GRID_H
 
 #include <array>
 #include <sstream>
@@ -79,7 +79,11 @@ void LogStep( int level, const Cell& cell, std::string msg );
 struct GlobData
 {
 	int  LogSteps = 0;
+#ifdef TESTMODE
+	bool Verbose  = true;
+#else
 	bool Verbose  = false;
+#endif
 	int  NbSteps  = 0;
 	bool doChecking = false;
 };
@@ -487,7 +491,6 @@ enum EN_ALGO
 	ALG_END
 };
 
-
 //----------------------------------------------------------------------------
 template<typename T>
 std::vector<T>
@@ -508,13 +511,37 @@ VectorRemoveDupes( std::vector<T>& vin )
 //----------------------------------------------------------------------------
 template<typename T>
 void
-PrintVector( const T& v, std::string s )
+PrintVector( const std::vector<T>& v, std::string s )
 {
-	std::cout <<  s << ": " << v.size() << " elems\n";
+	std::cout << s << ": " << v.size() << " elems\n";
 	for( auto p: v )
-		std::cout << p << ' ';
+			std::cout << p << ' ';
 	std::cout << '\n';
 }
+
+template<>
+inline
+void
+PrintVector<index_t>( const std::vector<index_t>& v, std::string s )
+{
+	std::cout << s << ": " << v.size() << " elems\n";
+	for( auto p: v )
+			std::cout << (int)p << ' ';
+	std::cout << '\n';
+}
+
+//----------------------------------------------------------------------------
+/*template<typename T>
+void
+PrintVector( const std::vector<std::pair<T,T>>& v, std::string s )
+{
+	std::cout << "PV3\n";
+	std::cout << s << ": " << v.size() << " elems\n";
+	for( auto p: v )
+		std::cout << (int)p.first << '-' << (int)p.second << ' ';
+	std::cout << '\n';
+}*/
+
 //----------------------------------------------------------------------------
 /// Add element \c elem to vector \c v only if it is not already present
 template<typename T>
