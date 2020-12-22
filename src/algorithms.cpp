@@ -420,86 +420,6 @@ isSameValues( const std::vector<value_t>& v1, const	std::array<value_t,3>& v2 )
 	return found1 & found2;
 }
 //----------------------------------------------------------------------------
-#if 0
-/// Helper function for SearchTriplesPattern(), search for "pattern D"
-/**
-A Triple Pattern of type D is a set of candidates where 3 cells hold each 2 candidates
-that are the same.
-
-For example, say we have this set of candidates in a unit:
-\verbatim
-(1,2) - (3,5) - (5,6,7,8) - (4,5) - (3,4)
-\endverbatim
-then we have the Triple Pattern (3,5)-(4,5)-(3,4)
-*/
-void
-CheckForTriplePattern_D( const std::vector<Pos_vcand>& v_cand, NakedTriple& retval )
-{
-	COUT( " case D !" );
-//	retval.cand_values.clear();
-//	assert( retval.cand_pos.empty() );
-
-	std::vector<index_t> v_pairs;
-	for( index_t i=0; i<v_cand.size(); i++ )
-	{
-		if( v_cand[i]._values.size() == 2 )  // if 2 candidates
-			v_pairs.push_back(i);
-	}
-
-//	PrintVector( v_pairs, "vpairs");
-
-	if( v_pairs.size() < 3 )       // if less than 3 cells with 2 candidates found,
-	{                              // then, no pattern!
-		retval.found_NT = false;
-		return;
-	}
-
-// step 1 - fill the 9 counters with number of values
-	std::array<int,9> counters;
-	std::fill( std::begin(counters), std::end(counters), 0 );
-
-	for( auto pa: v_pairs )
-	{
-		counters.at( v_cand.at( pa )._values[0]-1 )++;
-		counters.at( v_cand.at( pa )._values[1]-1 )++;
-	}
-
-// step 2 - search for counters that are=2
-	std::vector<int> pos_2; // holds the positions of counters (=grid values-1) with a value of 2
-	for(int i=0; i<9; i++ ) // i holds values (-1, because it is an index on array)
-	{
-		COUT( "c" << i+1 << ": " << counters[i] );
-		if( counters[i] == 2 )
-			pos_2.push_back(i);
-	}
-
-	if( pos_2.size() == 3 ) // if we have found 3 counters with a value of 2, then this is a "type D" triple pattern
-	{
-		retval.found_NT = true;
-		int x = 0;
-		for( auto i: pos_2 )
-		{
-			retval.cand_values[x++] = i+1;
-			COUT( "value: " << i+1 );
-		}
-
-		x=0;
-		for( auto i: v_pairs )
-		{
-//			std::cout << "i=" << (int)i << "/" << v_pairs.size() << '\n';
-			if( isSameValues( v_cand[i]._values, retval.cand_values ) )
-			{
-				retval.cand_pos[x++] = v_cand[i].pos_index;
-//				std::cout << "pos=" << (int)v_cand[i].pos_index << "\n";
-			}
-			assert( x < 4 );
-		}
-	}
-//	return retval;
-}
-#endif
-//----------------------------------------------------------------------------
-#if 1
 /// Helper function for SearchTriplesPattern(), search for "pattern D"
 /// \todo 20201221: this seems buggy, see "make test"
 void
@@ -579,15 +499,14 @@ CheckForTriplePattern_D( const std::vector<Pos_vcand>& v_cand, NakedTriple& retv
 		}
 	}
 }
-#endif
 //----------------------------------------------------------------------------
-/// helper function for SearchTriplesPattern(), search for "type C" pattern
+/// Helper function for SearchTriplesPattern(), search for "type C" pattern
 void
 CheckForTriplePattern_C(
 	const std::vector<Pos_vcand>& v_cand,
-	const std::vector<index_t>& v_pairs,
-	const std::vector<index_t>& v_triples,
-	NakedTriple& ret_val
+	const std::vector<index_t>&   v_pairs,
+	const std::vector<index_t>&   v_triples,
+	NakedTriple&                  ret_val
 )
 {
 	assert( v_pairs.size() == 2 );

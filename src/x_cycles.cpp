@@ -207,14 +207,11 @@ class EdgeWriter_2
 		template <class Edge>
 		void operator()( std::ostream &out, const Edge& e ) const
 		{
-#if 0
-			out << "[label=\"" << (_v1[e]==LT_Strong?'S':'W') << '\n' << GetString(_v2[e]) << "\"]";
-#else
+
 			out << "[label=\"" << GetString(_v2[e]) << "\"";
 			if( _v1[e]==LT_Strong )
 				out << ",style=\"bold\"";
 			out << "]";
-#endif
 		}
 	private:
 		T1 _v1;
@@ -552,12 +549,8 @@ size  0 1 2 3 4 5
 \endverbatim
 */
 CycleType
-//std::pair<En_CycleType,int>
 GetCycleType( const Cycle& cy )
 {
-//	En_CycleType type = CT_undefined;
-//	CycleType ct;
-
 	size_t count_WL = 0;   ///< Nb of Weak Links
 	size_t count_SL = 0;   ///< Nb of Strong Links
 	bool   has2WL(false);  ///< Has 2 Weak Links
@@ -622,7 +615,6 @@ GetCycleType( const Cycle& cy )
 		}
 	}
 
-//	if( type != CT_Invalid )
 	En_CycleType cyctype = CT_undefined;
 	{
 		if( has2WL )                         // if has 2 weak links
@@ -659,9 +651,9 @@ ExploreCycle( Cycle& cy, Grid& g, value_t val )
 	COUT( __FUNCTION__ << "(): " << cy );
 	bool removalDone( false );
 	auto gct = GetCycleType( cy );
+	assert( gct._ctype != CT_undefined );
 	COUT( "Cycle type=" << GetString( gct._ctype ) << " idx=" << gct._idx );
 
-//	auto middle_idx = p.second;
 	assert( gct._ctype != CT_undefined );
 	switch( gct._ctype )
 	{

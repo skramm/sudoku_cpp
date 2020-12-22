@@ -105,7 +105,6 @@ struct Cycle: public CircVec<Link>
 //----------------------------------------------------------------------------
 
 bool X_Cycles( Grid& g );
-//std::pair<En_CycleType,int> GetCycleType( const Cycle& cy );
 CycleType GetCycleType( const Cycle& cy );
 
 #endif

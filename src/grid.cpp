@@ -512,24 +512,6 @@ Grid::NbUnknows() const
 	return n;
 }
 //----------------------------------------------------------------------------
-#if 0
-int
-Grid::NbUnknows2() const
-{
-	int n = 0;
-	for( index_t i=0; i<9; i++ )  // for each row
-	{
-		View_1Dim_c row = GetRow( i );
-		for( index_t j=0; j<9; j++ ) // for each cell in the view
-		{
-			if( row.GetCell( j ).GetValue() == 0 )
-				n++;
-		}
-	}
-	return n;
-}
-#endif
-//----------------------------------------------------------------------------
 /// Returns true if something changed
 bool
 Grid::ProcessAlgorithm( EN_ALGO algo )

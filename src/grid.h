@@ -588,7 +588,6 @@ class Grid
 		bool Check( EN_ORIENTATION ) const;
 
 		int  NbUnknows() const;
-//		int  NbUnknows2() const;
 		bool ProcessAlgorithm( EN_ALGO );
 
 	private:

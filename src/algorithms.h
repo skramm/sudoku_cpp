@@ -95,26 +95,7 @@ struct Pos_vcand
 	}
 };
 
-#if 0
-//----------------------------------------------------------------------------
-/// Return type of SearchTriplesPattern(). Holds the naked triples values and positions in the row/col/block
-struct NakedTriple
-{
-	bool found_NT = false;
-	std::array<value_t,3> cand_values;
-	std::array<index_t,3> cand_pos;
-	void foundPattern() { found_NT = true; }
 
-	friend std::ostream& operator << ( std::ostream& s, const NakedTriple& nt )
-	{
-		s << "NakedTriple: found=" << std::boolalpha << nt.found_NT;
-		if( nt.found_NT )
-			s << ", values=" << (int)nt.cand_values[0] << '-' << (int)nt.cand_values[1] << '-' << (int)nt.cand_values[2];
-		s << '\n';
-		return s;
-	}
-};
-#endif
 NakedTriple SearchTriplesPattern( const std::vector<Pos_vcand>& v_cand );
 
 //----------------------------------------------------------------------------
