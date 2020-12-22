@@ -91,7 +91,7 @@ struct Link
 //----------------------------------------------------------------------------
 /// A cycle is associated with a value and a set of links.
 /// We store this as a vector of positions associated with a link type
-struct Cycle: public circvec<Link>
+struct Cycle: public CircVec<Link>
 {
 	friend std::ostream& operator << ( std::ostream& s, const Cycle& cy )
 	{

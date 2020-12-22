@@ -53,6 +53,7 @@ You'd better redirect in a file with that one, lots of output. Implies option "-
 * `-s`: will save the grid to a file name `current.sud` and to a timestamped file (`current_YYYYMMDD_HHMM.sud`).
 This is useful when entering grid from command-line, so you can get back to it.
 * `-c`: checking grid validity at every step (useful to catch bugs!)
+* `-t`: prints the available algorithms and exits
 
 ### 2.2 - Logging
 

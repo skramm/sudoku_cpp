@@ -6,7 +6,7 @@
 */
 
 template<typename T>
-class circvec
+class CircVec
 {
 	private:
 		std::vector<T> _data;
@@ -41,14 +41,5 @@ class circvec
 		}
 #endif
 
-/*		void RotateDown( size_t n )
-		{
-			assert( n<size() );
-			int p = _current_pos - n;
-			if( p < 0 )
-				_current_pos = size() - n;
-			else
-				_current_pos = p;
-		}*/
 };
 

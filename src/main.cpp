@@ -136,6 +136,14 @@ int main( int argc, const char** argv )
 			saveGridToFile = true;
 			cout << " -Option -s (save grid) activated\n";
 		}
+
+		if( arg == "-t" )
+		{
+			std::cout << "Implemented algorithms: " << (int)ALG_END << '\n';
+			for( auto i=0; i<ALG_END; i++ )
+				std::cout << i+1 << ": " << GetString( static_cast<EN_ALGO>(i) ) << '\n';
+			return 0;
+		}
 	}
 
 	if( !hasFileFlag && nbFlags+1 < argc )

@@ -28,11 +28,12 @@
 		<Unit filename="README.md">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
+		<Unit filename="build.sh" />
+		<Unit filename="devinfo.md" />
+		<Unit filename="doxyfile" />
 		<Unit filename="src/algorithms.cpp" />
 		<Unit filename="src/algorithms.h" />
-		<Unit filename="build.sh" />
 		<Unit filename="src/circvec.h" />
-		<Unit filename="doxyfile" />
 		<Unit filename="src/grid.cpp" />
 		<Unit filename="src/grid.h" />
 		<Unit filename="src/header.h" />
@@ -41,10 +42,7 @@
 		<Unit filename="src/x_cycles.cpp" />
 		<Unit filename="src/x_cycles.h" />
 		<Extensions>
-			<envvars />
-			<code_completion />
 			<lib_finder disable_auto="1" />
-			<debugger />
 		</Extensions>
 	</Project>
 </CodeBlocks_project_file>
