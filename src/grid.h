@@ -394,7 +394,7 @@ struct Cell
 		return _cand[currentValue];
 	}
 
-	int GetValueFromCandidate()
+	value_t GetValueFromCandidate()
 	{
 		assert( NbCandidates() == 1 );
 		for( value_t i=1; i<10; i++ )
@@ -581,6 +581,8 @@ class Grid
 		std::vector<pos_t> GetOtherCells_nbc(  const Cell&, int nb, EN_ORIENTATION )   const;
 		std::vector<pos_t> GetOtherCells_cand( const Cell&, int cand, EN_ORIENTATION ) const;
 
+		const Cell& getCell(index_t idx) const;
+
 	private:
 		std::vector<pos_t> GetOtherCells( const Cell&, int, EN_ORIENTATION, EN_GOCMODE ) const;
 
@@ -604,6 +606,17 @@ class Grid
 		View_1Dim_c   GetBlock( index_t ) const;
 		View_1Dim_nc  GetBlock( index_t );
 };
+//----------------------------------------------------------------------------
+
+inline
+const Cell&
+Grid::getCell( index_t idx ) const
+{
+	assert( idx<81 );
+	auto row = idx/9;
+	auto col = idx%9;
+	return _data[row][col];
+}
 //----------------------------------------------------------------------------
 
 inline
