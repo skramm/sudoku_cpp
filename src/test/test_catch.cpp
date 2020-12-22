@@ -268,4 +268,5 @@ TEST_CASE( "XY-chains test 1", "[XY-chains-1]" )
 	v.push_back( Cell2( "A1", 2,6 ) );
 	v.push_back( Cell2( "C2", 5,6 ) );
 	auto graph = buildGraphFrom( 0, 0, v );
+	CHECK( boost::num_vertices(graph) == 4 );
 }

@@ -114,22 +114,40 @@ buildGraphRecursive(
 
 	for( index_t idx=0; idx<v_cells.size(); idx++ )
 	{
-		auto& cell = v_cells[idx];
-		if( cell._chainRole == CR_Unused )
+		if( idx != curr_idx )          // if not the same cell !
 		{
-			if( areLinkable( cell, curr_cell ) )
+			auto& cell = v_cells[idx];
+			if(
+				cell._chainRole == CR_Unused  // if cell is not used yet
+				&&
+				cell._chainRole != CR_Start  // and not the starting cell
+			)
 			{
-				value_t vc1 = cell.get(0);
-				value_t vc2 = cell.get(1);
+				if( areLinkable( cell, curr_cell ) )  // if cells are on same row/col/block
+				{
+					value_t vc1 = cell.get(0);
+					value_t vc2 = cell.get(1);
+					COUT( "vc1=" << (int)vc1 << " vc2=" << (int)vc2 );
+					if( val2 == vc1 || val2 == vc2 )   // if the cell holds the OTHER value of the starting cell,
+						if( val1 != vc1 && val1 != vc2 )  // and it does NOT hold as other value the considered value
+						{                                 // THEN, its a new node in the graph !
+							auto newV = boost::add_vertex( graph );
+							graph[newV].idx = idx;
+							cell._chainRole = CR_Used;
+							boost::add_edge( currV, newV, graph );
 
-				if( val2 == vc1 || val2 == vc2 )   // if the cell holds the OTHER value of the starting cell,
-					if( val1 != vc1 && val1 != vc2 )  // and it does NOT hold as other value the considered value
-					{                                 // THEN, its a new node in the graph !
-						auto newV = boost::add_vertex( graph );
-						graph[newV].idx = idx;
-						auto newE = boost::add_edge( currV, newV, graph );
-						buildGraphRecursive( graph, startV, newV, (whichOne?0:1), v_cells );
-					}
+							if( 0 /*todo */)                      // if cell can be joined to starting cell
+							{
+								cell._chainRole = CR_End;
+								auto finalEdge = boost::add_edge( startV, newV, graph ).first;
+								graph[finalEdge].isFinalEdge = true;
+							}
+							else
+								buildGraphRecursive( graph, startV, newV, (whichOne?0:1), v_cells );
+						}
+				}
+				else
+					COUT( "NOT linkable" );
 			}
 		}
 	}

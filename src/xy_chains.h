@@ -98,6 +98,7 @@ struct GraphNode2
 /// \todo Checkout if it can be merged with \c GraphEdge
 struct GraphEdge2
 {
+	bool isFinalEdge = false;
 //	En_LinkType link_type;
 //	EN_ORIENTATION link_orient;
 };
