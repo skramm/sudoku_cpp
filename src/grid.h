@@ -60,7 +60,6 @@ struct Cell;
 void LogStep( int level, const Cell& cell, std::string msg );
 
 
-
 #ifdef NDEBUG
 	#define ASSERT_1( a, b ) ;
 #else
@@ -75,7 +74,7 @@ void LogStep( int level, const Cell& cell, std::string msg );
 #endif
 
 //----------------------------------------------------------------------------
-/// holds some global vars
+/// Holds some global vars
 struct GlobData
 {
 	int  LogSteps = 0;
@@ -90,20 +89,13 @@ struct GlobData
 extern GlobData g_data;
 
 //----------------------------------------------------------------------------
-inline
-void
-InitCandMap( cand_map_t& cmap )
-{
-	for( value_t i=1; i<10; i++ )
-		cmap[i]=true;
-}
-//----------------------------------------------------------------------------
-/// Wrapper over \ref cand_map_t, with somme added member functions
+/// Candidate Map
 struct CandMap
 {
 	CandMap()
 	{
-		InitCandMap( cmap );
+		for( value_t i=1; i<10; i++ )
+			cmap[i]=true;
 	}
 	bool Has( value_t cand )
 	{
@@ -113,9 +105,19 @@ struct CandMap
 	{
 		cmap[cand] = false;
 	}
-	private:
-		cand_map_t cmap;
 
+	const bool& operator [] ( const value_t& v ) const
+	{
+		return cmap.at(v);
+	}
+
+	bool& operator [] ( const value_t& v )
+	{
+		return cmap[v];
+	}
+
+	private:
+		std::map<value_t,bool> cmap;
 };
 //----------------------------------------------------------------------------
 /// Return type of SearchTriplesPattern(). Holds the naked triples values and positions in the row/col/block
@@ -139,7 +141,7 @@ struct NakedTriple
 };
 
 //----------------------------------------------------------------------------
-/// orientation : column, row or block
+/// Orientation : column, row or block
 enum EN_ORIENTATION { OR_COL=0, OR_ROW, OR_BLK, OR_INVALID };
 
 inline
@@ -194,7 +196,7 @@ char
 GetRowLetter( index_t i )
 {
 	char c = i+'A';
-	if( i==8 )   // so we replace 'I' by 'J' for readability
+	if( i==8 )   // we replace 'I' by 'J' for readability
 		c++;
 	return c;
 }
@@ -291,24 +293,16 @@ struct Cell
 {
 	friend std::ostream& operator << ( std::ostream& s, const Cell& c )
 	{
-//		s << "CELL: val=" << (int)c._value << " pos=" << c._pos << " candid: " << c._cand << '\n';
 		s << "CELL: pos=" << c._pos << " val=" << (int)c._value;
 		return s;
 	}
 
-private:
-	value_t    _value = 0; ///< value
-
-	/// \todo Why is this data public ?
-	public:
-	cand_map_t _cand;      ///< candidate map
-	pos_t      _pos;       ///< position in grid [0-8]
+	private:
+	value_t   _value = 0;  ///< Cell value
+	CandMap   _cand;       ///< Candidate map
+	pos_t     _pos;        ///< Position in view [0-8]
 
 	public:
-	Cell()
-	{
-		InitCandMap( _cand );
-	}
 	value_t GetValue() const { return _value; }
 	void SetValue( value_t v ) { _value = v; }
 
@@ -382,7 +376,7 @@ private:
 	{
 		std::vector<value_t> v;
 		for( value_t i=1; i<10; i++ )
-			if( _cand.at(i) )
+			if( _cand[i] )
 				v.push_back( i );
 		return v;
 	}
@@ -390,14 +384,14 @@ private:
 	{
 		uint8_t n = 0;
 		for( value_t i=1; i<10; i++ )
-			if( _cand.at(i) )
+			if( _cand[i] )
 				n++;
 		return n;
 	}
 	bool HasCandidate( value_t currentValue ) const
 	{
 		assert( currentValue>0 && currentValue<10 );
-		return _cand.at(currentValue);
+		return _cand[currentValue];
 	}
 
 	int GetValueFromCandidate()

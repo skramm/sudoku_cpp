@@ -15,8 +15,6 @@ and README.md
 #ifndef HG_HEADER_H
 #define HG_HEADER_H
 
-//#include "grid.h"
-
 #ifdef DEBUGMODE
 	#define DEBUG if(1) std::cout
 #else

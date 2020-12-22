@@ -46,7 +46,7 @@ LogStep( int level, const Cell& cell, std::string msg )
 {
 	++g_data.NbSteps;
 	if( level <= g_data.LogSteps )
-		std::cout << "*** step " << g_data.NbSteps << ": CELL " << cell._pos << ": " << msg << '\n';
+		std::cout << "*** step " << g_data.NbSteps << ": CELL " << cell.GetPos() << ": " << msg << '\n';
 }
 //----------------------------------------------------------------------------
 /// \todo 20201115: is this used somewhere ???
@@ -234,8 +234,8 @@ Grid::Check( EN_ORIENTATION orient ) const
 							std::cout << GetRowLetter( idx );
 						else
 							std::cout << (int)idx+1;
-						std::cout << ": Error, cell " << cell_1._pos
-							<< " and " << cell_2._pos
+						std::cout << ": Error, cell " << cell_1.GetPos()
+							<< " and " << cell_2.GetPos()
 							<< " have same value: " << (int)val_1 << '\n';
 						return false;
 					}
@@ -447,8 +447,8 @@ std::vector<pos_t>
 Grid::GetOtherCells( const Cell& src, int arg, EN_ORIENTATION orient, EN_GOCMODE goc_mode ) const
 {
 	std::vector<pos_t> out;
-	auto row = src._pos.first;
-	auto col = src._pos.second;
+	auto row = src.GetPos().first;
+	auto col = src.GetPos().second;
 
 	View_1Dim_c v1d;
 	switch( orient )
@@ -462,17 +462,17 @@ Grid::GetOtherCells( const Cell& src, int arg, EN_ORIENTATION orient, EN_GOCMODE
 	for( index_t i=0; i<9; i++ )  // for each cell of the view
 	{
 		const Cell& c = v1d.GetCell( i );
-		if( c._pos != src._pos )
+		if( c.GetPos() != src.GetPos() )
 		{
 			switch( goc_mode )
 			{
 				case GOCM_NB_CAND:
 					if( c.NbCandidates() == arg )
-						out.push_back( c._pos );
+						out.push_back( c.GetPos() );
 				break;
 				case GOCM_CAND_VALUE:
 					if( c.HasCandidate( arg ) )
-						out.push_back( c._pos );
+						out.push_back( c.GetPos() );
 				break;
 				default: assert(0);
 			}
@@ -632,7 +632,7 @@ Grid::BuildViewtable() const
 				int c = j*3 + k%3;
 
 				vt[r][c] = ' ';
-				if( cell._cand[k+1] )
+				if( cell.HasCandidate(k+1) )
 					vt[r][c] = k + '1';
 			}
 		}

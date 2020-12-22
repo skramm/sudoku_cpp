@@ -34,8 +34,6 @@ See:
 */
 
 
-#define GENERATE_DOT_FILES
-
 #ifdef BUILD_WITHOUT_UDGCD
 #warning Building solver without X cycles algorithm!
 #else
@@ -433,8 +431,6 @@ FindCycles(
 	const std::vector<Link>& v_StrongLinks
 )
 {
-	static std::array<int,9> dot_counter;
-
 	COUT( " val=" << (int)val );
 // 1 - add all the strong links to the graph
 	graph_t graph;
@@ -459,6 +455,7 @@ FindCycles(
 	}
 
 #ifdef GENERATE_DOT_FILES
+	static std::array<int,9> dot_counter;
 	std::ofstream file( "out/ls_" + std::to_string(val) + '_' + std::to_string(dot_counter[val]) + ".dot" );
 	assert( file.is_open() );
 	boost::write_graphviz(

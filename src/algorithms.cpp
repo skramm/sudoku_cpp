@@ -141,7 +141,7 @@ PointingPairsTriples( Grid& g, EN_ORIENTATION orient )
 		{
 			DEBUG << " block=" << (int)b+1 << '\n';
 			const Cell& first = v1d.GetCell(b*3); // get first cell of block
-			auto bl_idx = GetBlockIndex( first._pos );
+			auto bl_idx = GetBlockIndex( first.GetPos() );
 			auto cc1 = CoundCandidates( g, OR_BLK, bl_idx ); // number of candidates in that block
 			std::map<value_t,index_t> cc2;
 			for( index_t c=0; c<3; c++ )  // count candidates in the 3 cells of that block limit
@@ -908,7 +908,7 @@ RemoveCandidatesFromRegion( Grid& grid, const std::vector<pos_t>& v_region, valu
 {
 	bool retval(false);
 	for( auto& pos: v_region )
-		if( pos != key._pos )
+		if( pos != key.GetPos() )
 			if( grid.GetCellByPos(pos).RemoveCandidate( cand ) )
 				retval = true;
 	return retval;
@@ -1002,7 +1002,7 @@ Algo_XY_Wing( Grid& g )
 						std::vector<SymMatches> v_matches = FindSymmetricalMatches( g, v_cand, v_cells );
 						if( g_data.Verbose && v_matches.size() > 0 )
 						{
-							std::cout << "key cell: " << key._pos << '\n';
+							std::cout << "key cell: " << key.GetPos() << '\n';
 							PrintVector( v_matches, "Symmetric matches" );
 						}
 						for( const auto& p_match: v_matches )
