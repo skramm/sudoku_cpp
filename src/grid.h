@@ -44,16 +44,16 @@
 /// The values in the cells
 using value_t = uint8_t;
 
-/// index type
+/// Index type
 using index_t = uint8_t;
 
-/// a position in the grid
+/// A position in the grid. "first" is row, "second" is column
 using pos_t = std::pair<index_t,index_t>;
 
-/// a pair of (linked) positions
+/// A pair of (linked) positions
 using pospair_t = std::pair<pos_t,pos_t>;
 
-/// each cell has such a map with 9 values, to hold candidates with true/false value
+/// Each cell has such a map with 9 values, to hold candidates with true/false value
 using cand_map_t=std::map<value_t,bool>;
 
 struct Cell;

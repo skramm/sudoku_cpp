@@ -27,8 +27,9 @@
 #define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
 #include "catch.hpp"
 
+#include "../xy_chains.h"
 
-#include "algorithms.h"
+#include "../algorithms.h"
 
 TEST_CASE( "test of position/index conversions", "tposi" )
 {
@@ -258,3 +259,13 @@ TEST_CASE( "test of cycle detection", "[cycles]" )
 	CheckCycle( n++, BuildCycle( "W-W-S-W-S-W-W-S" ), CT_Invalid ); // twice 2 weak links
 }
 
+
+TEST_CASE( "XY-chains test 1", "[XY-chains-1]" )
+{
+	std::vector<Cell2> v;
+	v.push_back( Cell2( "A7", 6,9 ) );
+	v.push_back( Cell2( "A5", 2,9 ) );
+	v.push_back( Cell2( "A1", 2,6 ) );
+	v.push_back( Cell2( "C2", 5,6 ) );
+	auto graph = buildGraphFrom( 0, 0, v );
+}

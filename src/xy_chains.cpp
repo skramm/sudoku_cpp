@@ -35,45 +35,15 @@
 #include "header.h"
 #include "algorithms.h"
 
+#ifndef TESTMODE
+
 #include <boost/graph/adjacency_list.hpp>
-
-//----------------------------------------------------------------------------
-enum En_ChainRole
-{
-	CR_Start,
-	CR_End,
-	CR_Used,
-	CR_Unused
-};
-
-//----------------------------------------------------------------------------
-/// A cell hold as additional attribute its role in the chain (see \c En_ChainRole)
-struct Cell2
-{
-	En_ChainRole               _chainRole = CR_Unused;
-	pos_t                      _pos;
-	std::pair<value_t,value_t> _candidValues;
-	value_t get(index_t i) const
-	{
-		assert( i==0 || i==1 );
-		return i ? _candidValues.first : _candidValues.second;
-	}
-	Cell2( const Cell& c )
-		: _pos( c.GetPos() )
-	{
-		auto vcand = c.GetCandidates();
-		assert( vcand.size() == 2 );
-		_candidValues.first  = vcand[0];
-		_candidValues.second = vcand[1];
-	}
-};
 
 //----------------------------------------------------------------------------
 /// Vertex datatype, with BGL. Holds a cell position
 /// \todo Checkout if it can be merged with \c GraphNode
 struct GraphNode2
 {
-//	pos_t pos;
 	index_t idx;   ///< index in the set of cells having two candidates
 };
 
@@ -81,8 +51,8 @@ struct GraphNode2
 /// \todo Checkout if it can be merged with \c GraphEdge
 struct GraphEdge2
 {
-	En_LinkType link_type;
-	EN_ORIENTATION link_orient;
+//	En_LinkType link_type;
+//	EN_ORIENTATION link_orient;
 };
 
 /// A graph datatype, with BGL
@@ -94,9 +64,29 @@ typedef boost::adjacency_list<
 	GraphEdge2
 	> graph2_t;
 
+#endif // TESTMODE
+
 typedef typename boost::graph_traits<graph2_t>::vertex_descriptor vertex2_t;
 typedef typename boost::graph_traits<graph2_t>::edge_descriptor   edge2_t;
 
+//-------------------------------------------------------------------
+/// Returns true if cell are "linkable", that is they are:
+/**
+- either on same row
+- either on same column
+- either in same block
+*/
+bool
+areLinkable( const Cell2& c1, const Cell2& c2 )
+{
+	if( c1._pos.first == c2._pos.first )
+		return true;
+	if( c1._pos.second == c2._pos.second )
+		return true;
+	if( GetBlockIndex(c1._pos) == GetBlockIndex(c2._pos) )
+		return true;
+	return false;
+}
 //-------------------------------------------------------------------
 /// Explore set of Cells having 2 candidates and add them to the graph, recursively
 /**
@@ -104,43 +94,54 @@ Stop condition: when we can't add any more nodes
 */
 void
 buildGraphRecursive(
-	graph2_t&          graph,   ///< graph
-	vertex2_t          v,       ///< origin vertex
+	graph2_t&          graph,     ///< graph
+	vertex2_t          startV,    ///< graph starting vertex
+	vertex2_t          currV,     ///< current vertex
 	index_t            whichOne,  ///< 0 or 1, the index on the value of the origin vertex that we are considering
-	std::vector<Cell2>& v_cells  ///< the set of cells holding 2 candidates.
+	std::vector<Cell2>& v_cells   ///< the set of cells holding 2 candidates.
 )
 {
-	auto curr_idx = graph[v].idx;          // index on the cell we are considering
-	auto& curr_cell = v_cells.at(curr_idx);      // we fetch the cell
-
+	static int iter;
+	auto curr_idx = graph[currV].idx;           // index on the cell we are considering
+	auto& curr_cell = v_cells.at(curr_idx);     // we fetch the cell
+	COUT( "iter " << ++iter
+		<< " curr_idx=" << (int)curr_idx
+		<< " pos=" << curr_cell._pos
+		<< " graph: nb_nodes=" << boost::num_vertices(graph) );
 
 	value_t val1 = curr_cell.get(whichOne);
 	value_t val2 = curr_cell.get(whichOne?0:1);
 
-	for( auto cell: v_cells )
+	for( index_t idx=0; idx<v_cells.size(); idx++ )
 	{
+		auto& cell = v_cells[idx];
 		if( cell._chainRole == CR_Unused )
 		{
-			value_t vc1 = cell.get(0);
-			value_t vc2 = cell.get(1);
-
-			if( val2 == vc1 || val2 == vc2 )   // if the cell holds the OTHER value of the starting cell,
-				if( val1 != vc1 && val1 != vc2 )  // and it does NOT hold as other value the considered value
+			if( areLinkable( cell, curr_cell ) )
 			{
-;
-			}
+				value_t vc1 = cell.get(0);
+				value_t vc2 = cell.get(1);
 
+				if( val2 == vc1 || val2 == vc2 )   // if the cell holds the OTHER value of the starting cell,
+					if( val1 != vc1 && val1 != vc2 )  // and it does NOT hold as other value the considered value
+					{                                 // THEN, its a new node in the graph !
+						auto newV = boost::add_vertex( graph );
+						graph[newV].idx = idx;
+						auto newE = boost::add_edge( currV, newV, graph );
+						buildGraphRecursive( graph, startV, newV, (whichOne?0:1), v_cells );
+					}
+			}
 		}
 	}
-//	value_t v1 =
+//	COUT( "END iter " << iter );
 }
 
 //-------------------------------------------------------------------
 graph2_t
 buildGraphFrom(
-	index_t             idxCell, ///< the index on the cell we are starting from, holds 2 candidates
-	index_t             whichOne,       ///< 0 or 1
-	std::vector<Cell2>& v_cells ///< the set of cells holding 2 candidates. Not const, because each cell may get tagged as 'used' in graph
+	index_t             idxCell,   ///< the index on the cell we are starting from, holds 2 candidates
+	index_t             whichOne,  ///< 0 or 1
+	std::vector<Cell2>& v_cells    ///< the set of cells holding 2 candidates. Not const, because each cell may get tagged as 'used' in graph
 )
 {
 	graph2_t graph;
@@ -148,7 +149,7 @@ buildGraphFrom(
 	graph[v].idx = idxCell;
 	v_cells.at( idxCell )._chainRole = CR_Start;
 
-	buildGraphRecursive( graph, v, whichOne, v_cells );
+	buildGraphRecursive( graph, v, v, whichOne, v_cells );
 
 
 	return graph;

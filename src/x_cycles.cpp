@@ -197,6 +197,8 @@ struct GraphEdge
 	En_LinkType link_type;
 	EN_ORIENTATION link_orient;
 };
+
+#ifdef GENERATE_DOT_FILES
 //-------------------------------------------------------------------
 /// A functor class used to printout the properties of the edges
 template <class T1,class T2>
@@ -250,6 +252,9 @@ make_edge_writer( T1 v1, T2 v2 )
 {
 	return EdgeWriter_2<T1,T2>(v1,v2);
 }
+//-------------------------------------------------------------------
+#endif // GENERATE_DOT_FILES
+
 //-------------------------------------------------------------------
 /// A graph datatype, with BGL
 typedef boost::adjacency_list<
