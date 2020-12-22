@@ -23,6 +23,15 @@ ifeq ($(TEST),Y)
 endif
 
 #----------------------------------------------
+# Generate dot files (for X-cycles)
+ifeq "$(GENDOT)" ""
+	GENDOT=N
+endif
+ifeq ($(GENDOT),Y)
+	CFLAGS += -DGENERATE_DOT_FILES
+endif
+
+#----------------------------------------------
 # Build without udgcd
 ifeq "$(UDGCD)" ""
 	UDGCD=YES
@@ -31,6 +40,8 @@ endif
 ifeq ($(UDGCD),NO)
 	CFLAGS += -DBUILD_WITHOUT_UDGCD
 endif
+
+
 
 program: sudoku
 	@echo "done target $@"

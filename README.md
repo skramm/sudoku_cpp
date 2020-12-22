@@ -72,6 +72,7 @@ Two logging levels are available:
  3: invalid grid given (must be 81 characters, only digits or '.')
  4: invalid grid
  5: unable to solve
+ 6: invalid switch
 ```
 
 ## 3 - Motivation
@@ -94,3 +95,7 @@ So just consider this as some challenge to analyse and implement (some of) the t
 * 20201115:
   * changed usage: you can now enter grid directly from command-line.
   * new option to save the grid
+
+
+For additional information, check out [devinfo.md](devinfo.md).
+
