@@ -262,15 +262,17 @@ TEST_CASE( "test of cycle detection", "[cycles]" )
 #if 1
 TEST_CASE( "XY-chains test 1", "[XY-chains-1]" )
 {
-	std::vector<Cell2> v;
-	v.push_back( Cell2( "A7", 6,9 ) );
-	v.push_back( Cell2( "A5", 2,9 ) );
-	v.push_back( Cell2( "A1", 2,6 ) );
-	v.push_back( Cell2( "C2", 5,6 ) );
-	v.push_back( Cell2( "C8", 5,8 ) );
+	{
+		std::vector<Cell2> v;
+		v.push_back( Cell2( "A7", 6,9 ) );
+		v.push_back( Cell2( "A5", 2,9 ) );
+		v.push_back( Cell2( "A1", 2,6 ) );
+		v.push_back( Cell2( "C2", 5,6 ) );
+		v.push_back( Cell2( "C8", 5,8 ) );
 
-	auto v_graph1 = buildGraphs( v );
-//	CHECK( boost::num_vertices(graph1) == 5 );
+		auto v_graph1 = buildGraphs( v );
+	}
+
 
 
 // Example from https://www.sudokuwiki.org/sudoku.htm?bd=003001000800000000051009060080000290000700080200040503600900000002084000410050600
@@ -299,6 +301,8 @@ TEST_CASE( "XY-chains test 1", "[XY-chains-1]" )
 		v.push_back( Cell2( "D4", 5,3 ) );
 		v.push_back( Cell2( "G7", 4,8 ) );
 		v.push_back( Cell2( "H7", 7,9 ) );
+
+		auto v_graph1 = buildGraphs( v );
 	}
 
 }

@@ -133,21 +133,13 @@ struct LinkXY
 /// Vertex datatype, with BGL. Holds a cell position
 struct GraphNode_B
 {
-	index_t   cell_idx;   ///< index in the set of cells having two candidates
-//	ValuePair colorValues;
-/*
-	GraphNode_B()
-	{}
-	GraphNode_B( index_t i, const Cell2& cell ) : idx(i)
-	{
-		colorValues = cell._candidValues;
-	}*/
+	index_t cell_idx;   ///< index in the set of cells having two candidates
 };
 
 /// Edge datatype
 struct GraphEdge_B
 {
-	bool isFinalEdge = false;
+	value_t commonVal = 0;
 };
 
 /// A graph datatype, with BGL
