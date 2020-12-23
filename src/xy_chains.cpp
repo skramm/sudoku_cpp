@@ -51,8 +51,6 @@ Ref: https://www.sudokuwiki.org/XY_Chains
 #endif
 #include <boost/graph/graph_utility.hpp> //  for boost::print_graph()
 
-typedef typename boost::graph_traits<graph2_t>::vertex_descriptor vertex2_t;
-typedef typename boost::graph_traits<graph2_t>::edge_descriptor   edge2_t;
 
 #ifdef GENERATE_DOT_FILES
 //-------------------------------------------------------------------
@@ -85,7 +83,11 @@ class NodeWriter_B
 //			std::cout << "NodeWriter_B:vertex=" << v << " idx=" << (int) _v1[v] << " g_ptr->size=" << g_ptr->size() << std::endl;
 			auto cell = g_ptr->at( _v1[v] );
 //			std::cout << "NodeWriter_B:cell=" << cell << std::endl;
-			out << " [label=\"" << cell._pos << "\\n(" << (int)cell.get(0) << ',' << (int)cell.get(1) << ")\"]";
+			out << " [label=\"" << cell._pos << "\\n(" << (int)cell.get(0) << ',' << (int)cell.get(1) << ")\""
+				<< " pos=\"" << (int)cell._pos.second << ',' << -(int)cell._pos.first << "!\"";
+			if( _v1[v] == 0 )
+				out << " penwidth=\"2.0\"";
+			out << "]";
 		}
 	private:
 		T1 _v1;
@@ -121,13 +123,13 @@ make_node_writer_B( T1 v1 )
 {
 	return NodeWriter_B<T1>(v1);
 }
-template <class T1,class T2>
+/*template <class T1,class T2>
 inline
 NodeWriter_B2<T1,T2>
 make_node_writer_B2( T1 v1, T2 v2 )
 {
 	return NodeWriter_B2<T1,T2>(v1,v2);
-}
+}*/
 //-------------------------------------------------------------------
 /// Helper function to printout edges in the graph, used by boost::write_graphviz()
 template <class T1>
@@ -183,35 +185,31 @@ findFirstUnused( const std::vector<Cell2>& v_cells )
 	assert(0);	        // should never happen...
 }
 //-------------------------------------------------------------------
-#if 1
-std::pair<bool,value_t>
+/// Check if cells share 0, 1, or 2 common values
+/**
+- if 1 common value, second member of pair will hold it
+- if 2 common values, second member of pair will be irrelevant
+*/
+std::pair<uint8_t,value_t>
 shareCommonValue( const Cell2& c1, const Cell2& c2 )
 {
-	std::pair<bool,value_t>	res{true, 0};
+	assert( c1.get(0) != c1.get(1) );
+	assert( c2.get(0) != c2.get(1) );
 
+	std::pair<uint8_t,value_t>	res{0, 0};
 	if( c1.get(0) == c2.get(0) || c1.get(0) == c2.get(1) )
-		res.second = c1.get(0);
-	else
 	{
-		if( c1.get(1) == c2.get(0) || c1.get(1) == c2.get(1) )
-			res.second = c1.get(1);
-		else
-			res.first = false;
+		res.first++;
+		res.second = c1.get(0);
+	}
+	if( c1.get(1) == c2.get(0) || c1.get(1) == c2.get(1) )
+	{
+		res.first++;
+		res.second = c1.get(1);
 	}
 	return res;
 }
-#else
-bool
-shareCommonValue( const Cell2& c1, const Cell2& c2 )
-{
-	if(
-		c1.get(0) == c2.get(0) || c1.get(0) == c2.get(1) ||
-		c1.get(1) == c2.get(0) || c1.get(1) == c2.get(1)
-	)
-		return true;
-	return false;
-}
-#endif
+
 //-------------------------------------------------------------------
 /// Explore set of Cells having 2 candidates and add them to the graph, recursively
 /**
@@ -221,17 +219,18 @@ void
 buildGraphRecursive(
 	graph2_t&           graph,
 	vertex2_t           currVert,    ///< current vertex
+	value_t             inVal,       ///< the value that lead us to that vertex, 0 if none (for starting)
 	std::vector<Cell2>& v_cells      ///< the set of cells holding 2 candidates.
 )
 {
 	static int iter;
-	COUT( "iter " << ++iter << " currVert=" << currVert << " nbVert=" << boost::num_vertices(graph) );
+	COUT( "iter " << ++iter << " currVert=" << currVert );
 
 	auto curr_idx = graph[currVert].cell_idx;           // index on the cell we are considering
 	auto& currCell = v_cells.at(curr_idx);     // we fetch the cell
 	COUT( " curr_idx=" << (int)curr_idx
 		<< " pos=" << currCell._pos
-		<< " nb_nodes=" << boost::num_vertices(graph)
+		<< " values=(" << (int)currCell._candidValues.first << ',' << (int)currCell._candidValues.second << ')'
 		<< " nbUnusedCells=" << nbUnusedCells( v_cells )
 		<< " nbVertices=" << boost::num_vertices(graph)
 	);
@@ -242,37 +241,52 @@ buildGraphRecursive(
 	{
 		if( idx != curr_idx )          // if not the same cell !
 		{
-			auto& newCell = v_cells[idx];
-			if( !newCell._isUsed )
-			{
-				COUT ( (int)idx << ": considering cell " << newCell );
+			auto& newCell = v_cells.at(idx);
+			COUT ( (int)idx << ": considering cell " << newCell << ": " << newCell._candidValues );
 
-				if( areLinkable( newCell, currCell ) )  // if cells are on same row/col/block
+			if( areLinkable( newCell, currCell ) )  // if cells are on same row/col/block
+			{
+				COUT( " -Linkable !" );
+				auto scv = shareCommonValue( newCell, currCell );  // check if common value(s),
+				if( scv.first==1 && scv.second != inVal            //  that is NOT the "entrance" value (in cas of 1 common value)
+					|| scv.first==2 )
 				{
-					COUT( "Linkable !" );
-					auto scv = shareCommonValue( newCell, currCell );  // if they share a common value,
-					if( scv.first )  // if they share a common value,
-					{                                               // THEN, its a new node in the graph !
+					auto linkVal = scv.second;                        // determine the link value
+					if( scv.first==2 )
+						linkVal = newCell.getOtherVal( inVal );
+
+					if( !newCell._isUsed )                            // if not already used,
+					{                                                 // its a new node in the graph
 						auto newVert = boost::add_vertex( graph );
 						graph[newVert].cell_idx = idx;
 						COUT( "cell_idx =" << (int)idx );
 						newCell._isUsed = true;                  // tag the cell as "used"
+						newCell._vertex = newVert;
 						auto edge = boost::add_edge( currVert, newVert, graph ).first;
-						graph[edge].commonVal = scv.second;
+						graph[edge].commonVal = linkVal;
 						COUT( "Added edge " << currCell._pos << "--" << newCell._pos );
 
 						if( nbUnusedCells( v_cells ) != 0 )
 						{
 							COUT( "nbUnused=" << nbUnusedCells( v_cells ) << ", RE-ENTRY !" )
-							buildGraphRecursive( graph, newVert, v_cells );
+							buildGraphRecursive( graph, newVert, linkVal, v_cells );
 						}
 					}
-					else
-						COUT( "NO common value" );
+					else  // if already used, then add an edge (if not present)
+					{
+						auto v = newCell._vertex;
+						if( !boost::edge( v, currVert,graph ).second )  // if not there,
+						{
+							auto edge = boost::add_edge( currVert, v, graph ).first;  // then create that edge
+							graph[edge].commonVal = scv.second;
+						}
+					}
 				}
 				else
-					COUT( "NOT linkable" );
+					COUT( " -NO common value" );
 			}
+			else
+				COUT( " -NOT linkable" );
 		}
 	}
 }
@@ -301,41 +315,38 @@ buildGraphs( std::vector<Cell2>& v_cells )
 	auto vert = boost::add_vertex( graph );  // add initial vertex
 	graph[vert].cell_idx = 0;
 	v_graphs.push_back( graph );       // add initial graph
+	cell._vertex = vert;
 
 	size_t idx_graph = 0;
 	do
 	{
 		COUT( "start loop, idx_graph=" << idx_graph << " nbGraph=" << v_graphs.size() << " vert=" << vert << " nbVert=" << boost::num_vertices(v_graphs[idx_graph]) );
-		buildGraphRecursive( v_graphs[idx_graph], vert, v_cells );
-//		printGraph( std::cout, v_graphs[idx_graph] );
+		buildGraphRecursive( v_graphs[idx_graph], vert, 0, v_cells );
 		idx_graph++;
-		COUT ( "AFTER: nbUnusedCells=" << nbUnusedCells(v_cells) );
 		if( nbUnusedCells(v_cells) != 0 )        // then some cells where not connected, so we create a new graph
 		{
 			auto idx_c = findFirstUnused( v_cells );
-			COUT( "NbGraph=" << idx_graph << " nbUnusedCells" << nbUnusedCells(v_cells) << " firstUnused=" <<idx_c );
-			v_cells[idx_c]._isUsed = true;
+			COUT( "** CREATE NEW GRAPH, NbGraph=" << idx_graph << " nbUnusedCells=" << nbUnusedCells(v_cells) << " firstUnused=" <<idx_c );
 
 			graph2_t graph2;
 			vert = boost::add_vertex( graph2 );
+
+			v_cells[idx_c]._isUsed = true;
+			v_cells[idx_c]._vertex = vert;
+
 			graph2[vert].cell_idx = idx_c;
 			v_graphs.push_back( graph2 );
-
-// checking
-//			COUT( "NEW IDX=" << v_graphs[idx_graph][vert].cell_idx );
 		}
 	}
 	while( nbUnusedCells(v_cells) != 0 );
 
-
-//	COUT( "NbGraph=" << v_graphs.size() << " nbUnusedCells" << nbUnusedCells(v_cells) );
-
 #ifdef GENERATE_DOT_FILES
+	static int c;
 	g_ptr = &v_cells;
 	index_t i=0;
 	for( auto& gr: v_graphs )
 	{
-		std::ofstream file( "out/xyc_" + std::to_string(i++) + ".dot" );
+		std::ofstream file( "out/xyc_" + std::to_string(c) + "_" + std::to_string(i++) + ".dot" );
 		assert( file.is_open() );
 		boost::write_graphviz(
 			file,
@@ -344,38 +355,12 @@ buildGraphs( std::vector<Cell2>& v_cells )
 			make_edge_writer_B( boost::get( &GraphEdge_B::commonVal, graph ) )
 		);
 	}
+	c++;
 #endif
 
 	return v_graphs;
 }
 
-
-#if 0
-//-------------------------------------------------------------------
-std::vector<LinkXY>
-buildSetOfLinks( const std::vector<Cell2>& v_cells )
-{
-	std::vector<LinkXY> v_links;
-	for( index_t i=0; i<v_cells.size()-1; i++ )
-	{
-		const Cell2& c1 = v_cells[i];
-		for( index_t j=0; j<v_cells.size(); j++ )
-		{
-			if( i !=j )
-			{
-				const Cell2& c2 = v_cells[j];
-				if( areLinkable( c1, c2 ) )
-				{
-					auto scv = shareCommonValue(c1,c2);
-					if( scv.first )
-						AddToVector( v_links, LinkXY( c1,c2, scv.second ) );
-				}
-			}
-		}
-	}
-	return v_links;
-}
-#endif
 //-------------------------------------------------------------------
 bool
 Algo_XY_Chains( Grid& g )

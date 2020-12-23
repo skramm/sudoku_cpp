@@ -73,7 +73,9 @@ dot: $(SVG_FILES)
 	@echo done $<
 
 %.svg: %.dot
-	dot -Tsvg $< > $@
+#	dot -Kneato -Tsvg $< > $@
+	dot -Kfdp -Tsvg $< >$(basename $@)_fdp.svg
+	dot -Tsvg $< >$(basename $@)_dot.svg
 
 dox: html/index.html
 

@@ -47,6 +47,33 @@ enum En_ChainRole
 };
 using ValuePair = std::pair<value_t, value_t>;
 
+
+//----------------------------------------------------------------------------
+/// Vertex datatype, with BGL. Holds a cell position
+struct GraphNode_B
+{
+	index_t cell_idx;   ///< index in the set of cells having two candidates
+};
+
+/// Edge datatype
+struct GraphEdge_B
+{
+	value_t commonVal = 0;
+};
+
+/// A graph datatype, with BGL
+typedef boost::adjacency_list<
+	boost::vecS,
+	boost::vecS,
+//	boost::undirectedS,
+	boost::directedS,
+	GraphNode_B,
+	GraphEdge_B
+	> graph2_t;
+
+using vertex2_t = typename boost::graph_traits<graph2_t>::vertex_descriptor;
+//typedef typename boost::graph_traits<graph2_t>::edge_descriptor   edge2_t;
+
 //----------------------------------------------------------------------------
 /// A cell holding 2 candidates, hold as additional attribute its role in the chain (see \c En_ChainRole)
 struct Cell2
@@ -55,6 +82,7 @@ struct Cell2
 	bool          _isUsed = false;
 	pos_t         _pos;
 	ValuePair     _candidValues; ///< the 2 candidates of the cell
+	vertex2_t     _vertex = 0;
 
 	value_t get(index_t i) const
 	{
@@ -63,7 +91,7 @@ struct Cell2
 	}
 
 /// Return the other value
-	value_t getOther( value_t v ) const
+	value_t getOtherVal( value_t v ) const
 	{
 		return _candidValues.first==v ? _candidValues.second : _candidValues.first;
 	}
@@ -72,7 +100,7 @@ struct Cell2
 	Cell2( const Cell& c )
 		: _pos( c.GetPos() )
 	{
-		auto vcand = c.GetCandidates();
+		const auto& vcand = c.GetCandidates();
 		assert( vcand.size() == 2 );
 		assert( vcand[0] != vcand[1] );
 		_candidValues.first  = std::min( vcand[0],vcand[1] );
@@ -129,27 +157,7 @@ struct LinkXY
 	}
 };
 #endif
-//----------------------------------------------------------------------------
-/// Vertex datatype, with BGL. Holds a cell position
-struct GraphNode_B
-{
-	index_t cell_idx;   ///< index in the set of cells having two candidates
-};
 
-/// Edge datatype
-struct GraphEdge_B
-{
-	value_t commonVal = 0;
-};
-
-/// A graph datatype, with BGL
-typedef boost::adjacency_list<
-	boost::vecS,
-	boost::vecS,
-	boost::undirectedS,
-	GraphNode_B,
-	GraphEdge_B
-	> graph2_t;
 
 #ifdef TESTMODE
 	std::vector<graph2_t> buildGraphsFrom( index_t start,  std::vector<Cell2>& );
