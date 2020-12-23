@@ -50,14 +50,8 @@ Ref: https://www.sudokuwiki.org/XY_Chains
 	std::vector<Cell2>* g_ptr = 0;
 #endif
 
-
-
-//#include <boost/graph/adjacency_list.hpp>
-
-
 typedef typename boost::graph_traits<graph2_t>::vertex_descriptor vertex2_t;
 typedef typename boost::graph_traits<graph2_t>::edge_descriptor   edge2_t;
-
 
 #ifdef GENERATE_DOT_FILES
 //-------------------------------------------------------------------
@@ -90,7 +84,9 @@ class NodeWriter_B
 		template <class Vertex>
 		void operator()( std::ostream &out, const Vertex& v ) const
 		{
+			std::cout << "NodeWriter_B:vertex=" << v << " idx=" << (int) _v1[v] << " g_ptr->size=" << g_ptr->size() << std::endl;
 			auto cell = g_ptr->at( _v1[v] );
+			std::cout << "NodeWriter_B:cell=" << cell << std::endl;
 			out << " [label=\"" << cell._pos << "\\n(" << (int)cell.get(0) << ',' << (int)cell.get(1) << ")\"]";
 		}
 	private:
@@ -187,6 +183,7 @@ findFirstUnused( const std::vector<Cell2>& v_cells )
 	assert(0);	        // should never happen...
 }
 //-------------------------------------------------------------------
+#if 0
 std::pair<bool,value_t>
 shareCommonValue( const Cell2& c1, const Cell2& c2 )
 {
@@ -202,6 +199,18 @@ shareCommonValue( const Cell2& c1, const Cell2& c2 )
 			res.first = false;
 	}
 	return res;
+}
+#endif
+//-------------------------------------------------------------------
+bool
+shareCommonValue( const Cell2& c1, const Cell2& c2 )
+{
+	if(
+		c1.get(0) == c2.get(0) || c1.get(0) == c2.get(1) ||
+		c1.get(1) == c2.get(0) || c1.get(1) == c2.get(1)
+	)
+		return true;
+	return false;
 }
 
 //-------------------------------------------------------------------
@@ -219,7 +228,7 @@ buildGraphRecursive(
 	static int iter;
 	COUT( "iter " << ++iter << " currVert=" << currVert << " nbVert=" << boost::num_vertices(graph) );
 
-	auto curr_idx = graph[currVert].idx;           // index on the cell we are considering
+	auto curr_idx = graph[currVert].cell_idx;           // index on the cell we are considering
 	auto& currCell = v_cells.at(curr_idx);     // we fetch the cell
 	COUT( " curr_idx=" << (int)curr_idx
 		<< " pos=" << currCell._pos
@@ -238,21 +247,19 @@ buildGraphRecursive(
 			auto& newCell = v_cells[idx];
 			if( !newCell._isUsed )
 			{
-				COUT ( (int)idx  << ": considering cell " << newCell );
+				COUT ( (int)idx << ": considering cell " << newCell );
 
 				if( areLinkable( newCell, currCell ) )  // if cells are on same row/col/block
 				{
 					COUT( "Linkable !" );
-
-					auto scv = shareCommonValue( newCell, currCell );  // if they share a common value,
-					if( scv.first )
+					if( shareCommonValue( newCell, currCell ) )  // if they share a common value,
 					{                                               // THEN, its a new node in the graph !
 						auto newVert = boost::add_vertex( graph );
-						graph[newVert].idx = idx;
-
+						graph[newVert].cell_idx = idx;
+						COUT( "cell_idx =" << (int)idx );
 						newCell._isUsed = true;                  // tag the cell as "used"
 						boost::add_edge( currVert, newVert, graph );
-						COUT( "Added edge " << currCell._pos << "--" << newCell._pos ); // << ", based on value '" << (int)currValue << "'" );
+						COUT( "Added edge " << currCell._pos << "--" << newCell._pos );
 
 						if( nbUnusedCells( v_cells ) != 0 )
 						{
@@ -268,14 +275,12 @@ buildGraphRecursive(
 			}
 		}
 	}
-	COUT( "END iter " << iter );
 }
 
 //-------------------------------------------------------------------
+/// Builds the graphs from the set of cells holding 2 candidates. Not const, because each cell may get tagged as 'used' in graph
 std::vector<graph2_t>
-buildGraphs(
-	std::vector<Cell2>& v_cells    ///< the set of cells holding 2 candidates. Not const, because each cell may get tagged as 'used' in graph
-)
+buildGraphs( std::vector<Cell2>& v_cells )
 {
 	std::vector<graph2_t> v_graphs;
 	graph2_t graph;
@@ -283,9 +288,8 @@ buildGraphs(
 	auto& cell = v_cells[0];
 	cell._isUsed = true;                 // tag the cell as "used"
 
-
 	auto vert = boost::add_vertex( graph );  // add initial vertex
-	graph[vert].idx = 0;
+	graph[vert].cell_idx = 0;
 	v_graphs.push_back( graph );       // add initial graph
 
 	size_t idx_graph = 0;
@@ -297,29 +301,35 @@ buildGraphs(
 		COUT ( "AFTER: nbUnusedCells=" << nbUnusedCells(v_cells) );
 		if( nbUnusedCells(v_cells) != 0 )        // then some cells where not connected, so we create a new graph
 		{
-			COUT( "NbGraph=" << idx_graph << " nbUnusedCells" << nbUnusedCells(v_cells) );
 			auto idx_c = findFirstUnused( v_cells );
+			COUT( "NbGraph=" << idx_graph << " nbUnusedCells" << nbUnusedCells(v_cells) << " firstUnused=" <<idx_c );
 			v_cells[idx_c]._isUsed = true;
 
 			graph2_t graph2;
 			vert = boost::add_vertex( graph2 );
-			graph2[vert].idx = idx_c;
+			graph2[vert].cell_idx = idx_c;
 			v_graphs.push_back( graph2 );
 		}
 	}
 	while( nbUnusedCells(v_cells) != 0 );
 
 
+	COUT( "NbGraph=" << v_graphs.size() << " nbUnusedCells" << nbUnusedCells(v_cells) );
+
 #ifdef GENERATE_DOT_FILES
 	g_ptr = &v_cells;
-	std::ofstream file( "out/xyc_" + std::to_string(cell.get(whichOne)) + ".dot" );
-	assert( file.is_open() );
-	boost::write_graphviz(
-		file,
-		graph,
-		make_node_writer_B2( boost::get( &GraphNode_B::idx, graph ), boost::get( &GraphNode_B::colorValues, graph ) ),
-		make_edge_writer_B( boost::get( &GraphEdge_B::isFinalEdge, graph ) )
-	);
+	index_t i=0;
+	for( auto& gr: v_graphs )
+	{
+		std::ofstream file( "out/xyc_" + std::to_string(i++) + ".dot" );
+		assert( file.is_open() );
+		boost::write_graphviz(
+			file,
+			gr,
+			make_node_writer_B( boost::get( &GraphNode_B::cell_idx, graph ) ) //, boost::get( &GraphNode_B::colorValues, graph ) )
+//			make_edge_writer_B( boost::get( &GraphEdge_B::isFinalEdge, graph ) )
+		);
+	}
 #endif
 
 	return v_graphs;
@@ -369,11 +379,10 @@ Algo_XY_Chains( Grid& g )
 		}
 	}
 
-// step 2 - build a set of links joining these cells
-//	auto v_Links = buildSetOfLinks( v_cells );
-//	PrintVector( v_Links, "set of links" );
+// step 2 - build a set of graphs covering all these cells
+	auto v_graph1 = buildGraphs( v_cells );
 
-// step 3 - build graph(s)
+// step 3 - explore these graphs to find chains
 
 
 

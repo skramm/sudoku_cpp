@@ -87,7 +87,6 @@ struct Cell2
 		_candidValues = std::make_pair(c1,c2);
 		_pos.first  = spos[0] != 'J' ? spos[0] - 'A': 8;
 		_pos.second = spos[1] - '1';
-		COUT( "creating cell2 at " << _pos );
 	}
 #endif // TESTMODE
 
@@ -134,7 +133,7 @@ struct LinkXY
 /// Vertex datatype, with BGL. Holds a cell position
 struct GraphNode_B
 {
-	index_t   idx;   ///< index in the set of cells having two candidates
+	index_t   cell_idx;   ///< index in the set of cells having two candidates
 //	ValuePair colorValues;
 /*
 	GraphNode_B()
@@ -164,8 +163,6 @@ typedef boost::adjacency_list<
 	std::vector<graph2_t> buildGraphsFrom( index_t start,  std::vector<Cell2>& );
 #endif // TESTMODE
 
-//bool areLinkable( const Cell2&, const Cell2& );
-//std::vector<LinkXY> buildSetOfLinks( const std::vector<Cell2>& v_cells );
 std::vector<graph2_t> buildGraphs( std::vector<Cell2>& );
 //----------------------------------------------------------------------------
 #endif // HG_XY_CHAINS_H
