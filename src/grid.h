@@ -41,19 +41,19 @@
 #include <type_traits>
 
 
-/// The values in the cells
+/// The values in the cells, in the range [1:9]
 using value_t = uint8_t;
 
 /// Index type
 using index_t = uint8_t;
 
-/// A position in the grid. "first" is row, "second" is column
+/// A position in the grid. "first" is row, "second" is column. 0-based
 using pos_t = std::pair<index_t,index_t>;
 
 /// A pair of (linked) positions
 using pospair_t = std::pair<pos_t,pos_t>;
 
-/// Each cell has such a map with 9 values, to hold candidates with true/false value
+/// Each cell has such a map with 9 values, to hold candidates with true/false value. Values are in [1:9]
 using cand_map_t=std::map<value_t,bool>;
 
 struct Cell;
@@ -300,7 +300,7 @@ struct Cell
 	private:
 	value_t   _value = 0;  ///< Cell value
 	CandMap   _cand;       ///< Candidate map
-	pos_t     _pos;        ///< Position in view [0-8]
+	pos_t     _pos;        ///< Position of cell in grid
 
 	public:
 	value_t GetValue() const { return _value; }
@@ -523,18 +523,6 @@ PrintVector<index_t>( const std::vector<index_t>& v, std::string s )
 			std::cout << (int)p << ' ';
 	std::cout << '\n';
 }
-
-//----------------------------------------------------------------------------
-/*template<typename T>
-void
-PrintVector( const std::vector<std::pair<T,T>>& v, std::string s )
-{
-	std::cout << "PV3\n";
-	std::cout << s << ": " << v.size() << " elems\n";
-	for( auto p: v )
-		std::cout << (int)p.first << '-' << (int)p.second << ' ';
-	std::cout << '\n';
-}*/
 
 //----------------------------------------------------------------------------
 /// Add element \c elem to vector \c v only if it is not already present

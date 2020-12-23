@@ -15,12 +15,12 @@ CFLAGS=-Wall -std=c++11 -fexceptions
 
 #----------------------------------------------
 # Test mode ?
-ifeq "$(TEST)" ""
-	TEST=N
-endif
-ifeq ($(TEST),Y)
-	CFLAGS += -DTESTMODE
-endif
+#ifeq "$(TEST)" ""
+#	TEST=N
+#endif
+#ifeq ($(TEST),Y)
+#	CFLAGS += -DTESTMODE
+#endif
 
 #----------------------------------------------
 # Generate dot files (for X-cycles)

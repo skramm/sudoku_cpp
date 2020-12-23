@@ -267,6 +267,11 @@ TEST_CASE( "XY-chains test 1", "[XY-chains-1]" )
 	v.push_back( Cell2( "A5", 2,9 ) );
 	v.push_back( Cell2( "A1", 2,6 ) );
 	v.push_back( Cell2( "C2", 5,6 ) );
-	auto graph = buildGraphFrom( 0, 0, v );
-	CHECK( boost::num_vertices(graph) == 4 );
+	v.push_back( Cell2( "C8", 5,8 ) );
+
+	auto graph1 = buildGraphFrom( 0, 0, v );
+	CHECK( boost::num_vertices(graph1) == 5 );
+
+	auto graph2 = buildGraphFrom( 0, 1, v );
+	CHECK( boost::num_vertices(graph2) == 5 );
 }

@@ -21,7 +21,7 @@ and README.md
 	#define DEBUG if(0) std::cout
 #endif
 
-#define COUT(a) { if( g_data.Verbose ) std::cout << a << '\n'; }
+#define COUT(a) { if( g_data.Verbose ) std::cout << __FUNCTION__ << "(): " << a << '\n'; }
 
 #define PRINT_MAIN_IDX( o ) \
 	{ \

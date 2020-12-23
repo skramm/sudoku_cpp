@@ -35,39 +35,107 @@
 #include "header.h"
 #include "algorithms.h"
 
-#ifndef TESTMODE
 
-#include <boost/graph/adjacency_list.hpp>
+#ifdef GENERATE_DOT_FILES
+	#include <fstream>
+	#include <boost/graph/graphviz.hpp>
+	std::vector<Cell2>* g_ptr = 0;
+#endif
 
-//----------------------------------------------------------------------------
-/// Vertex datatype, with BGL. Holds a cell position
-/// \todo Checkout if it can be merged with \c GraphNode
-struct GraphNode2
-{
-	index_t idx;   ///< index in the set of cells having two candidates
-};
 
-/// Edge datatype
-/// \todo Checkout if it can be merged with \c GraphEdge
-struct GraphEdge2
-{
-//	En_LinkType link_type;
-//	EN_ORIENTATION link_orient;
-};
 
-/// A graph datatype, with BGL
-typedef boost::adjacency_list<
-	boost::vecS,
-	boost::vecS,
-	boost::undirectedS,
-	GraphNode2,
-	GraphEdge2
-	> graph2_t;
+//#include <boost/graph/adjacency_list.hpp>
 
-#endif // TESTMODE
 
 typedef typename boost::graph_traits<graph2_t>::vertex_descriptor vertex2_t;
 typedef typename boost::graph_traits<graph2_t>::edge_descriptor   edge2_t;
+
+
+#ifdef GENERATE_DOT_FILES
+//-------------------------------------------------------------------
+/// A functor class used to printout the properties of the edges, related to Algo_XY_Chains()
+template <class T1>
+class EdgeWriter_B
+{
+	public:
+		EdgeWriter_B(T1 v1) : _v1(v1)
+		{}
+		template <class Edge>
+		void operator()( std::ostream &out, const Edge& e ) const
+		{
+			out << "[";
+			if( _v1[e]==false )              // if NOT Final Edge
+				out << "style=\"bold\"";
+			out << "]";
+		}
+	private:
+		T1 _v1;
+};
+//-------------------------------------------------------------------
+/// A functor class used to printout the properties of the nodes, related to Algo_XY_Chains()
+template <class T1>
+class NodeWriter_B
+{
+	public:
+		NodeWriter_B(T1 v1) : _v1(v1)
+		{}
+		template <class Vertex>
+		void operator()( std::ostream &out, const Vertex& v ) const
+		{
+			auto cell = g_ptr->at( _v1[v] );
+			out << " [label=\"" << cell._pos << "\\n(" << (int)cell.get(0) << ',' << (int)cell.get(1) << ")\"]";
+		}
+	private:
+		T1 _v1;
+};
+
+template <class T1,class T2>
+class NodeWriter_B2
+{
+	public:
+		NodeWriter_B2(T1 v1, T2 v2) : _v1(v1), _v2(v2)
+		{}
+		template <class Vertex>
+		void operator()( std::ostream &out, const Vertex& v ) const
+		{
+			auto cell = g_ptr->at( _v1[v] );
+			out << " [label=\"" << cell._pos << "\\n(R=" << (int)_v2[v].first << ",G=" << (int)_v2[v].second << ")\"";
+			if( cell._chainRole == CR_Start )
+				out << ",penwidth=\"2.0\"";
+			out << "]";
+		}
+	private:
+		T1 _v1;
+		T2 _v2;
+};
+//-------------------------------------------------------------------
+/// Helper function to printout nodes in the graph, used by boost::write_graphviz()
+template <class T1>
+inline
+NodeWriter_B<T1>
+make_node_writer_B( T1 v1 )
+{
+	return NodeWriter_B<T1>(v1);
+}
+template <class T1,class T2>
+inline
+NodeWriter_B2<T1,T2>
+make_node_writer_B2( T1 v1, T2 v2 )
+{
+	return NodeWriter_B2<T1,T2>(v1,v2);
+}
+//-------------------------------------------------------------------
+/// Helper function to printout edges in the graph, used by boost::write_graphviz()
+template <class T1>
+inline
+EdgeWriter_B<T1>
+make_edge_writer_B( T1 v1 )
+{
+	return EdgeWriter_B<T1>(v1);
+}
+//-------------------------------------------------------------------
+#endif // GENERATE_DOT_FILES
+
 
 //-------------------------------------------------------------------
 /// Returns true if cell are "linkable", that is they are:
@@ -94,56 +162,76 @@ Stop condition: when we can't add any more nodes
 */
 void
 buildGraphRecursive(
-	graph2_t&          graph,     ///< graph
-	vertex2_t          startV,    ///< graph starting vertex
-	vertex2_t          currV,     ///< current vertex
-	index_t            whichOne,  ///< 0 or 1, the index on the value of the origin vertex that we are considering
-	std::vector<Cell2>& v_cells   ///< the set of cells holding 2 candidates.
+	graph2_t&           graph,       ///< graph
+	vertex2_t           startVert,   ///< starting vertex (cell)
+	value_t             startValue,  ///< starting cell value (has 2, so we have to know)
+	vertex2_t           currVert,    ///< current vertex
+	value_t             currValue,   ///< the value that brings us here
+	std::vector<Cell2>& v_cells      ///< the set of cells holding 2 candidates.
 )
 {
 	static int iter;
-	auto curr_idx = graph[currV].idx;           // index on the cell we are considering
+	auto curr_idx = graph[currVert].idx;           // index on the cell we are considering
 	auto& curr_cell = v_cells.at(curr_idx);     // we fetch the cell
 	COUT( "iter " << ++iter
 		<< " curr_idx=" << (int)curr_idx
 		<< " pos=" << curr_cell._pos
-		<< " graph: nb_nodes=" << boost::num_vertices(graph) );
-
-	value_t val1 = curr_cell.get(whichOne);
-	value_t val2 = curr_cell.get(whichOne?0:1);
-
-	for( index_t idx=0; idx<v_cells.size(); idx++ )
+		<< " nb_nodes=" << boost::num_vertices(graph)
+		<< " val=" << (int)currValue
+	);
+	for( index_t idx=0; idx<v_cells.size(); idx++ ) // iterate over set of cells
 	{
 		if( idx != curr_idx )          // if not the same cell !
 		{
-			auto& cell = v_cells[idx];
-			if(
-				cell._chainRole == CR_Unused  // if cell is not used yet
-				&&
-				cell._chainRole != CR_Start  // and not the starting cell
-			)
+			auto& newCell = v_cells[idx];
+			if( newCell._chainRole != CR_Start )  // if cell is not the start cell
 			{
-				if( areLinkable( cell, curr_cell ) )  // if cells are on same row/col/block
+				COUT ( (int)idx  << ": considering cell at pos=" << newCell._pos
+					<< " values=" << (int)newCell._candidValues.first << "-" << (int)newCell._candidValues.second );
+				if( areLinkable( newCell, curr_cell ) )  // if cells are on same row/col/block
 				{
-					value_t vc1 = cell.get(0);
-					value_t vc2 = cell.get(1);
+					COUT( "Linkable !" );
+					value_t vc1 = newCell.get(0);
+					value_t vc2 = newCell.get(1);
 					COUT( "vc1=" << (int)vc1 << " vc2=" << (int)vc2 );
-					if( val2 == vc1 || val2 == vc2 )   // if the cell holds the OTHER value of the starting cell,
-						if( val1 != vc1 && val1 != vc2 )  // and it does NOT hold as other value the considered value
-						{                                 // THEN, its a new node in the graph !
-							auto newV = boost::add_vertex( graph );
-							graph[newV].idx = idx;
-							cell._chainRole = CR_Used;
-							boost::add_edge( currV, newV, graph );
+					value_t currCompVal = curr_cell.getOther( currValue );
 
-							if( 0 /*todo */)                      // if cell can be joined to starting cell
+					if( currValue == vc1 || currValue == vc2 )          // if this considered cell holds the value of the current cell we are searching for,
+						if( currCompVal != vc1 && currCompVal != vc2 )  // and it does NOT hold as other value the considered value
+						{                                               // THEN, its a new node in the graph !
+							auto newVert = boost::add_vertex( graph );
+
+							newCell._chainRole = CR_Used;                  // tag the cell as "used"
+							boost::add_edge( currVert, newVert, graph );
+							COUT( "Added edge " << curr_cell._pos << "--" << newCell._pos << ", based on value '" << (int)currValue << "'" );
+
+							auto newValue = vc1;
+							auto newCompValue = vc2;
+							if( currValue == vc1 )
+								std::swap( newValue, newCompValue );
+							graph[newVert] = GraphNode_B( idx, newValue, newCompValue );
+
+							COUT( "newValue=" << (int)newValue << " newCompValue=" << (int)newCompValue );
+
+							auto  start_idx = graph[startVert].idx;
+							auto& start_cell = v_cells.at(start_idx);
+							auto  startCompValue = start_cell.getOther( startValue );
+							if(
+//								areLinkable( newCell, start_cell )               // if cell is linkable with starting cell
+//									&&                                        // AND
+								startCompValue == newCompValue                //
+							)
 							{
-								cell._chainRole = CR_End;
-								auto finalEdge = boost::add_edge( startV, newV, graph ).first;
+								COUT( "adding final edge to " << start_cell._pos );
+								newCell._chainRole = CR_End;
+								auto finalEdge = boost::add_edge( startVert, newVert, graph ).first;
 								graph[finalEdge].isFinalEdge = true;
 							}
 							else
-								buildGraphRecursive( graph, startV, newV, (whichOne?0:1), v_cells );
+							{
+								COUT( "Rentry with value " << (int)newValue );
+								buildGraphRecursive( graph, startVert, startValue, newVert, newValue, v_cells );
+							}
 						}
 				}
 				else
@@ -163,11 +251,28 @@ buildGraphFrom(
 )
 {
 	graph2_t graph;
-	auto v = boost::add_vertex( graph );  // add initial vertex
-	graph[v].idx = idxCell;
+	auto vert = boost::add_vertex( graph );  // add initial vertex
+	auto& cell = v_cells[idxCell];
+
+	auto value = cell.get(whichOne);
+	graph[vert] = GraphNode_B( idxCell, value, cell.getOther(value) );
+
 	v_cells.at( idxCell )._chainRole = CR_Start;
 
-	buildGraphRecursive( graph, v, v, whichOne, v_cells );
+	buildGraphRecursive( graph, vert, cell.get(whichOne), vert, cell.get(whichOne), v_cells );
+
+
+#ifdef GENERATE_DOT_FILES
+	g_ptr = &v_cells;
+	std::ofstream file( "out/xyc_" + std::to_string(cell.get(whichOne)) + ".dot" );
+	assert( file.is_open() );
+	boost::write_graphviz(
+		file,
+		graph,
+		make_node_writer_B2( boost::get( &GraphNode_B::idx, graph ), boost::get( &GraphNode_B::colorValues, graph ) ),
+		make_edge_writer_B( boost::get( &GraphEdge_B::isFinalEdge, graph ) )
+	);
+#endif
 
 
 	return graph;
@@ -193,6 +298,7 @@ Algo_XY_Chains( Grid& g )
 	{
 //		auto vc = cell.GetCandidates();
 		auto gr0 = buildGraphFrom( idx, 0, v_cells );
+
 		auto gr1 = buildGraphFrom( idx, 1, v_cells );
 	}
 

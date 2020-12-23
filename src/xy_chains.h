@@ -31,11 +31,9 @@
 #define HG_XY_CHAINS_H
 
 #include "grid.h"
-//struct Grid;
+#include "header.h"
 
-#ifdef TESTMODE
-	#include <boost/graph/adjacency_list.hpp>
-#endif
+#include <boost/graph/adjacency_list.hpp>
 
 bool Algo_XY_Chains( Grid& g );
 
@@ -62,45 +60,58 @@ struct Cell2
 		return i ? _candidValues.first : _candidValues.second;
 	}
 
+/// Return the other value
+	value_t getOther( value_t v ) const
+	{
+		return _candidValues.first==v ? _candidValues.second : _candidValues.first;
+	}
+
 /// Constructor
 	Cell2( const Cell& c )
 		: _pos( c.GetPos() )
 	{
 		auto vcand = c.GetCandidates();
 		assert( vcand.size() == 2 );
-		_candidValues.first  = vcand[0];
-		_candidValues.second = vcand[1];
+		assert( vcand[0] != vcand[1] );
+		_candidValues.first  = std::min( vcand[0],vcand[1] );
+		_candidValues.second = std::max( vcand[0],vcand[1] );
 	}
 
 #ifdef TESTMODE
+/// This constructor is only useful for unit-testing
 	Cell2( std::string spos, value_t c1, value_t c2  )
 	{
 		_candidValues = std::make_pair(c1,c2);
 		_pos.first  = spos[0] != 'J' ? spos[0] - 'A': 8;
-		_pos.second = spos[1] - '0';
+		_pos.second = spos[1] - '1';
+		COUT( "creating cell2 at " << _pos );
 	}
 
 
 #endif // TESTMODE
 };
 
-#ifdef TESTMODE
 
 //----------------------------------------------------------------------------
 /// Vertex datatype, with BGL. Holds a cell position
-/// \todo Checkout if it can be merged with \c GraphNode
-struct GraphNode2
+struct GraphNode_B
 {
 	index_t idx;   ///< index in the set of cells having two candidates
+	std::pair<value_t, value_t> colorValues;
+
+	GraphNode_B()
+	{}
+	GraphNode_B( index_t i, value_t v1, value_t v2 ) : idx(i)
+	{
+		colorValues.first  = v1;
+		colorValues.second = v2;
+	}
 };
 
 /// Edge datatype
-/// \todo Checkout if it can be merged with \c GraphEdge
-struct GraphEdge2
+struct GraphEdge_B
 {
 	bool isFinalEdge = false;
-//	En_LinkType link_type;
-//	EN_ORIENTATION link_orient;
 };
 
 /// A graph datatype, with BGL
@@ -108,13 +119,12 @@ typedef boost::adjacency_list<
 	boost::vecS,
 	boost::vecS,
 	boost::undirectedS,
-	GraphNode2,
-	GraphEdge2
+	GraphNode_B,
+	GraphEdge_B
 	> graph2_t;
 
-
-graph2_t buildGraphFrom( index_t, index_t, std::vector<Cell2>& );
-
+#ifdef TESTMODE
+	graph2_t buildGraphFrom( index_t start, index_t whichOne, std::vector<Cell2>& );
 #endif // TESTMODE
 
 //----------------------------------------------------------------------------
