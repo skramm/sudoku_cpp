@@ -259,7 +259,7 @@ TEST_CASE( "test of cycle detection", "[cycles]" )
 	CheckCycle( n++, BuildCycle( "W-W-S-W-S-W-W-S" ), CT_Invalid ); // twice 2 weak links
 }
 
-#if 0
+#if 1
 TEST_CASE( "XY-chains test 1", "[XY-chains-1]" )
 {
 	std::vector<Cell2> v;
@@ -269,14 +269,42 @@ TEST_CASE( "XY-chains test 1", "[XY-chains-1]" )
 	v.push_back( Cell2( "C2", 5,6 ) );
 	v.push_back( Cell2( "C8", 5,8 ) );
 
-	auto graph1 = buildGraphFrom( 0, 0, v );
-	CHECK( boost::num_vertices(graph1) == 5 );
+	auto v_graph1 = buildGraphs( v );
+//	CHECK( boost::num_vertices(graph1) == 5 );
 
-	auto graph2 = buildGraphFrom( 0, 1, v );
-	CHECK( boost::num_vertices(graph2) == 5 );
+
+// Example from https://www.sudokuwiki.org/sudoku.htm?bd=003001000800000000051009060080000290000700080200040503600900000002084000410050600
+// see doc/AS_XY_chain_example1.png
+	{
+		std::vector<Cell2> v;
+		v.push_back( Cell2( "B3", 4,6 ) );
+
+		v.push_back( Cell2( "E3", 4,5 ) );
+		v.push_back( Cell2( "G3", 8,5 ) );
+		v.push_back( Cell2( "J3", 8,9 ) );
+
+		v.push_back( Cell2( "E1", 5,3 ) );
+		v.push_back( Cell2( "H1", 5,3 ) );
+
+		v.push_back( Cell2( "C5", 2,3 ) );
+		v.push_back( Cell2( "C9", 2,8 ) );
+		v.push_back( Cell2( "J9", 9,8 ) );
+		v.push_back( Cell2( "D5", 3,6 ) );
+
+		v.push_back( Cell2( "E2", 3,4 ) );
+		v.push_back( Cell2( "F2", 9,6 ) );
+		v.push_back( Cell2( "F3", 9,6 ) );
+		v.push_back( Cell2( "B6", 5,6 ) );
+		v.push_back( Cell2( "D6", 5,6 ) );
+		v.push_back( Cell2( "D4", 5,3 ) );
+		v.push_back( Cell2( "G7", 4,8 ) );
+		v.push_back( Cell2( "H7", 7,9 ) );
+	}
+
 }
 #endif
 
+#if 0
 TEST_CASE( "XY-chains test 2", "[XY-chains-2]" )
 {
 	std::vector<Cell2> v;
@@ -290,3 +318,4 @@ TEST_CASE( "XY-chains test 2", "[XY-chains-2]" )
 	PrintVector( setLinks, "set of links" );
 
 }
+#endif

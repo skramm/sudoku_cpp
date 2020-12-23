@@ -45,14 +45,16 @@ enum En_ChainRole
 	CR_Used,
 	CR_Unused
 };
+using ValuePair = std::pair<value_t, value_t>;
 
 //----------------------------------------------------------------------------
 /// A cell holding 2 candidates, hold as additional attribute its role in the chain (see \c En_ChainRole)
 struct Cell2
 {
-	En_ChainRole               _chainRole = CR_Unused;
-	pos_t                      _pos;
-	std::pair<value_t,value_t> _candidValues; ///< the 2 candidates of the cell
+	En_ChainRole  _chainRole = CR_Unused;
+	bool          _isUsed = false;
+	pos_t         _pos;
+	ValuePair     _candidValues; ///< the 2 candidates of the cell
 
 	value_t get(index_t i) const
 	{
@@ -77,6 +79,7 @@ struct Cell2
 		_candidValues.second = std::max( vcand[0],vcand[1] );
 	}
 
+
 #ifdef TESTMODE
 /// This constructor is only useful for unit-testing
 	Cell2( std::string spos, value_t c1, value_t c2  )
@@ -86,13 +89,18 @@ struct Cell2
 		_pos.second = spos[1] - '1';
 		COUT( "creating cell2 at " << _pos );
 	}
-
-
 #endif // TESTMODE
+
+	friend std::ostream& operator << ( std::ostream& s, const Cell2& c )
+	{
+		s << c._pos << ": used=" << (c._isUsed?'Y':'N') << ", values=(" << (int)c._candidValues.first << "-" << (int)c._candidValues.second << ')';
+		return s;
+	}
 };
 
 
 //-------------------------------------------------------------------
+#if 0
 struct LinkXY
 {
 	pos_t _p1, _p2;
@@ -121,21 +129,20 @@ struct LinkXY
 		return s;
 	}
 };
-
+#endif
 //----------------------------------------------------------------------------
 /// Vertex datatype, with BGL. Holds a cell position
 struct GraphNode_B
 {
-	index_t idx;   ///< index in the set of cells having two candidates
-	std::pair<value_t, value_t> colorValues;
-
+	index_t   idx;   ///< index in the set of cells having two candidates
+//	ValuePair colorValues;
+/*
 	GraphNode_B()
 	{}
-	GraphNode_B( index_t i, value_t v1, value_t v2 ) : idx(i)
+	GraphNode_B( index_t i, const Cell2& cell ) : idx(i)
 	{
-		colorValues.first  = v1;
-		colorValues.second = v2;
-	}
+		colorValues = cell._candidValues;
+	}*/
 };
 
 /// Edge datatype
@@ -154,12 +161,12 @@ typedef boost::adjacency_list<
 	> graph2_t;
 
 #ifdef TESTMODE
-	graph2_t buildGraphFrom( index_t start, index_t whichOne, std::vector<Cell2>& );
+	std::vector<graph2_t> buildGraphsFrom( index_t start,  std::vector<Cell2>& );
 #endif // TESTMODE
 
-bool areLinkable( const Cell2& c1, const Cell2& c2 );
-std::vector<LinkXY> buildSetOfLinks( const std::vector<Cell2>& v_cells );
-
+//bool areLinkable( const Cell2&, const Cell2& );
+//std::vector<LinkXY> buildSetOfLinks( const std::vector<Cell2>& v_cells );
+std::vector<graph2_t> buildGraphs( std::vector<Cell2>& );
 //----------------------------------------------------------------------------
 #endif // HG_XY_CHAINS_H
 
