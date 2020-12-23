@@ -523,9 +523,20 @@ PrintVector<index_t>( const std::vector<index_t>& v, std::string s )
 			std::cout << (int)p << ' ';
 	std::cout << '\n';
 }
-
+/*
+template<>
+inline
+void
+PrintVector<std::pair<bool,value_t>>( const std::vector<std::pair<bool,value_t>& v, std::string s )
+{
+	std::cout << s << ": " << v.size() << " elems\n";
+	for( auto p: v )
+			std::cout << (int)p << ' ';
+	std::cout << '\n';
+}
+*/
 //----------------------------------------------------------------------------
-/// Add element \c elem to vector \c v only if it is not already present
+/// Add element \c elem to vector \c v \b only if it is not already present
 template<typename T>
 void AddToVector( std::vector<T>& v, const T& elem )
 {
@@ -536,7 +547,7 @@ void AddToVector( std::vector<T>& v, const T& elem )
 	}
 }
 //----------------------------------------------------------------------------
-/// Adds to vector \c v the elements of v2 only if they are not already present
+/// Adds to vector \c v the elements of \c v2 only if they are not already present
 template<typename T>
 void AddToVector( std::vector<T>& v, const std::vector<T>& v2 )
 {

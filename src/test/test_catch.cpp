@@ -259,7 +259,7 @@ TEST_CASE( "test of cycle detection", "[cycles]" )
 	CheckCycle( n++, BuildCycle( "W-W-S-W-S-W-W-S" ), CT_Invalid ); // twice 2 weak links
 }
 
-
+#if 0
 TEST_CASE( "XY-chains test 1", "[XY-chains-1]" )
 {
 	std::vector<Cell2> v;
@@ -274,4 +274,19 @@ TEST_CASE( "XY-chains test 1", "[XY-chains-1]" )
 
 	auto graph2 = buildGraphFrom( 0, 1, v );
 	CHECK( boost::num_vertices(graph2) == 5 );
+}
+#endif
+
+TEST_CASE( "XY-chains test 2", "[XY-chains-2]" )
+{
+	std::vector<Cell2> v;
+	v.push_back( Cell2( "A7", 6,9 ) );
+	v.push_back( Cell2( "A5", 2,9 ) );
+	v.push_back( Cell2( "A1", 2,6 ) );
+	v.push_back( Cell2( "C2", 5,6 ) );
+	v.push_back( Cell2( "C8", 5,8 ) );
+
+	auto setLinks = buildSetOfLinks( v );
+	PrintVector( setLinks, "set of links" );
+
 }

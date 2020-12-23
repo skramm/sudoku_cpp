@@ -92,6 +92,36 @@ struct Cell2
 };
 
 
+//-------------------------------------------------------------------
+struct LinkXY
+{
+	pos_t _p1, _p2;
+	value_t _commonVal;
+	LinkXY( const Cell2& c1, const Cell2& c2, value_t val )
+		: _p1(c1._pos), _p2(c2._pos), _commonVal(val)
+	{}
+
+	friend bool operator == ( const LinkXY& lA, const LinkXY& lB )
+	{
+		if( lA._commonVal != lB._commonVal )
+			return false;
+
+		if( lA._p1 == lB._p1 )
+			if( lA._p2 == lB._p2 )
+				return true;
+		if( lA._p1 == lB._p2 )
+			if( lA._p2 == lB._p1 )
+				return true;
+		return false;
+	}
+
+	friend std::ostream& operator << ( std::ostream& s, const LinkXY& l )
+	{
+		s << '{' << l._p1 << "-" << l._p2 << ";C=" << (int)l._commonVal << "}\n"; // '}';
+		return s;
+	}
+};
+
 //----------------------------------------------------------------------------
 /// Vertex datatype, with BGL. Holds a cell position
 struct GraphNode_B
@@ -126,6 +156,9 @@ typedef boost::adjacency_list<
 #ifdef TESTMODE
 	graph2_t buildGraphFrom( index_t start, index_t whichOne, std::vector<Cell2>& );
 #endif // TESTMODE
+
+bool areLinkable( const Cell2& c1, const Cell2& c2 );
+std::vector<LinkXY> buildSetOfLinks( const std::vector<Cell2>& v_cells );
 
 //----------------------------------------------------------------------------
 #endif // HG_XY_CHAINS_H

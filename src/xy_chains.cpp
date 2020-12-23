@@ -26,6 +26,14 @@
 /**
 \file
 \brief Implementation for XY-chains algorithm
+
+Some details about the algorithm:
+
+Ref: https://www.sudokuwiki.org/XY_Chains
+
+- The chain can have an odd or an even number of links
+- The starting and ending cell can have the same pair of values or not
+- The common value between start and end must be of a different color in these two cells
 */
 
 
@@ -274,9 +282,51 @@ buildGraphFrom(
 	);
 #endif
 
-
 	return graph;
 }
+
+//-------------------------------------------------------------------
+std::pair<bool,value_t>
+shareCommonValue( const Cell2& c1, const Cell2& c2 )
+{
+	std::pair<bool,value_t>	res{true, 0};
+
+	if( c1.get(0) == c2.get(0) || c1.get(0) == c2.get(1) )
+		res.second = c1.get(0);
+	else
+	{
+		if( c1.get(1) == c2.get(0) || c1.get(1) == c2.get(1) )
+			res.second = c1.get(1);
+		else
+			res.first = false;
+	}
+	return res;
+}
+//-------------------------------------------------------------------
+std::vector<LinkXY>
+buildSetOfLinks( const std::vector<Cell2>& v_cells )
+{
+	std::vector<LinkXY> v_links;
+	for( index_t i=0; i<v_cells.size()-1; i++ )
+	{
+		const Cell2& c1 = v_cells[i];
+		for( index_t j=0; j<v_cells.size(); j++ )
+		{
+			if( i !=j )
+			{
+				const Cell2& c2 = v_cells[j];
+				if( areLinkable( c1, c2 ) )
+				{
+					auto scv = shareCommonValue(c1,c2);
+					if( scv.first )
+						AddToVector( v_links, LinkXY( c1,c2, scv.second ) );
+				}
+			}
+		}
+	}
+	return v_links;
+}
+
 //-------------------------------------------------------------------
 bool
 Algo_XY_Chains( Grid& g )
@@ -293,6 +343,12 @@ Algo_XY_Chains( Grid& g )
 			v_cells.push_back( c2 );
 		}
 	}
+
+// step 2 -build a set of links joining these cells
+	auto setLinks = buildSetOfLinks( v_cells );
+	PrintVector( setLinks, "set of links" );
+
+#if 0
 // for each of these, build a non-oriented graph of cells
 	for( index_t idx=0; idx<v_cells.size(); idx++ )
 	{
@@ -304,7 +360,7 @@ Algo_XY_Chains( Grid& g )
 
 // step 2 - iterate through these to see if we can build a chain
 
-
+#endif
 
 	return false;
 }
