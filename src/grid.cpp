@@ -481,6 +481,34 @@ Grid::GetOtherCells( const Cell& src, int arg, EN_ORIENTATION orient, EN_GOCMODE
 }
 
 //----------------------------------------------------------------------------
+/// Returns a vector of size=9, holding all the positions of the cells that are in row/col/block of the given index
+std::vector<pos_t>
+getCellsPos( EN_ORIENTATION orient, index_t idx )
+{
+	std::vector<pos_t> v_out(9);
+	switch( orient )
+	{
+		case OR_ROW:
+			for( index_t i=0; i<9; i++ )
+				v_out[i] = std::make_pair(idx,i);
+		break;
+
+		case OR_COL:
+			for( index_t i=0; i<9; i++ )
+				v_out[i] = std::make_pair(i,idx);
+		break;
+
+		case OR_BLK:
+			for( index_t i=0; i<9; i++ )
+				v_out[i] = getPosFromBlockIndex( idx, i );
+		break;
+			default: assert(0);
+	}
+
+	return v_out;
+}
+
+//----------------------------------------------------------------------------
 /// Returns a set of cell positions that are on same row/col/block as \c src and have candidate \c cand
 std::vector<pos_t>
 Grid::GetOtherCells_cand( const Cell& src, int cand, EN_ORIENTATION orient ) const

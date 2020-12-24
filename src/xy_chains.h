@@ -158,9 +158,45 @@ struct LinkXY
 };
 #endif
 
+//-------------------------------------------------------------------
+/// See RowColBlkIntersect
+enum En_CommonRowCol
+{
+	IT_Neither,
+	IT_SameRow,
+	IT_SameCol,
+};
+/// See RowColBlkIntersect
+enum En_BlockIntersect
+{
+	AT_None,
+	AT_SameBlock,
+	AT_BlockSameRow,
+	AT_BlockSameCol
+};
+/// Holds the intersection of the two final cells. Related to XY-Chains.
+struct RowColBlkIntersect
+{
+	value_t            _commonValue;
+	std::vector<pos_t> _vPos;
+
+	En_CommonRowCol   _cRC          = IT_Neither;
+	index_t           _idxRC;
+	pos_t             _interSectPos1;
+	pos_t             _interSectPos2;
+
+	En_BlockIntersect _blkIntersect = AT_None;
+	index_t           _idxBlk;
+
+	RowColBlkIntersect( value_t val ) : _commonValue(val)
+	{}
+};
+
 
 #ifdef TESTMODE
 	std::vector<graph2_t> buildGraphsFrom( index_t start,  std::vector<Cell2>& );
+	RowColBlkIntersect findRowColBlkIntersect( const Cell2&, const Cell2& );
+
 #endif // TESTMODE
 
 std::vector<graph2_t> buildGraphs( std::vector<Cell2>& );

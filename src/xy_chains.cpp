@@ -211,76 +211,74 @@ shareCommonValue( const Cell2& c1, const Cell2& c2 )
 }
 
 //-------------------------------------------------------------------
-/// See RowColBlkIntersect
-enum En_IntersectType
-{
-	IT_None,
-	IT_SameRow,
-	IT_SameCol,
-};
-enum En_AreaType
-{
-	AT_None,
-	AT_SameBlock,
-	AT_BlockSameRow,
-	AT_BlockSameCol
-};
-/// Holds the intersection of the two final cells. Related to XY-Chains.
-struct RowColBlkIntersect
-{
-	En_IntersectType type = IT_None;
-	En_AreaType areaType;
-	index_t idx1;
-	pos_t   interSectPos1;
-	pos_t   interSectPos2;
-};
-
 /// Finds the intersection of the two final cells. Related to XY-Chains.
 /// \todo NOT FINISHED, UNTESTED !!!
+/**
+Needed for XY-chains
+
+This function will determine which row/col/block(s) have to be cleared of candidate value
+
+- if the two cells are on same row/col, then all the row/col can be cleared of that candidate value
+
+
+see doc/AS_XY_chain_example_1.png
+The two cells are B3 and C5
+*/
 RowColBlkIntersect
 findRowColBlkIntersect( const Cell2& c1, const Cell2& c2 )
 {
 	auto scv = shareCommonValue( c1, c2 );
 	assert( scv.first == 1 );
 
-
-	RowColBlkIntersect res;
+// step 1 - check if same row or same col (simplest case)
+	RowColBlkIntersect res( scv.second );
 	if( c1._pos.first == c2._pos.first )
 	{
-		res.type = IT_SameRow;
-		res.idx1 = c1._pos.first;
+		res._vPos = getCellsPos( OR_ROW, c1._pos.first  );
+		res._cRC   = IT_SameRow;
+		res._idxRC = c1._pos.first;
 		return res;
 	}
 	if( c1._pos.second == c2._pos.second )
 	{
-		res.type = IT_SameCol;
-		res.idx1 = c1._pos.second;
+		res._vPos = getCellsPos( OR_COL, c1._pos.second  );
+		res._cRC   = IT_SameCol;
+		res._idxRC = c1._pos.second;
 		return res;
 	}
-	res.interSectPos1 = std::make_pair( c1._pos.first, c2._pos.second );
-	res.interSectPos2 = std::make_pair( c2._pos.first, c1._pos.second );
 
+// step 2 - if not, then determine the two intersection cells
+	res._interSectPos1 = std::make_pair( c1._pos.first, c2._pos.second );
+	res._interSectPos2 = std::make_pair( c2._pos.first, c1._pos.second );
+
+// step 3.1 - check if same block
 	auto blockIndex1 = GetBlockIndex(c1._pos);
 	auto blockIndex2 = GetBlockIndex(c2._pos);
 
 	if( blockIndex1 == blockIndex2 )        // if the two cell are in same block
-		res.areaType = AT_SameBlock;
+	{
+		res._blkIntersect = AT_SameBlock;
+		res._idxBlk = blockIndex1;
+		return res;
+	}
+
+// step 3.2 - check if the blocks are on same row/col
+	auto blkRow1 = getBlockRow( blockIndex1 );
+	auto blkRow2 = getBlockRow( blockIndex2 );
+	if( blkRow1 == blkRow2 )
+	{
+		res._blkIntersect = AT_BlockSameRow;
+	}
+
 	else
 	{
-		auto blkRow1 = getBlockRow( blockIndex1 );
-		auto blkRow2 = getBlockRow( blockIndex2 );
-		if( blkRow1 == blkRow2 )
-			res.areaType = AT_BlockSameRow;
+		auto blkCol1 = getBlockCol( blockIndex1 );
+		auto blkCol2 = getBlockCol( blockIndex2 );
+/*		if( blkCol1 == blkCol2 )
+			res._areaType = AT_BlockSameCol;
 		else
-		{
-			auto blkCol1 = getBlockCol( blockIndex1 );
-			auto blkCol2 = getBlockCol( blockIndex2 );
-			if( blkCol1 == blkCol2 )
-				res.areaType = AT_BlockSameCol;
-			else
-				res.areaType = AT_None;
-		}
-
+			res._areaType = AT_None;
+*/
 	}
 
 	return res;

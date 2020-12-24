@@ -308,18 +308,19 @@ TEST_CASE( "XY-chains test 1", "[XY-chains-1]" )
 }
 #endif
 
-#if 0
-TEST_CASE( "XY-chains test 2", "[XY-chains-2]" )
+TEST_CASE( "fGrid::getCells", "Grid::getCells" )
 {
-	std::vector<Cell2> v;
-	v.push_back( Cell2( "A7", 6,9 ) );
-	v.push_back( Cell2( "A5", 2,9 ) );
-	v.push_back( Cell2( "A1", 2,6 ) );
-	v.push_back( Cell2( "C2", 5,6 ) );
-	v.push_back( Cell2( "C8", 5,8 ) );
-
-	auto setLinks = buildSetOfLinks( v );
-	PrintVector( setLinks, "set of links" );
-
+	std::vector<pos_t> v1{ {0,0}, {0,1}, {0,2}, {0,3}, {0,4}, {0,5}, {0,6}, {0,7}, {0,8} };
+	auto v2 = getCellsPos( OR_ROW, 0 );
+	CHECK( v1 == v2 );
 }
-#endif
+
+TEST_CASE( "findRowColBlkIntersect()", "FRCLI" )
+{
+
+	Cell2 c1( "B3", 4, 6 );
+	Cell2 c2( "B9", 3, 6 );
+	auto res = findRowColBlkIntersect( c1, c2 );
+	CHECK( res._cRC   == IT_SameRow );
+	CHECK( res._idxRC == 1 );
+}

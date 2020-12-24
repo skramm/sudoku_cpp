@@ -699,7 +699,7 @@ Grid::GetRow( index_t r ) const
 	return row;
 }
 
-/// return mono-dimensional view of row \c r \in [0,8]
+/// return non-const mono-dimensional view of row \c r \in [0,8]
 inline
 View_1Dim_nc
 Grid::GetRow( index_t r )
@@ -745,6 +745,9 @@ Grid::GetBlock( index_t idx )
 
 	return g;
 }
+
+std::vector<pos_t> getCellsPos( EN_ORIENTATION, index_t );
+
 //----------------------------------------------------------------------------
 
 #endif // GRID_H
