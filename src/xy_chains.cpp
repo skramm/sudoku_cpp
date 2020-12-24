@@ -211,6 +211,82 @@ shareCommonValue( const Cell2& c1, const Cell2& c2 )
 }
 
 //-------------------------------------------------------------------
+/// See RowColBlkIntersect
+enum En_IntersectType
+{
+	IT_None,
+	IT_SameRow,
+	IT_SameCol,
+};
+enum En_AreaType
+{
+	AT_None,
+	AT_SameBlock,
+	AT_BlockSameRow,
+	AT_BlockSameCol
+};
+/// Holds the intersection of the two final cells. Related to XY-Chains.
+struct RowColBlkIntersect
+{
+	En_IntersectType type = IT_None;
+	En_AreaType areaType;
+	index_t idx1;
+	pos_t   interSectPos1;
+	pos_t   interSectPos2;
+};
+
+/// Finds the intersection of the two final cells. Related to XY-Chains.
+/// \todo NOT FINISHED, UNTESTED !!!
+RowColBlkIntersect
+findRowColBlkIntersect( const Cell2& c1, const Cell2& c2 )
+{
+	auto scv = shareCommonValue( c1, c2 );
+	assert( scv.first == 1 );
+
+
+	RowColBlkIntersect res;
+	if( c1._pos.first == c2._pos.first )
+	{
+		res.type = IT_SameRow;
+		res.idx1 = c1._pos.first;
+		return res;
+	}
+	if( c1._pos.second == c2._pos.second )
+	{
+		res.type = IT_SameCol;
+		res.idx1 = c1._pos.second;
+		return res;
+	}
+	res.interSectPos1 = std::make_pair( c1._pos.first, c2._pos.second );
+	res.interSectPos2 = std::make_pair( c2._pos.first, c1._pos.second );
+
+	auto blockIndex1 = GetBlockIndex(c1._pos);
+	auto blockIndex2 = GetBlockIndex(c2._pos);
+
+	if( blockIndex1 == blockIndex2 )        // if the two cell are in same block
+		res.areaType = AT_SameBlock;
+	else
+	{
+		auto blkRow1 = getBlockRow( blockIndex1 );
+		auto blkRow2 = getBlockRow( blockIndex2 );
+		if( blkRow1 == blkRow2 )
+			res.areaType = AT_BlockSameRow;
+		else
+		{
+			auto blkCol1 = getBlockCol( blockIndex1 );
+			auto blkCol2 = getBlockCol( blockIndex2 );
+			if( blkCol1 == blkCol2 )
+				res.areaType = AT_BlockSameCol;
+			else
+				res.areaType = AT_None;
+		}
+
+	}
+
+	return res;
+}
+
+//-------------------------------------------------------------------
 /// Explore set of Cells having 2 candidates and add them to the graph, recursively
 /**
 Stop condition: when we can't add any more nodes
@@ -248,7 +324,7 @@ buildGraphRecursive(
 			{
 				COUT( " -Linkable !" );
 				auto scv = shareCommonValue( newCell, currCell );  // check if common value(s),
-				if( scv.first==1 && scv.second != inVal            //  that is NOT the "entrance" value (in cas of 1 common value)
+				if( (scv.first==1 && scv.second != inVal)         //  that is NOT the "entrance" value (in case of 1 common value)
 					|| scv.first==2 )
 				{
 					auto linkVal = scv.second;                        // determine the link value

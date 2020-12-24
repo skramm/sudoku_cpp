@@ -25,6 +25,7 @@
 
 /**
 \file grid.h
+\brief Holds some useful definitions
 
 */
 
@@ -158,7 +159,7 @@ GetString( EN_ORIENTATION orient )
 }
 
 //----------------------------------------------------------------------------
-/// Returns index inside block from (row,col)
+/// Returns index inside block from (row,col) of cell
 /** See opposite: getPosFromBlockIndex() */
 inline
 index_t
@@ -167,13 +168,33 @@ GetBlockIndex( index_t row, index_t col )
 	return row/3*3 + col/3;
 }
 
-/// Returns index inside block from position (row,col)
+/// Returns index inside block from position (row,col) of cell
 /** See opposite: getPosFromBlockIndex() */
 inline
 index_t
 GetBlockIndex( pos_t p )
 {
 	return GetBlockIndex( p.first, p.second );
+}
+
+/// Input: a block index, in [0:9]
+/// Output: the row of the block, in [0:2]
+inline
+index_t
+getBlockRow( index_t blockIndex )
+{
+	assert( blockIndex<10 );
+	return blockIndex/3;
+}
+
+/// Input: a block index, in [0:9]
+/// Output: the row of the block, in [0:2]
+inline
+index_t
+getBlockCol( index_t blockIndex )
+{
+	assert( blockIndex<10 );
+	return blockIndex%3;
 }
 
 /// Returns position inside block from index
