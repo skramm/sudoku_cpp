@@ -230,26 +230,31 @@ findRowColBlkIntersect( const Cell2& c1, const Cell2& c2 )
 	auto scv = shareCommonValue( c1, c2 );
 	assert( scv.first == 1 );
 
-// step 1 - check if same row or same col (simplest case)
 	RowColBlkIntersect res( scv.second );
+
+// step 1 - check if same row or same col (simplest case)
+	bool isSameRowCol = false;
 	if( c1._pos.first == c2._pos.first )
 	{
 		res._vPos = getCellsPos( OR_ROW, c1._pos.first  );
-		res._cRC   = IT_SameRow;
-		res._idxRC = c1._pos.first;
-		return res;
+		isSameRowCol = true;
 	}
 	if( c1._pos.second == c2._pos.second )
 	{
 		res._vPos = getCellsPos( OR_COL, c1._pos.second  );
-		res._cRC   = IT_SameCol;
-		res._idxRC = c1._pos.second;
+		isSameRowCol = true;
+	}
+
+	if( isSameRowCol )   // is same row or col, then erase the two cells of the output set
+	{
+		res._vPos.erase( std::find( std::begin(res._vPos), std::end(res._vPos), c1._pos ) );
+		res._vPos.erase( std::find( std::begin(res._vPos), std::end(res._vPos), c2._pos ) );
 		return res;
 	}
 
 // step 2 - if not, then determine the two intersection cells
-	res._interSectPos1 = std::make_pair( c1._pos.first, c2._pos.second );
-	res._interSectPos2 = std::make_pair( c2._pos.first, c1._pos.second );
+	res._vPos.insert( std::make_pair( c1._pos.first, c2._pos.second ) );
+	res._vPos.insert( std::make_pair( c2._pos.first, c1._pos.second ) );
 
 // step 3.1 - check if same block
 	auto blockIndex1 = GetBlockIndex(c1._pos);
@@ -257,11 +262,11 @@ findRowColBlkIntersect( const Cell2& c1, const Cell2& c2 )
 
 	if( blockIndex1 == blockIndex2 )        // if the two cell are in same block
 	{
-		res._blkIntersect = AT_SameBlock;
-		res._idxBlk = blockIndex1;
+		res._vPos = getCellsPos( OR_BLK, blockIndex1 );
+
 		return res;
 	}
-
+/*
 // step 3.2 - check if the blocks are on same row/col
 	auto blkRow1 = getBlockRow( blockIndex1 );
 	auto blkRow2 = getBlockRow( blockIndex2 );
@@ -274,13 +279,14 @@ findRowColBlkIntersect( const Cell2& c1, const Cell2& c2 )
 	{
 		auto blkCol1 = getBlockCol( blockIndex1 );
 		auto blkCol2 = getBlockCol( blockIndex2 );
+*/
 /*		if( blkCol1 == blkCol2 )
 			res._areaType = AT_BlockSameCol;
 		else
 			res._areaType = AT_None;
-*/
-	}
 
+	}
+*/
 	return res;
 }
 

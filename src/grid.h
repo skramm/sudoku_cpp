@@ -35,6 +35,12 @@
 #include <array>
 #include <sstream>
 #include <vector>
+
+#include <set>
+//#include <unordered_set>
+//#define SET_CONTAINER unordered_set
+#define SET_CONTAINER set
+
 #include <map>
 #include <algorithm>
 #include <iostream>
@@ -568,7 +574,7 @@ void AddToVector( std::vector<T>& v, const T& elem )
 	}
 }
 //----------------------------------------------------------------------------
-/// Adds to vector \c v the elements of \c v2 only if they are not already present
+/// Adds to vector \c v the elements of \c v2, only if they are not already present
 template<typename T>
 void AddToVector( std::vector<T>& v, const std::vector<T>& v2 )
 {
@@ -746,7 +752,7 @@ Grid::GetBlock( index_t idx )
 	return g;
 }
 
-std::vector<pos_t> getCellsPos( EN_ORIENTATION, index_t );
+std::SET_CONTAINER<pos_t> getCellsPos( EN_ORIENTATION, index_t );
 
 //----------------------------------------------------------------------------
 

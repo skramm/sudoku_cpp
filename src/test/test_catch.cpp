@@ -308,11 +308,23 @@ TEST_CASE( "XY-chains test 1", "[XY-chains-1]" )
 }
 #endif
 
-TEST_CASE( "fGrid::getCells", "Grid::getCells" )
+TEST_CASE( "Grid::getCellsPos", "Grid::getCellsPos" )
 {
-	std::vector<pos_t> v1{ {0,0}, {0,1}, {0,2}, {0,3}, {0,4}, {0,5}, {0,6}, {0,7}, {0,8} };
-	auto v2 = getCellsPos( OR_ROW, 0 );
-	CHECK( v1 == v2 );
+	{
+		std::SET_CONTAINER<pos_t> v1{ {0,0}, {0,1}, {0,2}, {0,3}, {0,4}, {0,5}, {0,6}, {0,7}, {0,8} };
+		auto v2 = getCellsPos( OR_ROW, 0 );
+		CHECK( v1 == v2 );
+	}
+	{
+		std::SET_CONTAINER<pos_t> v1{ {0,2}, {1,2}, {2,2}, {3,2}, {4,2}, {5,2}, {6,2}, {7,2}, {8,2} };
+		auto v2 = getCellsPos( OR_COL, 2 );
+		CHECK( v1 == v2 );
+	}
+	{
+		std::SET_CONTAINER<pos_t> v1{ {0,0}, {0,1}, {0,2}, {1,0}, {1,1}, {1,2}, {2,0}, {2,1}, {2,2} };
+		auto v2 = getCellsPos( OR_BLK, 0 );
+		CHECK( v1 == v2 );
+	}
 }
 
 TEST_CASE( "findRowColBlkIntersect()", "FRCLI" )

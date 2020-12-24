@@ -178,7 +178,7 @@ enum En_BlockIntersect
 struct RowColBlkIntersect
 {
 	value_t            _commonValue;
-	std::vector<pos_t> _vPos;
+	std::SET_CONTAINER<pos_t> _vPos;
 
 	En_CommonRowCol   _cRC          = IT_Neither;
 	index_t           _idxRC;
