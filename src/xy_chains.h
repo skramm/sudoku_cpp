@@ -65,8 +65,8 @@ struct GraphEdge_B
 typedef boost::adjacency_list<
 	boost::vecS,
 	boost::vecS,
-//	boost::undirectedS,
-	boost::directedS,
+	boost::undirectedS,
+//	boost::directedS,
 	GraphNode_B,
 	GraphEdge_B
 	> graph2_t;
@@ -79,7 +79,7 @@ using vertex2_t = typename boost::graph_traits<graph2_t>::vertex_descriptor;
 struct Cell2
 {
 	En_ChainRole  _chainRole = CR_Unused;
-	bool          _isUsed = false;
+	int           _graphIdx = -1;
 	pos_t         _pos;
 	ValuePair     _candidValues; ///< the 2 candidates of the cell
 	vertex2_t     _vertex = 0;
@@ -120,43 +120,12 @@ struct Cell2
 
 	friend std::ostream& operator << ( std::ostream& s, const Cell2& c )
 	{
-		s << c._pos << ": used=" << (c._isUsed?'Y':'N') << ", values=(" << (int)c._candidValues.first << "-" << (int)c._candidValues.second << ')';
+		s << c._pos << ": used:" << c._graphIdx << ", values=(" << (int)c._candidValues.first << "-" << (int)c._candidValues.second << ')';
 		return s;
 	}
 };
 
 
-//-------------------------------------------------------------------
-#if 0
-struct LinkXY
-{
-	pos_t _p1, _p2;
-	value_t _commonVal;
-	LinkXY( const Cell2& c1, const Cell2& c2, value_t val )
-		: _p1(c1._pos), _p2(c2._pos), _commonVal(val)
-	{}
-
-	friend bool operator == ( const LinkXY& lA, const LinkXY& lB )
-	{
-		if( lA._commonVal != lB._commonVal )
-			return false;
-
-		if( lA._p1 == lB._p1 )
-			if( lA._p2 == lB._p2 )
-				return true;
-		if( lA._p1 == lB._p2 )
-			if( lA._p2 == lB._p1 )
-				return true;
-		return false;
-	}
-
-	friend std::ostream& operator << ( std::ostream& s, const LinkXY& l )
-	{
-		s << '{' << l._p1 << "-" << l._p2 << ";C=" << (int)l._commonVal << "}\n"; // '}';
-		return s;
-	}
-};
-#endif
 
 //-------------------------------------------------------------------
 /// See RowColBlkIntersect
@@ -199,7 +168,12 @@ struct RowColBlkIntersect
 
 #endif // TESTMODE
 
-std::vector<graph2_t> buildGraphs( std::vector<Cell2>& );
+using pgvalset = std::pair<graph2_t,std::set<value_t>>;
+
+std::vector<pgvalset> buildGraphs( std::vector<Cell2>& );
+
+//std::vector<graph2_t> buildGraphs( std::vector<Cell2>& );
+
 //----------------------------------------------------------------------------
 #endif // HG_XY_CHAINS_H
 

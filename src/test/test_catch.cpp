@@ -270,7 +270,19 @@ TEST_CASE( "XY-chains test 1", "[XY-chains-1]" )
 		v.push_back( Cell2( "C2", 5,6 ) );
 		v.push_back( Cell2( "C8", 5,8 ) );
 
-		auto v_graph1 = buildGraphs( v );
+		auto vout = buildGraphs( v );
+		CHECK( vout.size() == 1 );
+		const auto& graph = vout[0].first;
+		const auto& vset  = vout[0].second;
+		CHECK( vset.count(1) == 0 );
+		CHECK( vset.count(2) == 1 );
+		CHECK( vset.count(3) == 0 );
+		CHECK( vset.count(4) == 0 );
+		CHECK( vset.count(5) == 1 );
+		CHECK( vset.count(6) == 1 );
+		CHECK( vset.count(7) == 0 );
+		CHECK( vset.count(8) == 1 );
+		CHECK( vset.count(9) == 1 );
 	}
 
 
@@ -303,6 +315,7 @@ TEST_CASE( "XY-chains test 1", "[XY-chains-1]" )
 		v.push_back( Cell2( "H7", 7,9 ) );
 
 		auto v_graph1 = buildGraphs( v );
+		CHECK( v_graph1.size() == 2 );
 	}
 
 }
@@ -333,6 +346,6 @@ TEST_CASE( "findRowColBlkIntersect()", "FRCLI" )
 	Cell2 c1( "B3", 4, 6 );
 	Cell2 c2( "B9", 3, 6 );
 	auto res = findRowColBlkIntersect( c1, c2 );
-	CHECK( res._cRC   == IT_SameRow );
-	CHECK( res._idxRC == 1 );
+//	CHECK( res._cRC   == IT_SameRow );
+//	CHECK( res._idxRC == 1 );
 }

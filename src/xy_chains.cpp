@@ -171,7 +171,7 @@ nbUnusedCells( const std::vector<Cell2>& v_cells )
 		[]                         // lambda
 		( const Cell2& c )
 		{
-			return !c._isUsed;
+			return c._graphIdx==-1;
 		}
 	);
 }
@@ -180,7 +180,7 @@ size_t
 findFirstUnused( const std::vector<Cell2>& v_cells )
 {
 	for( size_t i=0; i<v_cells.size(); i++ )
-		if( !v_cells[i]._isUsed )
+		if( v_cells[i]._graphIdx==-1 )
 			return i;
 	assert(0);	        // should never happen...
 }
@@ -297,7 +297,8 @@ Stop condition: when we can't add any more nodes
 */
 void
 buildGraphRecursive(
-	graph2_t&           graph,
+	pgvalset& 			graph_set,
+	int                 graphIdx,
 	vertex2_t           currVert,    ///< current vertex
 	value_t             inVal,       ///< the value that lead us to that vertex, 0 if none (for starting)
 	std::vector<Cell2>& v_cells      ///< the set of cells holding 2 candidates.
@@ -305,6 +306,8 @@ buildGraphRecursive(
 {
 	static int iter;
 	COUT( "iter " << ++iter << " currVert=" << currVert );
+	graph2_t&          graph = graph_set.first;
+	std::set<value_t>& vSet  = graph_set.second;
 
 	auto curr_idx = graph[currVert].cell_idx;           // index on the cell we are considering
 	auto& currCell = v_cells.at(curr_idx);     // we fetch the cell
@@ -335,13 +338,17 @@ buildGraphRecursive(
 					if( scv.first==2 )
 						linkVal = newCell.getOtherVal( inVal );
 
-					if( !newCell._isUsed )                            // if not already used,
+					if( newCell._graphIdx==-1 )                       // if not already used,
 					{                                                 // its a new node in the graph
 						auto newVert = boost::add_vertex( graph );
 						graph[newVert].cell_idx = idx;
 						COUT( "cell_idx =" << (int)idx );
-						newCell._isUsed = true;                  // tag the cell as "used"
+						newCell._graphIdx = graphIdx;               // tag the cell as "used"
 						newCell._vertex = newVert;
+
+						vSet.insert( newCell._candidValues.first );
+						vSet.insert( newCell._candidValues.second );
+
 						auto edge = boost::add_edge( currVert, newVert, graph ).first;
 						graph[edge].commonVal = linkVal;
 						COUT( "Added edge " << currCell._pos << "--" << newCell._pos );
@@ -349,10 +356,10 @@ buildGraphRecursive(
 						if( nbUnusedCells( v_cells ) != 0 )
 						{
 							COUT( "nbUnused=" << nbUnusedCells( v_cells ) << ", RE-ENTRY !" )
-							buildGraphRecursive( graph, newVert, linkVal, v_cells );
+							buildGraphRecursive( graph_set, graphIdx, newVert, linkVal, v_cells );
 						}
 					}
-					else  // if already used, then add an edge (if not present)
+					else  // if already used, then add an edge (if edge not already present)
 					{
 						auto v = newCell._vertex;
 						if( !boost::edge( v, currVert,graph ).second )  // if not there,
@@ -383,39 +390,46 @@ printGraph( std::ostream& s, const graph2_t& graph )
 }
 //-------------------------------------------------------------------
 /// Builds the graphs from the set of cells holding 2 candidates. Not const, because each cell may get tagged as 'used' in graph
-std::vector<graph2_t>
+std::vector<pgvalset>
 buildGraphs( std::vector<Cell2>& v_cells )
 {
-	std::vector<graph2_t> v_graphs;
+	std::vector<pgvalset> v_out;
+//	std::vector<graph2_t> v_graphs;
 	graph2_t graph;
-
-	auto& cell = v_cells[0];
-	cell._isUsed = true;                 // tag the cell as "used"
+	std::set<value_t> s_values;
 
 	auto vert = boost::add_vertex( graph );  // add initial vertex
 	graph[vert].cell_idx = 0;
-	v_graphs.push_back( graph );       // add initial graph
+
+	auto& cell = v_cells[0];
+	cell._graphIdx = 0;                 // tag the cell as "used"
 	cell._vertex = vert;
+
+	v_out.push_back( std::make_pair(graph,s_values) );       // add initial graph
 
 	size_t idx_graph = 0;
 	do
 	{
-		COUT( "start loop, idx_graph=" << idx_graph << " nbGraph=" << v_graphs.size() << " vert=" << vert << " nbVert=" << boost::num_vertices(v_graphs[idx_graph]) );
-		buildGraphRecursive( v_graphs[idx_graph], vert, 0, v_cells );
+		COUT( "start loop, idx_graph=" << idx_graph << " nbGraph=" << v_out.size() << " vert=" << vert << " nbVert=" << boost::num_vertices(v_out[idx_graph].first) );
+		buildGraphRecursive( v_out[idx_graph], idx_graph, vert, 0, v_cells );
 		idx_graph++;
 		if( nbUnusedCells(v_cells) != 0 )        // then some cells where not connected, so we create a new graph
 		{
 			auto idx_c = findFirstUnused( v_cells );
 			COUT( "** CREATE NEW GRAPH, NbGraph=" << idx_graph << " nbUnusedCells=" << nbUnusedCells(v_cells) << " firstUnused=" <<idx_c );
 
-			graph2_t graph2;
-			vert = boost::add_vertex( graph2 );
-
-			v_cells[idx_c]._isUsed = true;
-			v_cells[idx_c]._vertex = vert;
-
+			graph2_t graph2;                      // new graph
+			vert = boost::add_vertex( graph2 );   // with its initial vertex
 			graph2[vert].cell_idx = idx_c;
-			v_graphs.push_back( graph2 );
+
+			std::set<value_t> s_values2;          // new set of values
+			s_values.insert( v_cells[idx_c]._candidValues.first );
+			s_values.insert( v_cells[idx_c]._candidValues.second );
+
+			v_out.push_back( std::make_pair(graph2,s_values2) );
+
+			v_cells[idx_c]._graphIdx = idx_graph;
+			v_cells[idx_c]._vertex = vert;
 		}
 	}
 	while( nbUnusedCells(v_cells) != 0 );
@@ -424,21 +438,21 @@ buildGraphs( std::vector<Cell2>& v_cells )
 	static int c;
 	g_ptr = &v_cells;
 	index_t i=0;
-	for( auto& gr: v_graphs )
+	for( auto& grset: v_out )
 	{
 		std::ofstream file( "out/xyc_" + std::to_string(c) + "_" + std::to_string(i++) + ".dot" );
 		assert( file.is_open() );
 		boost::write_graphviz(
 			file,
-			gr,
-			make_node_writer_B( boost::get( &GraphNode_B::cell_idx, gr ) ),
-			make_edge_writer_B( boost::get( &GraphEdge_B::commonVal, graph ) )
+			grset.first,
+			make_node_writer_B( boost::get( &GraphNode_B::cell_idx, grset.first ) ),
+			make_edge_writer_B( boost::get( &GraphEdge_B::commonVal, grset.first ) )
 		);
 	}
 	c++;
 #endif
 
-	return v_graphs;
+	return v_out;
 }
 
 //-------------------------------------------------------------------
@@ -459,25 +473,18 @@ Algo_XY_Chains( Grid& g )
 	}
 
 // step 2 - build a set of graphs covering all these cells
-	auto v_graph1 = buildGraphs( v_cells );
+	auto v_pgs = buildGraphs( v_cells );
 
 // step 3 - explore these graphs to find chains
 
-
-
-#if 0
-// for each of these, build a non-oriented graph of cells
-	for( index_t idx=0; idx<v_cells.size(); idx++ )
+	for(const auto& pgs: v_pgs )
 	{
-//		auto vc = cell.GetCandidates();
-		auto gr0 = buildGraphFrom( idx, 0, v_cells );
-
-		auto gr1 = buildGraphFrom( idx, 1, v_cells );
+		for( auto val: pgs.second )  // iterate on the values that are in the current set
+		{
+			COUT( "current value=" << val );
+		}
 	}
 
-// step 2 - iterate through these to see if we can build a chain
-
-#endif
 
 	return false;
 }
