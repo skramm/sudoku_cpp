@@ -107,14 +107,32 @@ struct Cell2
 		_candidValues.second = std::max( vcand[0],vcand[1] );
 	}
 
+/// sorting operator, based on position
+	friend bool operator < ( const Cell2& c1, const Cell2& c2 )
+	{
+		auto p1 = c1._pos;
+		auto p2 = c2._pos;
+		if( p1.first < p2.first )
+			return true;
+		if( p1.first == p2.first )
+			return p1.second < p2.second;
+		return false;
+	}
 
 #ifdef TESTMODE
 /// This constructor is only useful for unit-testing
-	Cell2( std::string spos, value_t c1, value_t c2  )
+	Cell2( std::string spos )
 	{
-		_candidValues = std::make_pair(c1,c2);
 		_pos.first  = spos[0] != 'J' ? spos[0] - 'A': 8;
 		_pos.second = spos[1] - '1';
+	}
+
+/// This constructor is only useful for unit-testing
+	Cell2( std::string spos, value_t c1, value_t c2  ) : Cell2( spos )
+	{
+		_candidValues = std::make_pair(c1,c2);
+//		_pos.first  = spos[0] != 'J' ? spos[0] - 'A': 8;
+//		_pos.second = spos[1] - '1';
 	}
 #endif // TESTMODE
 
@@ -147,7 +165,7 @@ enum En_BlockIntersect
 struct RowColBlkIntersect
 {
 	value_t            _commonValue;
-	std::SET_CONTAINER<pos_t> _vPos;
+	std::set<pos_t>    _sPos;
 
 	En_CommonRowCol   _cRC          = IT_Neither;
 	index_t           _idxRC;
@@ -168,9 +186,9 @@ struct RowColBlkIntersect
 
 #endif // TESTMODE
 
-using pgvalset = std::pair<graph2_t,std::set<value_t>>;
+using Pgrvalset = std::pair<graph2_t,std::set<value_t>>;
 
-std::vector<pgvalset> buildGraphs( std::vector<Cell2>& );
+std::vector<Pgrvalset> buildGraphs( std::vector<Cell2>& );
 
 //std::vector<graph2_t> buildGraphs( std::vector<Cell2>& );
 

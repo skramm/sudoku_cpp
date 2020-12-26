@@ -314,8 +314,11 @@ TEST_CASE( "XY-chains test 1", "[XY-chains-1]" )
 		v.push_back( Cell2( "G7", 4,8 ) );
 		v.push_back( Cell2( "H7", 7,9 ) );
 
-		auto v_graph1 = buildGraphs( v );
-		CHECK( v_graph1.size() == 2 );
+		auto vout = buildGraphs( v );
+		CHECK( vout.size() == 2 );
+
+		const auto& graph = vout[0].first;
+		const auto& vset  = vout[0].second;
 	}
 
 }
@@ -324,17 +327,17 @@ TEST_CASE( "XY-chains test 1", "[XY-chains-1]" )
 TEST_CASE( "Grid::getCellsPos", "Grid::getCellsPos" )
 {
 	{
-		std::SET_CONTAINER<pos_t> v1{ {0,0}, {0,1}, {0,2}, {0,3}, {0,4}, {0,5}, {0,6}, {0,7}, {0,8} };
+		std::set<pos_t> v1{ {0,0}, {0,1}, {0,2}, {0,3}, {0,4}, {0,5}, {0,6}, {0,7}, {0,8} };
 		auto v2 = getCellsPos( OR_ROW, 0 );
 		CHECK( v1 == v2 );
 	}
 	{
-		std::SET_CONTAINER<pos_t> v1{ {0,2}, {1,2}, {2,2}, {3,2}, {4,2}, {5,2}, {6,2}, {7,2}, {8,2} };
+		std::set<pos_t> v1{ {0,2}, {1,2}, {2,2}, {3,2}, {4,2}, {5,2}, {6,2}, {7,2}, {8,2} };
 		auto v2 = getCellsPos( OR_COL, 2 );
 		CHECK( v1 == v2 );
 	}
 	{
-		std::SET_CONTAINER<pos_t> v1{ {0,0}, {0,1}, {0,2}, {1,0}, {1,1}, {1,2}, {2,0}, {2,1}, {2,2} };
+		std::set<pos_t> v1{ {0,0}, {0,1}, {0,2}, {1,0}, {1,1}, {1,2}, {2,0}, {2,1}, {2,2} };
 		auto v2 = getCellsPos( OR_BLK, 0 );
 		CHECK( v1 == v2 );
 	}
@@ -343,9 +346,22 @@ TEST_CASE( "Grid::getCellsPos", "Grid::getCellsPos" )
 TEST_CASE( "findRowColBlkIntersect()", "FRCLI" )
 {
 
-	Cell2 c1( "B3", 4, 6 );
-	Cell2 c2( "B9", 3, 6 );
+	Cell2 c1( "B3", 4, 6 ); // pos=1,2
+	Cell2 c2( "B9", 3, 6 ); // pos=1,8
+
 	auto res = findRowColBlkIntersect( c1, c2 );
-//	CHECK( res._cRC   == IT_SameRow );
-//	CHECK( res._idxRC == 1 );
+
+	std::set<pos_t> s1{ {1,0}, {1,1}, {1,3}, {1,4}, {1,5}, {1,6}, {1,7} };
+
+	CHECK( res._sPos  == s1 );
 }
+
+TEST_CASE( "addToPosSet", "addToPosSet" )
+{
+
+/*	addToPosSet()
+	std::set<pos_t>& posSet,   ///< output set, we add values here
+	EN_ORIENTATION   orient,
+	pos_t            p1,
+	pos_t            p2*/
+)

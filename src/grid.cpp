@@ -481,11 +481,11 @@ Grid::GetOtherCells( const Cell& src, int arg, EN_ORIENTATION orient, EN_GOCMODE
 }
 
 //----------------------------------------------------------------------------
-/// Returns a vector of size=9, holding all the positions of the cells that are in row/col/block of the given index
-std::SET_CONTAINER<pos_t>
+/// Returns a set of size=9, holding all the positions of the cells that are in row/col/block of the given index
+std::set<pos_t>
 getCellsPos( EN_ORIENTATION orient, index_t idx )
 {
-	std::SET_CONTAINER<pos_t> v_out; //(9);
+	std::set<pos_t> v_out; //(9);
 	switch( orient )
 	{
 		case OR_ROW:

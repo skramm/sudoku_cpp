@@ -211,6 +211,42 @@ shareCommonValue( const Cell2& c1, const Cell2& c2 )
 }
 
 //-------------------------------------------------------------------
+/// Add to set the cell position lying on row/col of p1/p2 and part of the block of p2/p1 (respectively)
+void
+addToPosSet(
+	std::set<pos_t>& posSet,   ///< output set, we add values here
+	EN_ORIENTATION   orient,
+	pos_t            p1,
+	pos_t            p2
+)
+{
+	auto bi1=GetBlockIndex(p1):
+	auto bi2=GetBlockIndex(p2):
+
+	if( orient == OR_ROW )
+	{
+		posSet.insert( std::make_pair( p1.first, getBlockCol(bi2)*3+0 ) );
+		posSet.insert( std::make_pair( p1.first, getBlockCol(bi2)*3+1 ) );
+		posSet.insert( std::make_pair( p1.first, getBlockCol(bi2)*3+2 ) );
+
+		posSet.insert( std::make_pair( p2.first, getBlockCol(bi1)*3+0 ) );
+		posSet.insert( std::make_pair( p2.first, getBlockCol(bi1)*3+1 ) );
+		posSet.insert( std::make_pair( p2.first, getBlockCol(bi1)*3+2 ) );
+	}
+	if( orient == OR_COL )
+	{
+		posSet.insert( std::make_pair( getBlockRow(bi1)*3+0, p2.second ) );
+		posSet.insert( std::make_pair( getBlockRow(bi1)*3+1, p2.second ) );
+		posSet.insert( std::make_pair( getBlockRow(bi1)*3+2, p2.second ) );
+
+		posSet.insert( std::make_pair( getBlockRow(bi2)*3+0, p1.second ) );
+		posSet.insert( std::make_pair( getBlockRow(bi2)*3+1, p1.second ) );
+		posSet.insert( std::make_pair( getBlockRow(bi2)*3+2, p1.second ) );
+	}
+	assert(0);
+
+}
+//-------------------------------------------------------------------
 /// Finds the intersection of the two final cells. Related to XY-Chains.
 /// \todo NOT FINISHED, UNTESTED !!!
 /**
@@ -234,59 +270,45 @@ findRowColBlkIntersect( const Cell2& c1, const Cell2& c2 )
 
 // step 1 - check if same row or same col (simplest case)
 	bool isSameRowCol = false;
-	if( c1._pos.first == c2._pos.first )
+	if( c1._pos.first == c2._pos.first )      // same row
 	{
-		res._vPos = getCellsPos( OR_ROW, c1._pos.first  );
+		res._sPos = getCellsPos( OR_ROW, c1._pos.first  );
 		isSameRowCol = true;
 	}
-	if( c1._pos.second == c2._pos.second )
+	if( c1._pos.second == c2._pos.second )  // same column
 	{
-		res._vPos = getCellsPos( OR_COL, c1._pos.second  );
+		res._sPos = getCellsPos( OR_COL, c1._pos.second  );
 		isSameRowCol = true;
 	}
 
 	if( isSameRowCol )   // is same row or col, then erase the two cells of the output set
 	{
-		res._vPos.erase( std::find( std::begin(res._vPos), std::end(res._vPos), c1._pos ) );
-		res._vPos.erase( std::find( std::begin(res._vPos), std::end(res._vPos), c2._pos ) );
+		res._sPos.erase( std::find( std::begin(res._sPos), std::end(res._sPos), c1._pos ) );
+		res._sPos.erase( std::find( std::begin(res._sPos), std::end(res._sPos), c2._pos ) );
 		return res;
 	}
 
-// step 2 - if not, then determine the two intersection cells
-	res._vPos.insert( std::make_pair( c1._pos.first, c2._pos.second ) );
-	res._vPos.insert( std::make_pair( c2._pos.first, c1._pos.second ) );
+
+// step 2 - if not, then add the two intersection cells
+	res._sPos.insert( std::make_pair( c1._pos.first, c2._pos.second ) );
+	res._sPos.insert( std::make_pair( c2._pos.first, c1._pos.second ) );
 
 // step 3.1 - check if same block
 	auto blockIndex1 = GetBlockIndex(c1._pos);
 	auto blockIndex2 = GetBlockIndex(c2._pos);
 
-	if( blockIndex1 == blockIndex2 )        // if the two cell are in same block
-	{
-		res._vPos = getCellsPos( OR_BLK, blockIndex1 );
+	assert( blockIndex1 != blockIndex2 ); // SHOULD NOT HAPPEN !
 
-		return res;
+	if( getBlockRow(blockIndex1) == getBlockRow(blockIndex2) )  // if blocks belong to same row,
+	{                                                           // then, add the 3 cell intersecting row and block
+		addToPosSet( res._sPos, OR_ROW, c1._pos, c2._pos );
 	}
-/*
-// step 3.2 - check if the blocks are on same row/col
-	auto blkRow1 = getBlockRow( blockIndex1 );
-	auto blkRow2 = getBlockRow( blockIndex2 );
-	if( blkRow1 == blkRow2 )
-	{
-		res._blkIntersect = AT_BlockSameRow;
-	}
-
 	else
 	{
-		auto blkCol1 = getBlockCol( blockIndex1 );
-		auto blkCol2 = getBlockCol( blockIndex2 );
-*/
-/*		if( blkCol1 == blkCol2 )
-			res._areaType = AT_BlockSameCol;
-		else
-			res._areaType = AT_None;
-
+		if( getBlockCol(blockIndex1) == getBlockCol(blockIndex2) )
+			addToPosSet( res._sPos, OR_COL, c1._pos, c2._pos );
 	}
-*/
+
 	return res;
 }
 
@@ -297,7 +319,7 @@ Stop condition: when we can't add any more nodes
 */
 void
 buildGraphRecursive(
-	pgvalset& 			graph_set,
+	Pgrvalset& 			graph_set,
 	int                 graphIdx,
 	vertex2_t           currVert,    ///< current vertex
 	value_t             inVal,       ///< the value that lead us to that vertex, 0 if none (for starting)
@@ -390,11 +412,10 @@ printGraph( std::ostream& s, const graph2_t& graph )
 }
 //-------------------------------------------------------------------
 /// Builds the graphs from the set of cells holding 2 candidates. Not const, because each cell may get tagged as 'used' in graph
-std::vector<pgvalset>
+std::vector<Pgrvalset>
 buildGraphs( std::vector<Cell2>& v_cells )
 {
-	std::vector<pgvalset> v_out;
-//	std::vector<graph2_t> v_graphs;
+	std::vector<Pgrvalset> v_out;
 	graph2_t graph;
 	std::set<value_t> s_values;
 
@@ -456,6 +477,82 @@ buildGraphs( std::vector<Cell2>& v_cells )
 }
 
 //-------------------------------------------------------------------
+/// Searches set of cells on returns those that:
+/**
+- hold the same value \c val
+- belong to graph \c idx
+*/
+std::vector<Cell2>
+findCellsHolding( const std::vector<Cell2>& v_cells, index_t gidx, value_t val )
+{
+	std::vector<Cell2> out;
+	for( const auto& cell: v_cells )
+	{
+		if( cell._graphIdx == gidx )
+			if( cell._candidValues.first == val || cell._candidValues.second == val )
+				out.push_back( cell );
+	}
+	return out;
+}
+//--------------------------------------------------------------------
+bool
+valueIsSameColor( const Cell2& c1, const Cell2& c2, value_t val )
+{
+	auto a = shareCommonValue( c1, c2 );
+	assert( a.first == 1 );
+	assert( a.second == val );
+	if(
+		c1._candidValues.first == c2._candidValues.first
+		||
+		c1._candidValues.second == c2._candidValues.second
+	)
+		return true;
+	return false;
+}
+//--------------------------------------------------------------------
+void
+iterateOnCells( const std::vector<Cell2>& v_cells, value_t val )
+{
+
+	for( index_t i=0; i<v_cells.size()-1; i++ )
+	{
+		auto c1 = v_cells[i];
+		for( index_t j=i+1; j<v_cells.size(); j++ )
+		{
+			auto c2 = v_cells[j];
+			COUT( "c1: " << c1._pos << " c2:" << c2._pos );
+			if( GetBlockIndex(c1._pos) != GetBlockIndex(c2._pos) )   // if not in same block
+			{
+				if( !valueIsSameColor(c1,c2,val) )  // if the value is not on the same color in those two cells
+				{
+					auto cellSet = findRowColBlkIntersect( c1, c2 );
+				}
+			}
+		}
+	}
+}
+//-------------------------------------------------------------------
+bool
+exploreGraph(
+	std::vector<Cell2>& v_cells,
+	std::vector<Pgrvalset> v_pgs
+)
+{
+	for( index_t idx=0; idx<v_pgs.size(); idx++ )
+	{
+		auto pgs = v_pgs[idx];
+		for( auto val: pgs.second )  // iterate on the values that are in the current set
+		{
+			COUT( "current value=" << val );
+			auto chval = findCellsHolding( v_cells, idx, val );
+			COUT( "nb of cells with value " << val << "=" << chval.size() );
+			if( chval.size() > 1 )
+				iterateOnCells( chval, val );
+		}
+	}
+}
+
+//-------------------------------------------------------------------
 bool
 Algo_XY_Chains( Grid& g )
 {
@@ -476,15 +573,7 @@ Algo_XY_Chains( Grid& g )
 	auto v_pgs = buildGraphs( v_cells );
 
 // step 3 - explore these graphs to find chains
-
-	for(const auto& pgs: v_pgs )
-	{
-		for( auto val: pgs.second )  // iterate on the values that are in the current set
-		{
-			COUT( "current value=" << val );
-		}
-	}
-
+	exploreGraph( v_cells, v_pgs );
 
 	return false;
 }

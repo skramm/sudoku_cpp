@@ -37,10 +37,6 @@
 #include <vector>
 
 #include <set>
-//#include <unordered_set>
-//#define SET_CONTAINER unordered_set
-#define SET_CONTAINER set
-
 #include <map>
 #include <algorithm>
 #include <iostream>
@@ -752,7 +748,7 @@ Grid::GetBlock( index_t idx )
 	return g;
 }
 
-std::SET_CONTAINER<pos_t> getCellsPos( EN_ORIENTATION, index_t );
+std::set<pos_t> getCellsPos( EN_ORIENTATION, index_t );
 
 //----------------------------------------------------------------------------
 
