@@ -80,7 +80,8 @@ struct Cell2
 {
 	En_ChainRole  _chainRole = CR_Unused;
 	int           _graphIdx = -1;
-	pos_t         _pos;
+	Pos           _pos;
+//	pos_t         _pos;
 	ValuePair     _candidValues; ///< the 2 candidates of the cell
 	vertex2_t     _vertex = 0;
 
@@ -110,7 +111,7 @@ struct Cell2
 	}
 
 /// sorting operator, based on position
-	friend bool operator < ( const Cell2& c1, const Cell2& c2 )
+/*	friend bool operator < ( const Cell2& c1, const Cell2& c2 )
 	{
 		auto p1 = c1._pos;
 		auto p2 = c2._pos;
@@ -120,18 +121,19 @@ struct Cell2
 			return p1.second < p2.second;
 		return false;
 	}
-
+*/
 #ifdef TESTMODE
 /// This constructor is only useful for unit-testing
 /// \todo replace when \c Pos is fine
-	Cell2( std::string spos )
+/*	Cell2( std::string spos )
 	{
 		_pos.first  = spos[0] != 'J' ? spos[0] - 'A': 8;
 		_pos.second = spos[1] - '1';
-	}
+	}*/
 
 /// This constructor is only useful for unit-testing
-	Cell2( std::string spos, value_t c1, value_t c2  ) : Cell2( spos )
+//	Cell2( std::string spos, value_t c1, value_t c2  ) : Cell2( spos )
+	Cell2( std::string spos, value_t c1, value_t c2  ) : _pos( spos )
 	{
 		_candidValues = std::make_pair(c1,c2);
 //		_pos.first  = spos[0] != 'J' ? spos[0] - 'A': 8;
@@ -147,25 +149,7 @@ struct Cell2
 };
 
 
-
 //-------------------------------------------------------------------
-/*
-/// See RowColBlkIntersect
-enum En_CommonRowCol
-{
-	IT_Neither,
-	IT_SameRow,
-	IT_SameCol,
-};
-/// See RowColBlkIntersect
-enum En_BlockIntersect
-{
-	AT_None,
-	AT_SameBlock,
-	AT_BlockSameRow,
-	AT_BlockSameCol
-};*/
-
 /// Holds the intersection of the two final cells. Related to XY-Chains.
 struct XYC_area
 {
@@ -189,7 +173,6 @@ using Pgrvalset = std::pair<graph2_t,std::set<value_t>>;
 
 std::vector<Pgrvalset> buildGraphs( std::vector<Cell2>& );
 
-//std::vector<graph2_t> buildGraphs( std::vector<Cell2>& );
 
 //----------------------------------------------------------------------------
 #endif // HG_XY_CHAINS_H

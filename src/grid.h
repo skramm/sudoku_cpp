@@ -77,6 +77,17 @@ void LogStep( int level, const Cell& cell, std::string msg );
 #endif
 
 //----------------------------------------------------------------------------
+inline
+char
+GetRowLetter( index_t i )
+{
+	char c = i+'A';
+	if( i==8 )   // we replace 'I' by 'J' for readability
+		c++;
+	return c;
+}
+
+//----------------------------------------------------------------------------
 struct Pos
 {
 	private:
@@ -128,6 +139,11 @@ struct Pos
 		if( p1.row() == p2.row() )
 			return p1.col() < p2.col();
 		return false;
+	}
+	friend std::ostream& operator << ( std::ostream& s, const Pos& p )
+	{
+		s << GetRowLetter(p.pa.first) << p.pa.second+1;
+		return s;
 	}
 
 };
@@ -267,16 +283,6 @@ getPosFromBlockIndex(
 	pos.first  += idx/3;
 	pos.second += idx%3;
 	return pos;
-}
-//----------------------------------------------------------------------------
-inline
-char
-GetRowLetter( index_t i )
-{
-	char c = i+'A';
-	if( i==8 )   // we replace 'I' by 'J' for readability
-		c++;
-	return c;
 }
 //----------------------------------------------------------------------------
 /// Stream cell position as "A1", "B2", ...

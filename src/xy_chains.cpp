@@ -84,7 +84,7 @@ class NodeWriter_B
 			auto cell = g_ptr->at( _v1[v] );
 //			std::cout << "NodeWriter_B:cell=" << cell << std::endl;
 			out << " [label=\"" << cell._pos << "\\n(" << (int)cell.get(0) << ',' << (int)cell.get(1) << ")\""
-				<< " pos=\"" << (int)cell._pos.second << ',' << -(int)cell._pos.first << "!\"";
+				<< " pos=\"" << (int)cell._pos.col() << ',' << -(int)cell._pos.row() << "!\"";
 			if( _v1[v] == 0 )
 				out << " penwidth=\"2.0\"";
 			out << "]";
@@ -153,11 +153,11 @@ make_edge_writer_B( T1 v1 )
 bool
 areLinkable( const Cell2& c1, const Cell2& c2 )
 {
-	if( c1._pos.first == c2._pos.first )
+	if( c1._pos.row() == c2._pos.row() )
 		return true;
-	if( c1._pos.second == c2._pos.second )
+	if( c1._pos.col() == c2._pos.col() )
 		return true;
-	if( GetBlockIndex(c1._pos) == GetBlockIndex(c2._pos) )
+	if( c1._pos.getBlockIndex() == c2._pos.getBlockIndex() )
 		return true;
 	return false;
 }
@@ -272,14 +272,14 @@ getArea( const Cell2& c1, const Cell2& c2 )
 
 // step 1 - check if same row or same col (simplest case)
 	bool isSameRowCol = false;
-	if( c1._pos.first == c2._pos.first )      // same row
+	if( c1._pos.row() == c2._pos.row() )      // same row
 	{
-		res._sPos = getCellsPos( OR_ROW, c1._pos.first  );
+		res._sPos = getCellsPos( OR_ROW, c1._pos.row()  );
 		isSameRowCol = true;
 	}
-	if( c1._pos.second == c2._pos.second )  // same column
+	if( c1._pos.col() == c2._pos.col() )  // same column
 	{
-		res._sPos = getCellsPos( OR_COL, c1._pos.second  );
+		res._sPos = getCellsPos( OR_COL, c1._pos.col()  );
 		isSameRowCol = true;
 	}
 
@@ -292,12 +292,12 @@ getArea( const Cell2& c1, const Cell2& c2 )
 
 
 // step 2 - if not, then add the two intersection cells
-	res._sPos.insert( Pos( c1._pos.first, c2._pos.second ) );
-	res._sPos.insert( Pos( c2._pos.first, c1._pos.second ) );
+	res._sPos.insert( Pos( c1._pos.row(), c2._pos.col() ) );
+	res._sPos.insert( Pos( c2._pos.row(), c1._pos.col() ) );
 
 // step 3.1 - check if same block
-	auto blockIndex1 = GetBlockIndex(c1._pos);
-	auto blockIndex2 = GetBlockIndex(c2._pos);
+	auto blockIndex1 = c1._pos.getBlockIndex();
+	auto blockIndex2 = c2._pos.getBlockIndex();
 
 	assert( blockIndex1 != blockIndex2 ); // SHOULD NOT HAPPEN !
 
@@ -523,7 +523,7 @@ iterateOnCells( const std::vector<Cell2>& v_cells, value_t val )
 		{
 			auto c2 = v_cells[j];
 			COUT( "c1: " << c1._pos << " c2:" << c2._pos );
-			if( GetBlockIndex(c1._pos) != GetBlockIndex(c2._pos) )   // if not in same block
+			if( c1._pos.getBlockIndex() != c2._pos.getBlockIndex() )   // if not in same block
 			{
 				if( !valueIsSameColor(c1,c2,val) )  // if the value is not on the same color in those two cells
 				{
