@@ -214,34 +214,36 @@ shareCommonValue( const Cell2& c1, const Cell2& c2 )
 /// Add to set the cell position lying on row/col of p1/p2 and part of the block of p2/p1 (respectively)
 void
 addToPosSet(
-	std::set<pos_t>& posSet,   ///< output set, we add values here
-	EN_ORIENTATION   orient,
-	pos_t            p1,
-	pos_t            p2
+	std::set<Pos>& posSet,   ///< output set, we add values here
+	EN_ORIENTATION orient,
+	Pos            p1,
+	Pos            p2
 )
 {
-	auto bi1=GetBlockIndex(p1):
-	auto bi2=GetBlockIndex(p2):
+	auto bi1=p1.getBlockIndex();
+	auto bi2=p2.getBlockIndex();
 
 	if( orient == OR_ROW )
 	{
-		posSet.insert( std::make_pair( p1.first, getBlockCol(bi2)*3+0 ) );
-		posSet.insert( std::make_pair( p1.first, getBlockCol(bi2)*3+1 ) );
-		posSet.insert( std::make_pair( p1.first, getBlockCol(bi2)*3+2 ) );
+		posSet.insert( Pos( p1.row(), getBlockCol(bi2)*3+0 ) );
+		posSet.insert( Pos( p1.row(), getBlockCol(bi2)*3+1 ) );
+		posSet.insert( Pos( p1.row(), getBlockCol(bi2)*3+2 ) );
 
-		posSet.insert( std::make_pair( p2.first, getBlockCol(bi1)*3+0 ) );
-		posSet.insert( std::make_pair( p2.first, getBlockCol(bi1)*3+1 ) );
-		posSet.insert( std::make_pair( p2.first, getBlockCol(bi1)*3+2 ) );
+		posSet.insert( Pos( p2.row(), getBlockCol(bi1)*3+0 ) );
+		posSet.insert( Pos( p2.row(), getBlockCol(bi1)*3+1 ) );
+		posSet.insert( Pos( p2.row(), getBlockCol(bi1)*3+2 ) );
+		return;
 	}
 	if( orient == OR_COL )
 	{
-		posSet.insert( std::make_pair( getBlockRow(bi1)*3+0, p2.second ) );
-		posSet.insert( std::make_pair( getBlockRow(bi1)*3+1, p2.second ) );
-		posSet.insert( std::make_pair( getBlockRow(bi1)*3+2, p2.second ) );
+		posSet.insert( Pos( getBlockRow(bi1)*3+0, p2.col() ) );
+		posSet.insert( Pos( getBlockRow(bi1)*3+1, p2.col() ) );
+		posSet.insert( Pos( getBlockRow(bi1)*3+2, p2.col() ) );
 
-		posSet.insert( std::make_pair( getBlockRow(bi2)*3+0, p1.second ) );
-		posSet.insert( std::make_pair( getBlockRow(bi2)*3+1, p1.second ) );
-		posSet.insert( std::make_pair( getBlockRow(bi2)*3+2, p1.second ) );
+		posSet.insert( Pos( getBlockRow(bi2)*3+0, p1.col() ) );
+		posSet.insert( Pos( getBlockRow(bi2)*3+1, p1.col() ) );
+		posSet.insert( Pos( getBlockRow(bi2)*3+2, p1.col() ) );
+		return;
 	}
 	assert(0);
 
@@ -260,13 +262,13 @@ This function will determine which row/col/block(s) have to be cleared of candid
 see doc/AS_XY_chain_example_1.png
 The two cells are B3 and C5
 */
-RowColBlkIntersect
-findRowColBlkIntersect( const Cell2& c1, const Cell2& c2 )
+XYC_area
+getArea( const Cell2& c1, const Cell2& c2 )
 {
 	auto scv = shareCommonValue( c1, c2 );
 	assert( scv.first == 1 );
 
-	RowColBlkIntersect res( scv.second );
+	XYC_area res( scv.second );
 
 // step 1 - check if same row or same col (simplest case)
 	bool isSameRowCol = false;
@@ -283,15 +285,15 @@ findRowColBlkIntersect( const Cell2& c1, const Cell2& c2 )
 
 	if( isSameRowCol )   // is same row or col, then erase the two cells of the output set
 	{
-		res._sPos.erase( std::find( std::begin(res._sPos), std::end(res._sPos), c1._pos ) );
-		res._sPos.erase( std::find( std::begin(res._sPos), std::end(res._sPos), c2._pos ) );
+		res._sPos.erase( std::find( std::begin(res._sPos), std::end(res._sPos), c1.pos() ) );
+		res._sPos.erase( std::find( std::begin(res._sPos), std::end(res._sPos), c2.pos() ) );
 		return res;
 	}
 
 
 // step 2 - if not, then add the two intersection cells
-	res._sPos.insert( std::make_pair( c1._pos.first, c2._pos.second ) );
-	res._sPos.insert( std::make_pair( c2._pos.first, c1._pos.second ) );
+	res._sPos.insert( Pos( c1._pos.first, c2._pos.second ) );
+	res._sPos.insert( Pos( c2._pos.first, c1._pos.second ) );
 
 // step 3.1 - check if same block
 	auto blockIndex1 = GetBlockIndex(c1._pos);
@@ -525,7 +527,7 @@ iterateOnCells( const std::vector<Cell2>& v_cells, value_t val )
 			{
 				if( !valueIsSameColor(c1,c2,val) )  // if the value is not on the same color in those two cells
 				{
-					auto cellSet = findRowColBlkIntersect( c1, c2 );
+					auto cellSet = getArea( c1, c2 );
 				}
 			}
 		}

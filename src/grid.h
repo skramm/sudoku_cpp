@@ -77,6 +77,61 @@ void LogStep( int level, const Cell& cell, std::string msg );
 #endif
 
 //----------------------------------------------------------------------------
+struct Pos
+{
+	private:
+		pos_t pa;
+	public:
+/// Constructor 1a
+	Pos( std::string spos )
+	{
+		pa.first  = spos[0] != 'J' ? spos[0] - 'A': 8;
+		pa.second = spos[1] - '1';
+	}
+/// Constructor 1b
+	Pos( const char* spos )
+	{
+		pa.first  = spos[0] != 'J' ? spos[0] - 'A': 8;
+		pa.second = spos[1] - '1';
+	}
+
+/// Constructor 2
+	Pos( index_t r, index_t c )
+	{
+		pa.first  = r;
+		pa.second = c;
+	}
+/// Constructor 3
+	Pos( pos_t p ) : pa(p)
+	{}
+
+	const index_t& row() const { return pa.first; }
+	const index_t& col() const { return pa.second; }
+	index_t& row() { return pa.first; }
+	index_t& col() { return pa.second; }
+
+	index_t getBlockIndex() const
+	{
+		return row()/3*3 + col()/3;
+	}
+
+	friend bool operator == ( const Pos& p1, const Pos& p2 )
+	{
+		return p1.pa == p2.pa;
+	}
+
+/// sorting operator, based on position
+	friend bool operator < ( const Pos& p1, const Pos& p2 )
+	{
+		if( p1.row() < p2.row() )
+			return true;
+		if( p1.row() == p2.row() )
+			return p1.col() < p2.col();
+		return false;
+	}
+
+};
+//----------------------------------------------------------------------------
 /// Holds some global vars
 struct GlobData
 {
@@ -748,7 +803,7 @@ Grid::GetBlock( index_t idx )
 	return g;
 }
 
-std::set<pos_t> getCellsPos( EN_ORIENTATION, index_t );
+std::set<Pos> getCellsPos( EN_ORIENTATION, index_t );
 
 //----------------------------------------------------------------------------
 

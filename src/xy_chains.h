@@ -84,6 +84,8 @@ struct Cell2
 	ValuePair     _candidValues; ///< the 2 candidates of the cell
 	vertex2_t     _vertex = 0;
 
+	Pos pos() const { return Pos(_pos); }
+
 	value_t get(index_t i) const
 	{
 		assert( i==0 || i==1 );
@@ -121,6 +123,7 @@ struct Cell2
 
 #ifdef TESTMODE
 /// This constructor is only useful for unit-testing
+/// \todo replace when \c Pos is fine
 	Cell2( std::string spos )
 	{
 		_pos.first  = spos[0] != 'J' ? spos[0] - 'A': 8;
@@ -146,6 +149,7 @@ struct Cell2
 
 
 //-------------------------------------------------------------------
+/*
 /// See RowColBlkIntersect
 enum En_CommonRowCol
 {
@@ -160,29 +164,24 @@ enum En_BlockIntersect
 	AT_SameBlock,
 	AT_BlockSameRow,
 	AT_BlockSameCol
-};
+};*/
+
 /// Holds the intersection of the two final cells. Related to XY-Chains.
-struct RowColBlkIntersect
+struct XYC_area
 {
-	value_t            _commonValue;
-	std::set<pos_t>    _sPos;
+	value_t        _commonValue;
+	std::set<Pos>  _sPos;
 
-	En_CommonRowCol   _cRC          = IT_Neither;
-	index_t           _idxRC;
-	pos_t             _interSectPos1;
-	pos_t             _interSectPos2;
-
-	En_BlockIntersect _blkIntersect = AT_None;
-	index_t           _idxBlk;
-
-	RowColBlkIntersect( value_t val ) : _commonValue(val)
+	XYC_area( value_t val ) : _commonValue(val)
 	{}
 };
 
 
 #ifdef TESTMODE
 	std::vector<graph2_t> buildGraphsFrom( index_t start,  std::vector<Cell2>& );
-	RowColBlkIntersect findRowColBlkIntersect( const Cell2&, const Cell2& );
+	XYC_area getArea( const Cell2&, const Cell2& );
+
+void addToPosSet( std::set<Pos>&, EN_ORIENTATION, Pos, Pos );
 
 #endif // TESTMODE
 

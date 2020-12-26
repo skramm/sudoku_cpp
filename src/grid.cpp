@@ -482,30 +482,30 @@ Grid::GetOtherCells( const Cell& src, int arg, EN_ORIENTATION orient, EN_GOCMODE
 
 //----------------------------------------------------------------------------
 /// Returns a set of size=9, holding all the positions of the cells that are in row/col/block of the given index
-std::set<pos_t>
+std::set<Pos>
 getCellsPos( EN_ORIENTATION orient, index_t idx )
 {
-	std::set<pos_t> v_out; //(9);
+	std::set<Pos> s_out;
 	switch( orient )
 	{
 		case OR_ROW:
 			for( index_t i=0; i<9; i++ )
-				v_out.insert( std::make_pair(idx,i) );
+				s_out.insert( Pos(idx,i) );
 		break;
 
 		case OR_COL:
 			for( index_t i=0; i<9; i++ )
-				v_out.insert( std::make_pair(i,idx) );
+				s_out.insert( Pos(i,idx) );
 		break;
 
 		case OR_BLK:
 			for( index_t i=0; i<9; i++ )
-				v_out.insert( getPosFromBlockIndex( idx, i ) );
+				s_out.insert( getPosFromBlockIndex( idx, i ) );
 		break;
 			default: assert(0);
 	}
 
-	return v_out;
+	return s_out;
 }
 
 //----------------------------------------------------------------------------

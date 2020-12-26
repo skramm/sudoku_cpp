@@ -327,41 +327,55 @@ TEST_CASE( "XY-chains test 1", "[XY-chains-1]" )
 TEST_CASE( "Grid::getCellsPos", "Grid::getCellsPos" )
 {
 	{
-		std::set<pos_t> v1{ {0,0}, {0,1}, {0,2}, {0,3}, {0,4}, {0,5}, {0,6}, {0,7}, {0,8} };
+		std::set<Pos> v1{ {0,0}, {0,1}, {0,2}, {0,3}, {0,4}, {0,5}, {0,6}, {0,7}, {0,8} };
 		auto v2 = getCellsPos( OR_ROW, 0 );
 		CHECK( v1 == v2 );
 	}
 	{
-		std::set<pos_t> v1{ {0,2}, {1,2}, {2,2}, {3,2}, {4,2}, {5,2}, {6,2}, {7,2}, {8,2} };
+		std::set<Pos> v1{ {0,2}, {1,2}, {2,2}, {3,2}, {4,2}, {5,2}, {6,2}, {7,2}, {8,2} };
 		auto v2 = getCellsPos( OR_COL, 2 );
 		CHECK( v1 == v2 );
 	}
 	{
-		std::set<pos_t> v1{ {0,0}, {0,1}, {0,2}, {1,0}, {1,1}, {1,2}, {2,0}, {2,1}, {2,2} };
+		std::set<Pos> v1{ {0,0}, {0,1}, {0,2}, {1,0}, {1,1}, {1,2}, {2,0}, {2,1}, {2,2} };
 		auto v2 = getCellsPos( OR_BLK, 0 );
 		CHECK( v1 == v2 );
 	}
 }
 
-TEST_CASE( "findRowColBlkIntersect()", "FRCLI" )
+TEST_CASE( "getArea()", "getArea" )
 {
 
 	Cell2 c1( "B3", 4, 6 ); // pos=1,2
 	Cell2 c2( "B9", 3, 6 ); // pos=1,8
 
-	auto res = findRowColBlkIntersect( c1, c2 );
+	auto res = getArea( c1, c2 );
 
-	std::set<pos_t> s1{ {1,0}, {1,1}, {1,3}, {1,4}, {1,5}, {1,6}, {1,7} };
+	std::set<Pos> s1{ {1,0}, {1,1}, {1,3}, {1,4}, {1,5}, {1,6}, {1,7} };
 
 	CHECK( res._sPos  == s1 );
 }
 
 TEST_CASE( "addToPosSet", "addToPosSet" )
 {
+	{
+		Pos p1 ("C2");
+		Pos p2 ("A7");
+		std::set<Pos> sA;
+		std::set<Pos> sB{ "A1", "A2", "A3", "C7", "C8", "C9" };
 
-/*	addToPosSet()
-	std::set<pos_t>& posSet,   ///< output set, we add values here
-	EN_ORIENTATION   orient,
-	pos_t            p1,
-	pos_t            p2*/
-)
+		addToPosSet( sA, OR_ROW, p1, p2 );
+		CHECK( sA == sB );
+	}
+
+	{
+		Pos p1 ("E5");
+		Pos p2 ("D9");
+		std::set<Pos> sA;
+		std::set<Pos> sB{ "D4", "D5", "D6", "E7", "E8", "E9" };
+
+		addToPosSet( sA, OR_ROW, p1, p2 );
+		CHECK( sA == sB );
+	}
+
+}
