@@ -125,10 +125,10 @@ struct Cell2
 #ifdef TESTMODE
 /// This constructor is only useful for unit-testing
 /// \todo replace when \c Pos is fine
-/*	Cell2( std::string spos )
+/*	Cell2( std::string spos ) : _pos( spos )
 	{
-		_pos.first  = spos[0] != 'J' ? spos[0] - 'A': 8;
-		_pos.second = spos[1] - '1';
+//		_pos.first  = spos[0] != 'J' ? spos[0] - 'A': 8;
+//		_pos.second = spos[1] - '1';
 	}*/
 
 /// This constructor is only useful for unit-testing
@@ -136,8 +136,6 @@ struct Cell2
 	Cell2( std::string spos, value_t c1, value_t c2  ) : _pos( spos )
 	{
 		_candidValues = std::make_pair(c1,c2);
-//		_pos.first  = spos[0] != 'J' ? spos[0] - 'A': 8;
-//		_pos.second = spos[1] - '1';
 	}
 #endif // TESTMODE
 
@@ -173,6 +171,18 @@ using Pgrvalset = std::pair<graph2_t,std::set<value_t>>;
 
 std::vector<Pgrvalset> buildGraphs( std::vector<Cell2>& );
 
+#ifdef TESTMODE
+inline
+std::ostream&
+operator << ( std::ostream& s, const std::set<Pos>& setpos )
+{
+	for( const auto& pos:setpos )
+	{
+		s << pos << "-";
+	}
+	return s;
+}
+#endif // TESTMODE
 
 //----------------------------------------------------------------------------
 #endif // HG_XY_CHAINS_H

@@ -512,14 +512,49 @@ valueIsSameColor( const Cell2& c1, const Cell2& c2, value_t val )
 	return false;
 }
 //--------------------------------------------------------------------
-void
-iterateOnCells( const std::vector<Cell2>& v_cells, value_t val )
+enum En_CandRemov
 {
+	CRem_None,           ///< no candidates where remove
+	CRem_OutOfCellSet,   ///< some candidates where removed, but this did not impact the set of cells
+	CRem_CellSetImpacted ///< one candidate was removed on a cell that was in the set of cells
+};
+//--------------------------------------------------------------------
+En_CandRemov
+removeCandidatesFromCellSet(
+	Grid&                     grid,
+	const std::vector<Cell2>& v_cells,  ///< set of cell forming the graph
+	const std::vector<Cell2>& area,
+	value_t                   val
+)
+{
+	for( const auto& cell: area )
+	{
+		auto& src_cell = grid.GetCellByPos( cell );
+		if( src_cell.removeCandidate( val ) )       // if there is a candidate to be removed in that cell,
+		{                                           // then check if that cell is included in graph
+//			auto pos_src = src_cell.pos
+//			if( std::find( std::begin(v_cells), std::end(v_cells), src_cell.pos() )
+		}
 
-	for( index_t i=0; i<v_cells.size()-1; i++ )
+	}
+}
+//--------------------------------------------------------------------
+/// Iterate on subset holding cells that are linked (they form a chain) and
+/// proceed to candidate removal
+En_CandRemov
+iterateOnCells(
+	Grid&                     grid,
+	const std::vector<Cell2>& v_cells,
+	value_t                   val
+)
+{
+	bool stop = false;
+	En_CandRemov retval;
+
+	for( index_t i=0; i<v_cells.size()-1  && !stop; i++ )
 	{
 		auto c1 = v_cells[i];
-		for( index_t j=i+1; j<v_cells.size(); j++ )
+		for( index_t j=i+1; j<v_cells.size() && !stop; j++ )
 		{
 			auto c2 = v_cells[j];
 			COUT( "c1: " << c1._pos << " c2:" << c2._pos );
@@ -527,31 +562,54 @@ iterateOnCells( const std::vector<Cell2>& v_cells, value_t val )
 			{
 				if( !valueIsSameColor(c1,c2,val) )  // if the value is not on the same color in those two cells
 				{
-					auto cellSet = getArea( c1, c2 );
+					auto area = getArea( c1, c2 );
+					auto reslocal = removeCandidatesFromCellSet( grid, v_cells, area, val );
+					if( reslocal == CRem_OutOfCellSet )
+					{
+						retval = CRem_OutOfCellSet;
+					}
+					if( reslocal == CRem_CellSetImpacted )
+					{
+						retval = CRem_OutOfCellSet;
+						stop = true;
+					}
+
 				}
 			}
 		}
 	}
+	return retval;
 }
 //-------------------------------------------------------------------
 bool
 exploreGraph(
-	std::vector<Cell2>& v_cells,
+	Grid&                  grid,
+	std::vector<Cell2>&    v_cells,
 	std::vector<Pgrvalset> v_pgs
 )
 {
-	for( index_t idx=0; idx<v_pgs.size(); idx++ )
+	bool candidateRemoval = false;
+	En_CandRemov res;
+
+ // iterate on graphs, stop when no more OR when the set of cells has been impacted by a candidate removal
+	for( index_t idx=0; idx<v_pgs.size() && res!= CRem_CellSetImpacted ; idx++ )
 	{
 		auto pgs = v_pgs[idx];
 		for( auto val: pgs.second )  // iterate on the values that are in the current set
 		{
-			COUT( "current value=" << val );
+			COUT( "graph " << (int)idx << ", current value=" << val );
 			auto chval = findCellsHolding( v_cells, idx, val );
 			COUT( "nb of cells with value " << val << "=" << chval.size() );
 			if( chval.size() > 1 )
-				iterateOnCells( chval, val );
+				res = iterateOnCells( grid, chval, val );
+			if( res != CRem_None )
+				candidateRemoval = true;
+			if( res == CRem_CellSetImpacted ) // means: we have remove a candidate that was in the set of cells
+				break;
 		}
 	}
+
+	return candidateRemoval;
 }
 
 //-------------------------------------------------------------------
@@ -574,9 +632,7 @@ Algo_XY_Chains( Grid& g )
 // step 2 - build a set of graphs covering all these cells
 	auto v_pgs = buildGraphs( v_cells );
 
-// step 3 - explore these graphs to find chains
-	exploreGraph( v_cells, v_pgs );
-
-	return false;
+// step 3 - explore these graphs to find chains an remove candidates
+	return exploreGraph( g, v_cells, v_pgs );
 }
 //-------------------------------------------------------------------

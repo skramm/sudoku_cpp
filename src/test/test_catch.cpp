@@ -345,15 +345,31 @@ TEST_CASE( "Grid::getCellsPos", "Grid::getCellsPos" )
 
 TEST_CASE( "getArea()", "getArea" )
 {
+	{
+		Cell2 c1( "B3", 1, 2 );  // same row
+		Cell2 c2( "B9", 1, 5 );
 
-	Cell2 c1( "B3", 4, 6 ); // pos=1,2
-	Cell2 c2( "B9", 3, 6 ); // pos=1,8
+		auto res = getArea( c1, c2 );
+		std::set<Pos> s1{ "B1","B2","B4","B5","B6","B7","B8" };
+		CHECK( res._sPos  == s1 );
+	}
+	{
+		Cell2 c1( "B3", 2, 3 ); // row/col intersection only
+		Cell2 c2( "D5", 2, 4 );
 
-	auto res = getArea( c1, c2 );
+		auto res = getArea( c1, c2 );
+		std::set<Pos> s1{ "B5","D3" };
+		CHECK( res._sPos  == s1 );
+	}
+	{
+		Cell2 c1( "E5", 2, 3 ); // block on same row
+		Cell2 c2( "D9", 2, 4 );
 
-	std::set<Pos> s1{ {1,0}, {1,1}, {1,3}, {1,4}, {1,5}, {1,6}, {1,7} };
+		auto res = getArea( c1, c2 );
+		std::set<Pos> s1{ "D4","D5","D6","E7","E8","E9" };
+		CHECK( res._sPos  == s1 );
+	}
 
-	CHECK( res._sPos  == s1 );
 }
 
 TEST_CASE( "addToPosSet", "addToPosSet" )
