@@ -130,6 +130,25 @@ int main( int argc, const char** argv )
 				}
 		}
 
+		if( arg.substr(0,2) == "-a" )     // logging options
+		{
+			nbFlags++;
+			g_data.useSingleAlgo = true;
+			if( arg.size() < 3 )
+			{
+				std::cerr << "invalid switch value with -a, no algorithm given\n";
+				exit(RV_invalidSwitch);
+			}
+			auto algo = stoi(arg.substr(2))-1;
+			if( algo<0 || algo >= static_cast<int>(ALG_END) )
+			{
+				std::cerr << "invalid algorithm/value with -a: *" << arg << "*\n";
+				exit(RV_invalidSwitch);
+			}
+			g_data.singleAlgo = static_cast<EN_ALGO>(algo);
+			cout << " -Option -a (single algorithm) activated, algorithm:" << GetString(g_data.singleAlgo) << '\n';
+		}
+
 		if( arg == "-s" )
 		{
 			nbFlags++;
@@ -177,7 +196,7 @@ int main( int argc, const char** argv )
 		return RV_invalidGrid;
     }
     auto ret = RV_success;
-    if( grid.Solve() )
+    if( grid.Solve( g_data.useSingleAlgo ) )
 	{
 		cout << "-solved with " << g_data.NbSteps << " steps\n";
 		if( saveGridToFile )

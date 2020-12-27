@@ -544,7 +544,7 @@ iterateOnCells(
 		for( index_t j=i+1; j<v_cells.size() && !stop; j++ )
 		{
 			auto c2 = v_cells[j];
-			COUT( "c1: " << c1._pos << " c2:" << c2._pos );
+			COUT( "c1=" << c1._pos << " c2=" << c2._pos );
 			if( c1._pos.getBlockIndex() != c2._pos.getBlockIndex() )   // if not in same block
 			{
 				if( !valueIsSameColor(c1,c2,val) )  // if the value is not on the same color in those two cells
@@ -582,9 +582,9 @@ exploreGraph(
 		auto pgs = v_pgs[idx];
 		for( auto val: pgs.second )  // iterate on the values that are in the current set
 		{
-			COUT( "graph " << (int)idx << ", current value=" << val );
+			COUT( "graph " << (int)idx << ", current value=" << (int)val );
 			auto chval = findCellsHolding( v_cells, idx, val );
-			COUT( "nb of cells with value " << val << "=" << chval.size() );
+			COUT( "nb of cells with value " << (int)val << "=" << chval.size() );
 			if( chval.size() > 1 )
 				res = iterateOnCells( grid, chval, val );
 			if( res != CRem_None )

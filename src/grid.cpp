@@ -567,8 +567,14 @@ Grid::ProcessAlgorithm( EN_ALGO algo )
 }
 //----------------------------------------------------------------------------
 bool
-Grid::Solve()
+Grid::Solve( bool useSingleAlgo )
 {
+	if( useSingleAlgo )
+	{
+		ProcessAlgorithm( ALG_REMOVE_CAND );
+		return ProcessAlgorithm( g_data.singleAlgo );
+	}
+
 	int iter=0;
 	int nu_before = NbUnknows();
 	int nu_after = nu_before;

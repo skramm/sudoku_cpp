@@ -77,6 +77,26 @@ void LogStep( int level, const Cell& cell, std::string msg );
 #endif
 
 //----------------------------------------------------------------------------
+/// Solving algorithms
+enum EN_ALGO
+{
+	ALG_REMOVE_CAND = 0,
+	ALG_SEARCH_PAIRS,
+	ALG_SEARCH_TRIPLES,
+	ALG_SEARCH_SINGLE_CAND,
+	ALG_SEARCH_MISSING_SINGLE,
+	ALG_POINTING_PT,
+	ALG_BOX_RED,
+	ALG_XY_WING,
+#ifndef BUILD_WITHOUT_UDGCD
+	ALG_X_CYCLES,
+#endif
+	ALG_XY_CHAINS,
+
+	ALG_END
+};
+
+//----------------------------------------------------------------------------
 inline
 char
 GetRowLetter( index_t i )
@@ -165,6 +185,8 @@ struct GlobData
 #endif
 	int  NbSteps  = 0;
 	bool doChecking = false;
+	bool useSingleAlgo = false;
+	EN_ALGO singleAlgo;
 };
 extern GlobData g_data;
 
@@ -560,24 +582,6 @@ PrintView( std::ostream& s, View_1Dim_nc& v )
 enum EN_GOCMODE { GOCM_NB_CAND, GOCM_CAND_VALUE };
 
 
-enum EN_ALGO
-{
-	ALG_REMOVE_CAND = 0,
-	ALG_SEARCH_PAIRS,
-	ALG_SEARCH_TRIPLES,
-	ALG_SEARCH_SINGLE_CAND,
-	ALG_SEARCH_MISSING_SINGLE,
-	ALG_POINTING_PT,
-	ALG_BOX_RED,
-	ALG_XY_WING,
-#ifndef BUILD_WITHOUT_UDGCD
-	ALG_X_CYCLES,
-#endif
-	ALG_XY_CHAINS,
-
-	ALG_END
-};
-
 //----------------------------------------------------------------------------
 template<typename T>
 std::vector<T>
@@ -657,7 +661,7 @@ class Grid
 		bool loadFromFile( std::string fn=std::string() );
 		bool saveToFile( std::string ) const;
 		bool Check() const;
-		bool Solve();
+		bool Solve( bool useSingleAlgo );
 		void InitCandidates();
 //		void SetVerbose(bool b ) { _verbose = b; }
 		void PrintCandidates( std::ostream&, std::string=std::string() ) const;
