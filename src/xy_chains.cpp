@@ -292,11 +292,13 @@ void
 buildGraphRecursive(
 	Pgrvalset& 			graph_set,
 	int                 graphIdx,
-	vertex2_t           currVert,    ///< current vertex
+//	vertex2_t           currVert,    ///< current vertex
+	size_t              idx_cell,
 	value_t             inVal,       ///< the value that lead us to that vertex, 0 if none (for starting)
 	std::vector<Cell2>& v_cells      ///< the set of cells holding 2 candidates.
 )
 {
+	vertex2_t  currVert = v_cells[idx_cell]._vertex;
 	static int iter;
 	COUT( "iter " << ++iter << " currVert=" << currVert );
 	graph2_t&          graph = graph_set.first;
@@ -349,7 +351,7 @@ buildGraphRecursive(
 						if( nbUnusedCells( v_cells ) != 0 )
 						{
 							COUT( "nbUnused=" << nbUnusedCells( v_cells ) << ", RE-ENTRY !" )
-							buildGraphRecursive( graph_set, graphIdx, newVert, linkVal, v_cells );
+							buildGraphRecursive( graph_set, graphIdx, idx, linkVal, v_cells );
 						}
 					}
 					else  // if already used, then add an edge (if edge not already present)
@@ -382,50 +384,45 @@ printGraph( std::ostream& s, const graph2_t& graph )
 	}
 }
 //-------------------------------------------------------------------
+/// Creates a new graph holding a single vertex, and a set of values.
+/// Helper function, used in buildGraphs()
+std::pair<graph2_t,std::set<value_t>>
+initNewGraph( index_t idx_cell, index_t idx_graph, std::vector<Cell2>& v_cells )
+{
+	graph2_t graph;
+	std::set<value_t> s_values;
+	auto vert = boost::add_vertex( graph );  // add vertex
+	graph[vert].cell_idx = idx_cell;
+
+	auto& cell = v_cells[idx_cell];
+	cell._graphIdx = idx_graph;                 // tag the initial cell as "used"
+	cell._vertex = vert;
+	s_values.insert( cell._candidValues.first );  // insert the values of initial cell
+	s_values.insert( cell._candidValues.second );
+
+	return std::make_pair(graph,s_values);
+}
+//-------------------------------------------------------------------
 /// Builds the graphs from the set of cells holding 2 candidates. Not const, because each cell may get tagged as 'used' in graph.
 /// Returns a vector of pairs (graph,cell values)
 std::vector<Pgrvalset>
 buildGraphs( std::vector<Cell2>& v_cells )
 {
 	std::vector<Pgrvalset> v_out;
-
-	graph2_t graph;
-	std::set<value_t> s_values;
-
-	auto vert = boost::add_vertex( graph );  // add initial vertex
-	graph[vert].cell_idx = 0;
-
-	auto& cell = v_cells[0];
-	cell._graphIdx = 0;                 // tag the initial cell as "used"
-	cell._vertex = vert;
-	s_values.insert( cell._candidValues.first );  // insert the values of initial cell
-	s_values.insert( cell._candidValues.second );
-
-	v_out.push_back( std::make_pair(graph,s_values) );       // add initial graph
+	v_out.push_back( initNewGraph( 0, 0, v_cells ) );       // add initial graph
 
 	size_t idx_graph = 0;
+	size_t idx_cell  = 0;
 	do
 	{
-		COUT( "start loop, idx_graph=" << idx_graph << " nbGraph=" << v_out.size() << " vert=" << vert << " nbVert=" << boost::num_vertices(v_out[idx_graph].first) );
-		buildGraphRecursive( v_out[idx_graph], idx_graph, vert, 0, v_cells );
+		COUT( "start loop, nbGraph=" << v_out.size() << " nbVert=" << boost::num_vertices(v_out[idx_graph].first) );
+		buildGraphRecursive( v_out[idx_graph], idx_graph, idx_cell, 0, v_cells );
 		idx_graph++;
 		if( nbUnusedCells(v_cells) != 0 )        // then some cells where not connected, so we create a new graph
 		{
-			auto idx_c = findFirstUnused( v_cells );
-			COUT( "** CREATE NEW GRAPH, NbGraph=" << idx_graph << " nbUnusedCells=" << nbUnusedCells(v_cells) << " firstUnused=" <<idx_c );
-
-			graph2_t graph2;                      // new graph
-			vert = boost::add_vertex( graph2 );   // with its initial vertex
-			graph2[vert].cell_idx = idx_c;
-
-			std::set<value_t> s_values2;          // new set of values
-			s_values2.insert( v_cells[idx_c]._candidValues.first );  // insert the values of initial cell
-			s_values2.insert( v_cells[idx_c]._candidValues.second );
-
-			v_out.push_back( std::make_pair(graph2,s_values2) );
-
-			v_cells[idx_c]._graphIdx = idx_graph;
-			v_cells[idx_c]._vertex = vert;
+			idx_cell = findFirstUnused( v_cells );
+			COUT( "** CREATE NEW GRAPH, NbGraph=" << idx_graph << " nbUnusedCells=" << nbUnusedCells(v_cells) << " firstUnused=" <<idx_cell );
+			v_out.push_back( initNewGraph( idx_cell, idx_graph, v_cells) );
 		}
 	}
 	while( nbUnusedCells(v_cells) != 0 );
@@ -474,7 +471,7 @@ bool
 valueIsSameColor( const Cell2& c1, const Cell2& c2, value_t val )
 {
 	auto a = shareCommonValue( c1, c2 );
-	assert( a.first == 1 );
+//	assert( a.first == 1 );
 	assert( a.second == val );
 	if(
 		c1._candidValues.first == c2._candidValues.first
@@ -544,7 +541,7 @@ iterateOnCells(
 		for( index_t j=i+1; j<v_cells.size() && !stop; j++ )
 		{
 			auto c2 = v_cells[j];
-			COUT( "c1=" << c1._pos << " c2=" << c2._pos );
+			COUT( "i=" << (int)i << " j=" << (int)j << " c1=" << c1._pos << " c2=" << c2._pos << " val=" << (int)val );
 			if( c1._pos.getBlockIndex() != c2._pos.getBlockIndex() )   // if not in same block
 			{
 				if( !valueIsSameColor(c1,c2,val) )  // if the value is not on the same color in those two cells
