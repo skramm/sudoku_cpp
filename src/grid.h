@@ -573,6 +573,8 @@ enum EN_ALGO
 #ifndef BUILD_WITHOUT_UDGCD
 	ALG_X_CYCLES,
 #endif
+	ALG_XY_CHAINS,
+
 	ALG_END
 };
 

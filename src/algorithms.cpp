@@ -150,7 +150,7 @@ PointingPairsTriples( Grid& g, EN_ORIENTATION orient )
 			for( value_t v=1; v<10; v++ )          // for each candidate value,
 				if( cc2[v] > 1 && cc1[v] == cc2[v] )  // if we have 2 or 3 identical candidates, AND no other in the others cells of the same block
 				{
-					COUT( " - value: " << (int)v << " : found " << (cc2[v]==2 ? '2' : '3') << " alone in block " << (int)b+1)
+					COUT( "value=" << (int)v << ": found " << (cc2[v]==2 ? '2' : '3') << " alone in block " << (int)b+1)
 					for( index_t j=0; j<9; j++ )  // for each cell of the view
 					{
 						Cell& cell = v1d.GetCell(j);

@@ -32,6 +32,7 @@
 
 #include "grid.h"
 #include "x_cycles.h"
+#include "xy_chains.h"
 
 bool Algo_PointingPairsTriples(  Grid& g );
 bool Algo_BoxReduction(          Grid& g );
@@ -57,6 +58,7 @@ GetString( EN_ALGO algo )
 		case ALG_POINTING_PT: return "PointingPairs/Triples"; break;
 		case ALG_BOX_RED: return "BoxReduction"; break;
 		case ALG_XY_WING: return "XY_Wing"; break;
+		case ALG_XY_CHAINS: return "XY_Chains"; break;
 #ifndef BUILD_WITHOUT_UDGCD
 		case ALG_X_CYCLES: return "X_cycles"; break;
 #endif

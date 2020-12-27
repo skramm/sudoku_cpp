@@ -452,7 +452,7 @@ buildGraphs( std::vector<Cell2>& v_cells )
 }
 
 //-------------------------------------------------------------------
-/// Searches set of cells on returns those that:
+/// Searches set of cells and returns those that:
 /**
 - hold the same value \c val
 - belong to graph \c idx
@@ -550,17 +550,15 @@ iterateOnCells(
 				if( !valueIsSameColor(c1,c2,val) )  // if the value is not on the same color in those two cells
 				{
 					auto area = getArea( c1, c2 );
+					COUT( "found chain, value=" << area._commonValue );
 					auto reslocal = removeCandidatesFromCellSet( grid, v_cells, area );
 					if( reslocal == CRem_OutOfCellSet )
-					{
 						retval = CRem_OutOfCellSet;
-					}
 					if( reslocal == CRem_CellSetImpacted )
 					{
 						retval = CRem_OutOfCellSet;
 						stop = true;
 					}
-
 				}
 			}
 		}

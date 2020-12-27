@@ -138,7 +138,7 @@ struct Cell2
 
 
 //-------------------------------------------------------------------
-/// Holds the intersection of the two final cells, and the shared value
+/// Holds the intersection of the two final cells, and the shared value.
 /// Related to XY-Chains.
 struct XYC_area
 {
@@ -150,19 +150,21 @@ struct XYC_area
 };
 
 
+using Pgrvalset = std::pair<graph2_t,std::set<value_t>>;
+
 #ifdef TESTMODE
 	std::vector<graph2_t> buildGraphsFrom( index_t start,  std::vector<Cell2>& );
 	XYC_area getArea( const Cell2&, const Cell2& );
 
 void addToPosSet( std::set<Pos>&, EN_ORIENTATION, Pos, Pos );
 
-#endif // TESTMODE
+//#endif // TESTMODE
 
-using Pgrvalset = std::pair<graph2_t,std::set<value_t>>;
 
 std::vector<Pgrvalset> buildGraphs( std::vector<Cell2>& );
 
-#ifdef TESTMODE
+
+//#ifdef TESTMODE
 inline
 std::ostream&
 operator << ( std::ostream& s, const std::set<Pos>& setpos )
@@ -174,6 +176,8 @@ operator << ( std::ostream& s, const std::set<Pos>& setpos )
 	return s;
 }
 #endif // TESTMODE
+
+bool Algo_XY_Chains( Grid& );
 
 //----------------------------------------------------------------------------
 #endif // HG_XY_CHAINS_H
