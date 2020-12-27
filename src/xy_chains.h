@@ -38,13 +38,6 @@
 bool Algo_XY_Chains( Grid& g );
 
 //----------------------------------------------------------------------------
-enum En_ChainRole
-{
-	CR_Start,
-	CR_End,
-	CR_Used,
-	CR_Unused
-};
 using ValuePair = std::pair<value_t, value_t>;
 
 
@@ -66,7 +59,6 @@ typedef boost::adjacency_list<
 	boost::vecS,
 	boost::vecS,
 	boost::undirectedS,
-//	boost::directedS,
 	GraphNode_B,
 	GraphEdge_B
 	> graph2_t;
@@ -75,13 +67,11 @@ using vertex2_t = typename boost::graph_traits<graph2_t>::vertex_descriptor;
 //typedef typename boost::graph_traits<graph2_t>::edge_descriptor   edge2_t;
 
 //----------------------------------------------------------------------------
-/// A cell holding 2 candidates, hold as additional attribute its role in the chain (see \c En_ChainRole)
+/// A cell holding 2 candidates, hold as additional attribute its role in the chain
 struct Cell2
 {
-	En_ChainRole  _chainRole = CR_Unused;
 	int           _graphIdx = -1;
 	Pos           _pos;
-//	pos_t         _pos;
 	ValuePair     _candidValues; ///< the 2 candidates of the cell
 	vertex2_t     _vertex = 0;
 
@@ -148,7 +138,8 @@ struct Cell2
 
 
 //-------------------------------------------------------------------
-/// Holds the intersection of the two final cells. Related to XY-Chains.
+/// Holds the intersection of the two final cells, and the shared value
+/// Related to XY-Chains.
 struct XYC_area
 {
 	value_t        _commonValue;

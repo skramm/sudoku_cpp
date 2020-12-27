@@ -93,6 +93,7 @@ struct Pos
 	private:
 		pos_t pa;
 	public:
+#ifdef TESTMODE
 /// Constructor 1a
 	Pos( std::string spos )
 	{
@@ -105,13 +106,18 @@ struct Pos
 		pa.first  = spos[0] != 'J' ? spos[0] - 'A': 8;
 		pa.second = spos[1] - '1';
 	}
+#endif // TESTMODE
 
 /// Constructor 2
 	Pos( index_t r, index_t c )
 	{
+		ASSERT_1( r < 9, r );
+		ASSERT_1( c < 9, c );
+
 		pa.first  = r;
 		pa.second = c;
 	}
+
 /// Constructor 3
 	Pos( pos_t p ) : pa(p)
 	{}
@@ -395,8 +401,9 @@ struct Cell
 		_pos.first  = i;
 		_pos.second = j;
 	}
-	pos_t GetPos() const { return _pos; }
 
+	pos_t GetPos() const { return _pos; }
+	Pos pos() const { return Pos(_pos); }
 	void PrintCellCandidates( std::ostream& s )
 	{
 		bool found = false;
@@ -657,6 +664,8 @@ class Grid
 		bool buildFromString( std::string );
 		Cell&       GetCellByPos( pos_t );
 		const Cell& GetCellByPos( pos_t ) const;
+		Cell&       GetCellByPos( Pos );
+		const Cell& GetCellByPos( Pos ) const;
 
 		View_1Dim_c  GetView( EN_ORIENTATION, index_t ) const;
 		View_1Dim_nc GetView( EN_ORIENTATION, index_t );
@@ -727,6 +736,21 @@ Grid::GetCellByPos( pos_t p ) const
 	ASSERT_1( p.second < 9, p.second );
 	return _data[p.first].at( p.second );
 }
+
+inline
+Cell&
+Grid::GetCellByPos( Pos p )
+{
+	return _data[p.row()].at( p.col() );
+}
+
+inline
+const Cell&
+Grid::GetCellByPos( Pos p ) const
+{
+	return _data[p.row()].at( p.col() );
+}
+
 
 inline
 View_1Dim_c

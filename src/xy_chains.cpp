@@ -80,9 +80,7 @@ class NodeWriter_B
 		template <class Vertex>
 		void operator()( std::ostream &out, const Vertex& v ) const
 		{
-//			std::cout << "NodeWriter_B:vertex=" << v << " idx=" << (int) _v1[v] << " g_ptr->size=" << g_ptr->size() << std::endl;
 			auto cell = g_ptr->at( _v1[v] );
-//			std::cout << "NodeWriter_B:cell=" << cell << std::endl;
 			out << " [label=\"" << cell._pos << "\\n(" << (int)cell.get(0) << ',' << (int)cell.get(1) << ")\""
 				<< " pos=\"" << (int)cell._pos.col() << ',' << -(int)cell._pos.row() << "!\"";
 			if( _v1[v] == 0 )
@@ -93,27 +91,6 @@ class NodeWriter_B
 		T1 _v1;
 };
 
-#if 0
-template <class T1,class T2>
-class NodeWriter_B2
-{
-	public:
-		NodeWriter_B2(T1 v1, T2 v2) : _v1(v1), _v2(v2)
-		{}
-		template <class Vertex>
-		void operator()( std::ostream &out, const Vertex& v ) const
-		{
-			auto cell = g_ptr->at( _v1[v] );
-			out << " [label=\"" << cell._pos << "\\n(R=" << (int)_v2[v].first << ",G=" << (int)_v2[v].second << ")\"";
-			if( cell._chainRole == CR_Start )
-				out << ",penwidth=\"2.0\"";
-			out << "]";
-		}
-	private:
-		T1 _v1;
-		T2 _v2;
-};
-#endif
 //-------------------------------------------------------------------
 /// Helper function to printout nodes in the graph, used by boost::write_graphviz()
 template <class T1>
@@ -123,13 +100,6 @@ make_node_writer_B( T1 v1 )
 {
 	return NodeWriter_B<T1>(v1);
 }
-/*template <class T1,class T2>
-inline
-NodeWriter_B2<T1,T2>
-make_node_writer_B2( T1 v1, T2 v2 )
-{
-	return NodeWriter_B2<T1,T2>(v1,v2);
-}*/
 //-------------------------------------------------------------------
 /// Helper function to printout edges in the graph, used by boost::write_graphviz()
 template <class T1>
@@ -141,7 +111,6 @@ make_edge_writer_B( T1 v1 )
 }
 //-------------------------------------------------------------------
 #endif // GENERATE_DOT_FILES
-
 
 //-------------------------------------------------------------------
 /// Returns true if cell are "linkable", that is they are:
@@ -413,11 +382,13 @@ printGraph( std::ostream& s, const graph2_t& graph )
 	}
 }
 //-------------------------------------------------------------------
-/// Builds the graphs from the set of cells holding 2 candidates. Not const, because each cell may get tagged as 'used' in graph
+/// Builds the graphs from the set of cells holding 2 candidates. Not const, because each cell may get tagged as 'used' in graph.
+/// Returns a vector of pairs (graph,cell values)
 std::vector<Pgrvalset>
 buildGraphs( std::vector<Cell2>& v_cells )
 {
 	std::vector<Pgrvalset> v_out;
+
 	graph2_t graph;
 	std::set<value_t> s_values;
 
@@ -425,8 +396,10 @@ buildGraphs( std::vector<Cell2>& v_cells )
 	graph[vert].cell_idx = 0;
 
 	auto& cell = v_cells[0];
-	cell._graphIdx = 0;                 // tag the cell as "used"
+	cell._graphIdx = 0;                 // tag the initial cell as "used"
 	cell._vertex = vert;
+	s_values.insert( cell._candidValues.first );  // insert the values of initial cell
+	s_values.insert( cell._candidValues.second );
 
 	v_out.push_back( std::make_pair(graph,s_values) );       // add initial graph
 
@@ -446,8 +419,8 @@ buildGraphs( std::vector<Cell2>& v_cells )
 			graph2[vert].cell_idx = idx_c;
 
 			std::set<value_t> s_values2;          // new set of values
-			s_values.insert( v_cells[idx_c]._candidValues.first );
-			s_values.insert( v_cells[idx_c]._candidValues.second );
+			s_values2.insert( v_cells[idx_c]._candidValues.first );  // insert the values of initial cell
+			s_values2.insert( v_cells[idx_c]._candidValues.second );
 
 			v_out.push_back( std::make_pair(graph2,s_values2) );
 
@@ -512,31 +485,45 @@ valueIsSameColor( const Cell2& c1, const Cell2& c2, value_t val )
 	return false;
 }
 //--------------------------------------------------------------------
+/// Return value when searching in the area defined by an XY chain
 enum En_CandRemov
 {
-	CRem_None,           ///< no candidates where remove
+	CRem_None,           ///< no candidates were remove
 	CRem_OutOfCellSet,   ///< some candidates where removed, but this did not impact the set of cells
 	CRem_CellSetImpacted ///< one candidate was removed on a cell that was in the set of cells
 };
 //--------------------------------------------------------------------
+/// Remove candidates in the considered area, and stops if it touches a cell in the given set
 En_CandRemov
 removeCandidatesFromCellSet(
-	Grid&                     grid,
-	const std::vector<Cell2>& v_cells,  ///< set of cell forming the graph
-	const std::vector<Cell2>& area,
-	value_t                   val
+	Grid&                     grid,     ///< grid
+	const std::vector<Cell2>& v_cells,  ///< set of cells forming the graph
+	const XYC_area&           area      ///< area in which we want to remove candidates
 )
 {
-	for( const auto& cell: area )
+	bool removal = false;
+	for( const auto& cellPos: area._sPos )
 	{
-		auto& src_cell = grid.GetCellByPos( cell );
-		if( src_cell.removeCandidate( val ) )       // if there is a candidate to be removed in that cell,
+		auto& src_cell = grid.GetCellByPos( cellPos );
+		if( src_cell.RemoveCandidate( area._commonValue ) )       // if there is a candidate to be removed in that cell,
 		{                                           // then check if that cell is included in graph
-//			auto pos_src = src_cell.pos
-//			if( std::find( std::begin(v_cells), std::end(v_cells), src_cell.pos() )
+			auto pos_src = src_cell.pos();
+			removal = true;
+			if(
+				std::find_if(
+					std::begin(v_cells),
+					std::end(v_cells),
+					[pos_src]                          // lambda
+					( const Cell2& cell )
+					{
+						return cell.pos() == pos_src;
+					}
+				) != std::end(v_cells)
+			)
+			return CRem_CellSetImpacted;  // stop immediately
 		}
-
 	}
+	return removal ? CRem_OutOfCellSet : CRem_None;
 }
 //--------------------------------------------------------------------
 /// Iterate on subset holding cells that are linked (they form a chain) and
@@ -563,7 +550,7 @@ iterateOnCells(
 				if( !valueIsSameColor(c1,c2,val) )  // if the value is not on the same color in those two cells
 				{
 					auto area = getArea( c1, c2 );
-					auto reslocal = removeCandidatesFromCellSet( grid, v_cells, area, val );
+					auto reslocal = removeCandidatesFromCellSet( grid, v_cells, area );
 					if( reslocal == CRem_OutOfCellSet )
 					{
 						retval = CRem_OutOfCellSet;
@@ -616,23 +603,19 @@ exploreGraph(
 bool
 Algo_XY_Chains( Grid& g )
 {
-
 // step 1 - build a set of cells having two candidates
 	std::vector<Cell2> v_cells;
 	for( index_t i=0; i<81; i++ )
 	{
-		auto cell = g.getCell(i);
+		const auto& cell = g.getCell(i);
 		if( cell.NbCandidates() == 2 )
-		{
-			Cell2 c2( cell );
-			v_cells.push_back( c2 );
-		}
+			v_cells.push_back( Cell2( cell ) );
 	}
 
 // step 2 - build a set of graphs covering all these cells
 	auto v_pgs = buildGraphs( v_cells );
 
-// step 3 - explore these graphs to find chains an remove candidates
+// step 3 - explore these graphs to find chains and remove candidates
 	return exploreGraph( g, v_cells, v_pgs );
 }
 //-------------------------------------------------------------------
