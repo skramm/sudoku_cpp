@@ -61,7 +61,9 @@ int main( int argc, const char** argv )
 			<< "-usage:\n sudoku [-s] [-v] <-f file>: load grid file"
 			<< "\n sudoku [-s] [-v] grid: read grid from command line\n"
 			<< "-switches:\n -s: save grid to file (human readable), and can be loaded with -f"
-			<< "\n -v: verbose\n -l: log steps"
+			<< "\n -v: verbose"
+			<< "\n -l: log steps"
+			<< "\n -c: enable grid checking at every step"
 			<< "\n-return value:\n "
 			<< RV_success         << ": success (solved puzzle)\n "
 			<< RV_missingFile     << ": unable to read given filename (missing or format error)\n "
@@ -211,5 +213,8 @@ int main( int argc, const char** argv )
 		ret = RV_solvingFailure;
 	}
 	cout << grid;
+
+	g_data.printAlgoUse();
+
     return ret;
 }

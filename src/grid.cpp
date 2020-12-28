@@ -544,6 +544,7 @@ bool
 Grid::ProcessAlgorithm( EN_ALGO algo )
 {
 	bool res = false;
+	g_data.incrementAlgoUse( algo );
 	switch( algo )
 	{
 		case ALG_REMOVE_CAND:    res = Algo_RemoveCandidates( *this );     break;
@@ -555,7 +556,7 @@ Grid::ProcessAlgorithm( EN_ALGO algo )
 		case ALG_BOX_RED:        res = Algo_BoxReduction( *this );         break;
 		case ALG_XY_WING:        res = Algo_XY_Wing( *this );              break;
 #ifndef BUILD_WITHOUT_UDGCD
-		case ALG_X_CYCLES:       res = X_Cycles( *this );                  break;
+		case ALG_X_CYCLES:       res = Algo_X_Cycles( *this );                  break;
 #endif
 		case ALG_XY_CHAINS:      res = Algo_XY_Chains( * this );           break;
 

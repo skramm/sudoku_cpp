@@ -104,7 +104,7 @@ struct Cycle: public CircVec<Link>
 };
 //----------------------------------------------------------------------------
 
-bool X_Cycles( Grid& g );
+bool Algo_X_Cycles( Grid& g );
 CycleType GetCycleType( const Cycle& cy );
 
 #endif

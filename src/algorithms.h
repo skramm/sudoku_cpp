@@ -44,38 +44,19 @@ bool Algo_SearchNakedTriples(    Grid& g );
 bool Algo_XY_Wing(               Grid& g );
 
 
-inline
-const char*
-GetString( EN_ALGO algo )
-{
-	switch( algo )
-	{
-		case ALG_REMOVE_CAND: return "RemoveCand"; break;
-		case ALG_SEARCH_PAIRS: return "SearchNakedPairs"; break;
-		case ALG_SEARCH_TRIPLES: return "SearchNakedTriples"; break;
-		case ALG_SEARCH_SINGLE_CAND: return "SearchSingleCand"; break;
-		case ALG_SEARCH_MISSING_SINGLE: return "MissingSingle"; break;
-		case ALG_POINTING_PT: return "PointingPairs/Triples"; break;
-		case ALG_BOX_RED: return "BoxReduction"; break;
-		case ALG_XY_WING: return "XY_Wing"; break;
-		case ALG_XY_CHAINS: return "XY_Chains"; break;
-#ifndef BUILD_WITHOUT_UDGCD
-		case ALG_X_CYCLES: return "X_cycles"; break;
-#endif
-		default: assert(0);
-	}
-}
 
 #define PRINT_ALGO_START \
 	{ \
+		static size_t algCounter; \
 		if( g_data.LogSteps > 2 ) \
-			std::cout << "START ALGO: " << __FUNCTION__ << ", orient=" << GetString( orient ) << '\n'; \
+			std::cout << "START ALGO: " << __FUNCTION__ << ", count= " << ++algCounter << ", orient=" << GetString( orient ) << '\n'; \
 	}
 
 #define PRINT_ALGO_START_2 \
 	{ \
+		static size_t algCounter; \
 		if( g_data.LogSteps > 2 ) \
-			std::cout << "START ALGO: " << __FUNCTION__ << '\n'; \
+			std::cout << "START ALGO: " << __FUNCTION__ << ", count= " << ++algCounter << '\n'; \
 	}
 
 //----------------------------------------------------------------------------

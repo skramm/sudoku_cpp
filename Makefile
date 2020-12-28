@@ -1,6 +1,6 @@
 # standard Linux makefile
 
-.PHONY=program test runall clean
+.PHONY=program test runall clean cleandoc touch
 
 DOT_FILES=$(wildcard out/*.dot)
 SVG_FILES = $(patsubst %.dot,%.svg,$(DOT_FILES))
@@ -48,7 +48,7 @@ program: sudoku
 
 runall: program
 	@echo "start solving all samples" > all_samples.log
-	@for f in samples/*.sud; do echo "RUNNING $$f"; ./sudoku -c -f $$f; echo "file $$f: success=$$?">>all_samples.log; done
+	for f in samples/*.sud; do echo "RUNNING $$f"; ./sudoku -c -v -f $$f>out/$$(basename $$f).log; echo "file $$f: success=$$?">>all_samples.log; done
 
 # linking binary
 sudoku: $(OBJ_FILES) obj/main.o
@@ -58,6 +58,9 @@ sudoku: $(OBJ_FILES) obj/main.o
 test_catch: $(OBJ_FILES) obj/test_catch.o
 	$(CXX) -o test_catch $(OBJ_FILES) obj/test_catch.o -DTESTMODE -s
 	@echo "done target $@"
+
+touch:
+	touch $(HEADERS)
 
 # generic compile rule
 obj/%.o: src/%.cpp $(HEADERS) Makefile

@@ -472,7 +472,7 @@ valueIsSameColor( const Cell2& c1, const Cell2& c2, value_t val )
 {
 	auto a = shareCommonValue( c1, c2 );
 //	assert( a.first == 1 );
-	assert( a.second == val );
+//	assert( a.second == val );
 	if(
 		c1._candidValues.first == c2._candidValues.first
 		||
@@ -544,6 +544,7 @@ iterateOnCells(
 			COUT( "i=" << (int)i << " j=" << (int)j << " c1=" << c1._pos << " c2=" << c2._pos << " val=" << (int)val );
 			if( c1._pos.getBlockIndex() != c2._pos.getBlockIndex() )   // if not in same block
 			{
+				COUT( "different blocks" );
 				if( !valueIsSameColor(c1,c2,val) )  // if the value is not on the same color in those two cells
 				{
 					auto area = getArea( c1, c2 );
@@ -598,6 +599,7 @@ exploreGraph(
 bool
 Algo_XY_Chains( Grid& g )
 {
+	PRINT_ALGO_START_2;
 // step 1 - build a set of cells having two candidates
 	std::vector<Cell2> v_cells;
 	for( index_t i=0; i<81; i++ )

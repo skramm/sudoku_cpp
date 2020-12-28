@@ -77,7 +77,8 @@ void LogStep( int level, const Cell& cell, std::string msg );
 #endif
 
 //----------------------------------------------------------------------------
-/// Solving algorithms
+/// Solving algorithms. The order here matters, as it is in that order that
+/// these will be used.
 enum EN_ALGO
 {
 	ALG_REMOVE_CAND = 0,
@@ -98,6 +99,29 @@ enum EN_ALGO
 
 //----------------------------------------------------------------------------
 inline
+const char*
+GetString( EN_ALGO algo )
+{
+	switch( algo )
+	{
+		case ALG_REMOVE_CAND: return "RemoveCand"; break;
+		case ALG_SEARCH_PAIRS: return "SearchNakedPairs"; break;
+		case ALG_SEARCH_TRIPLES: return "SearchNakedTriples"; break;
+		case ALG_SEARCH_SINGLE_CAND: return "SearchSingleCand"; break;
+		case ALG_SEARCH_MISSING_SINGLE: return "MissingSingle"; break;
+		case ALG_POINTING_PT: return "PointingPairs/Triples"; break;
+		case ALG_BOX_RED: return "BoxReduction"; break;
+		case ALG_XY_WING: return "XY_Wing"; break;
+		case ALG_XY_CHAINS: return "XY_Chains"; break;
+#ifndef BUILD_WITHOUT_UDGCD
+		case ALG_X_CYCLES: return "X_cycles"; break;
+#endif
+		default: assert(0);
+	}
+}
+
+//----------------------------------------------------------------------------
+inline
 char
 GetRowLetter( index_t i )
 {
@@ -108,19 +132,20 @@ GetRowLetter( index_t i )
 }
 
 //----------------------------------------------------------------------------
+/// A position in the cell (row,column). Will replace type \c pos_t
 struct Pos
 {
 	private:
 		pos_t pa;
 	public:
 #ifdef TESTMODE
-/// Constructor 1a
+/// Constructor Ta
 	Pos( std::string spos )
 	{
 		pa.first  = spos[0] != 'J' ? spos[0] - 'A': 8;
 		pa.second = spos[1] - '1';
 	}
-/// Constructor 1b
+/// Constructor Tb
 	Pos( const char* spos )
 	{
 		pa.first  = spos[0] != 'J' ? spos[0] - 'A': 8;
@@ -128,7 +153,7 @@ struct Pos
 	}
 #endif // TESTMODE
 
-/// Constructor 2
+/// Constructor 1
 	Pos( index_t r, index_t c )
 	{
 		ASSERT_1( r < 9, r );
@@ -138,7 +163,7 @@ struct Pos
 		pa.second = c;
 	}
 
-/// Constructor 3
+/// Constructor 2
 	Pos( pos_t p ) : pa(p)
 	{}
 
@@ -187,6 +212,25 @@ struct GlobData
 	bool doChecking = false;
 	bool useSingleAlgo = false;
 	EN_ALGO singleAlgo;
+
+	std::array<size_t,ALG_END> algoCounter;
+	GlobData()
+	{
+		std::fill(algoCounter.begin(),algoCounter.end(), 0 );
+	}
+	void incrementAlgoUse( EN_ALGO algo )
+	{
+		algoCounter[algo]++;
+	}
+	void printAlgoUse()
+	{
+		if( Verbose )
+		{
+			std::cout << "Algorithm use";
+			for( auto i=0; i<ALG_END; i++ )
+				std::cout << "algo: " << GetString( static_cast<EN_ALGO>(i) ) << ": called " << algoCounter[i] << " times\n";
+		}
+	}
 };
 extern GlobData g_data;
 

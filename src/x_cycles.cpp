@@ -511,7 +511,7 @@ FindCycles(
 
 	if( g_data.Verbose )
 		std::cout << "FindCycles(): start udgcd::FindCycles()" << std::endl;
-	auto cycles = udgcd::FindCycles<graph_t,vertex_t>( graph );
+	auto cycles = udgcd::findCycles<graph_t,vertex_t>( graph );
 //	std::cout << "VAL=" << (int)val << " nb cycles=" << cycles.size() << '\n';
 //	PrintCycles( cycles, "v1", graph );
 	if( g_data.Verbose )
@@ -731,7 +731,7 @@ See http://www.sudokuwiki.org/X_Cycles
 
 */
 bool
-X_Cycles( Grid& g )
+Algo_X_Cycles( Grid& g )
 {
 	PRINT_ALGO_START_2;
 	for( value_t v=1; v<10; v++ )             // for each possible value, get strong links, then search cycles
