@@ -61,6 +61,7 @@ test_catch: $(OBJ_FILES)
 
 # generic compile rule
 obj/%.o: src/%.cpp $(HEADERS) Makefile
+	@mkdir -p obj
 	$(CXX) $(CFLAGS) -o $@ -c $<
 
 dot: $(SVG_FILES)

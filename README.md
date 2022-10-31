@@ -3,7 +3,7 @@
 A sudoku C++ solver
 
 * I/O is text only
- * Input: a file name, holding the puzzle as a 9x9 character grid (see in samples folder for examples)
+ * Input: either a file name (`-f` switch) holding the puzzle as a 9x9 character grid (see in samples folder for examples), or a 81 character long string.
  * Ouput: the solved grid. Or more if verbose flag (-v) is given.
 * Uses basic strategies, and one more advanced one (XY-Wings).
 * Requirements: a C++11 compiler (see below for dependencies).
@@ -60,7 +60,7 @@ This is useful when entering grid from command-line, so you can get back to it.
 The "steps" can be either removing a candidate in a cell, that has a set of candidates, or assigning a value to a cell.
 The latter is done automatically when there is only one candidate left.
 
-Two logging levels are available:
+Three logging levels are available:
 * With `-l` or `-l1`, only the steps where a value is assigned to a cell are printed
 * With `-l2`, all the steps are printed
 * With `-l3`, the algorithm used is printed
@@ -83,7 +83,7 @@ Started out as just a small weekend side project...
 I found out that solving a Sudoku puzzle is tougher than what I thought.
 Several techniques can be used, some very advanced (and difficult to use with only pen and paper!).
 For these, the best resource is [Andrew C. Stuart's' website](http://www.sudokuwiki.org/sudoku.htm), from whom I took a lot of inspiration.
-Unfortunately, although it gives a very good explanation of the "algorithm", it doesn't actually describe that algorithm.
+Unfortunately, although it gives a very good explanation of the algorithm, it doesn't actually describe it.
 So just consider this as some challenge to analyse and implement (some of) the techniques described on Andrew's site.
 
 ## 4 - History

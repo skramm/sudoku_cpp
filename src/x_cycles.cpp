@@ -505,8 +505,8 @@ FindCycles(
 #endif
 
 	if( g_data.Verbose )
-		std::cout << "FindCycles(): start udgcd::FindCycles()" << std::endl;
-	auto cycles = udgcd::FindCycles<graph_t,vertex_t>( graph );
+		std::cout << "FindCycles(): start udgcd::findCycles()" << std::endl;
+	auto cycles = udgcd::findCycles<graph_t,vertex_t>( graph );
 //	std::cout << "VAL=" << (int)val << " nb cycles=" << cycles.size() << '\n';
 //	PrintCycles( cycles, "v1", graph );
 	if( g_data.Verbose )
