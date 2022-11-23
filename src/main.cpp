@@ -62,6 +62,8 @@ int main( int argc, const char** argv )
 			<< "\n sudoku [-s] [-v] grid: read grid from command line\n"
 			<< "-switches:\n -s: save grid to file (human readable), and can be loaded with -f"
 			<< "\n -v: verbose\n -l: log steps"
+			<< "\n -t: list implmented algorithms and stop"
+			<< "\n -p: stop after first cell found"
 			<< "\n-return value:\n "
 			<< RV_success         << ": success (solved puzzle)\n "
 			<< RV_missingFile     << ": unable to read given filename (missing or format error)\n "
@@ -130,6 +132,12 @@ int main( int argc, const char** argv )
 				}
 		}
 
+		if( arg == "-p" )
+		{
+			cout << " -Option -p (stop after first step) activated\n";
+			g_data.stopAfterFirstFound = true;
+		}
+
 		if( arg == "-s" )
 		{
 			nbFlags++;
@@ -155,7 +163,7 @@ int main( int argc, const char** argv )
 		}
 	}
 
-	grid.InitCandidates();
+	grid.initCandidates();
 	if( saveGridToFile )
 	{
 		grid.saveToFile( "grid_start.sud" );

@@ -71,19 +71,32 @@ operator << ( std::ostream& s, const Viewtable& vt )
 #endif
 //----------------------------------------------------------------------------
 void
-DrawLine( std::ostream& s, char ch, bool PrintValues )
+DrawLine( std::ostream& s )
 {
 	s << "  ";
-
-	int c = 17;
-	if( PrintValues )
-		c = 11;
 	for( int i=0; i<3; i++ )
 	{
 		s << '+';
-		for( int k=0; k<c;k++ )
-			s << ch;
+		for( int k=0; k<11;k++ )
+			s << '-';
 		s << '+';
+	}
+	s << '\n';
+}
+
+void
+DrawLineCand( std::ostream& s, char ch )
+{
+	s << "  ";
+	for( int i=0; i<3; i++ )
+	{
+		s << '+';
+		for( int j=0; j<3; j++ )
+		{
+			for( int k=0; k<5;k++ )
+				s << ch;
+			s << '+';
+		}
 	}
 	s << '\n';
 }
@@ -119,7 +132,7 @@ operator << ( std::ostream& s, const Grid& g )
 		s << "nb unknowns cells " << g.NbUnknows() << "\n";
 	PrintLineNumbers( s, 3, 0 );
 
-	DrawLine( s, '-', true );
+	DrawLine( s );
 	for( index_t i=0; i<9; i++ )
 	{
 		s << GetRowLetter(i) << " | ";
@@ -136,7 +149,7 @@ operator << ( std::ostream& s, const Grid& g )
 		}
 		s << '\n';
 		if( !((i+1)%3) )
-			DrawLine( s, '-', true );
+			DrawLine( s );
 	}
 	return s;
 }
@@ -151,7 +164,7 @@ Grid::PrintCandidates( std::ostream& s, std::string txt ) const
 
 	PrintLineNumbers( s, 4, 1 );
 
-	DrawLine( s, '-', false );
+	DrawLineCand( s, '-' );
 	for( index_t i=0; i<3*9; i++ )
 	{
 		if( !((i+2)%3) )
@@ -172,11 +185,10 @@ Grid::PrintCandidates( std::ostream& s, std::string txt ) const
 		}
 		s << '\n';
 		if( !((i+1)%9) && i != 26 )
-			DrawLine( s, '=', false );
+			DrawLineCand( s, '=' );
 		else
 			if( !((i+1)%3) )
-				DrawLine( s, '-', false );
-
+				DrawLineCand( s, '-' );
 	}
 }
 
@@ -270,7 +282,7 @@ Grid::Check() const
 //----------------------------------------------------------------------------
 /// Erase all candidates from cells that have a value
 void
-Grid::InitCandidates()
+Grid::initCandidates()
 {
 	for( index_t i=0; i<9; i++ )  // for each row
 	{
@@ -590,6 +602,9 @@ Grid::Solve()
 			stop = true;
 //		std::cout << "END of LOOP1, stop1=" << stop_1 << " nu_before=" << nu_before << " nu_after=" << nu_after << " stop=" << stop << "\n";
 
+// if switch activated and a cell was found, then stop
+		if( g_data.stopAfterFirstFound && nu_after+1 <= nu_before )
+			stop = true;
 	}
 	while( !stop );
 

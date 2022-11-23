@@ -16,7 +16,7 @@ In case of any bug, thanks for mailing (or open an issue).
 ## 1 - Instructions
 
 1. Build with `$ make`
-2. Run with (for example) `$ ./sudoku samples/grid2.sud`
+2. Run with (for example) `$ ./sudoku -f samples/grid2.sud`
 
 ### dependencies
 
@@ -54,6 +54,7 @@ You'd better redirect in a file with that one, lots of output. Implies option "-
 This is useful when entering grid from command-line, so you can get back to it.
 * `-c`: checking grid validity at every step (useful to catch bugs!)
 * `-t`: prints the available algorithms and exits
+* `-p`: stops after first algorithm that found 1 or more cells
 
 ### 2.2 - Logging
 

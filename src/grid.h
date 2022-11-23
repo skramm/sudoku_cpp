@@ -85,6 +85,7 @@ struct GlobData
 #endif
 	int  NbSteps  = 0;
 	bool doChecking = false;
+	bool stopAfterFirstFound = false;
 };
 extern GlobData g_data;
 
@@ -566,7 +567,7 @@ class Grid
 		bool saveToFile( std::string ) const;
 		bool Check() const;
 		bool Solve();
-		void InitCandidates();
+		void initCandidates();
 //		void SetVerbose(bool b ) { _verbose = b; }
 		void PrintCandidates( std::ostream&, std::string=std::string() ) const;
 		void PrintAll( std::ostream&, std::string ) const;
