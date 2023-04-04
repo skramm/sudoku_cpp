@@ -43,7 +43,7 @@ endif
 
 
 
-program: sudoku
+program: sudokus
 	@echo "done target $@"
 
 runall: program
@@ -51,8 +51,8 @@ runall: program
 	@for f in samples/*.sud; do echo "RUNNING $$f"; ./sudoku -c -f $$f; echo "file $$f: success=$$?">>all_samples.log; done
 
 # linking binary
-sudoku: $(OBJ_FILES)
-	$(CXX) -o sudoku obj/algorithms.o obj/grid.o obj/x_cycles.o obj/main.o  -s
+sudokus: $(OBJ_FILES)
+	$(CXX) -o $@ obj/algorithms.o obj/grid.o obj/x_cycles.o obj/main.o  -s
 	@echo "done target $@"
 
 test_catch: $(OBJ_FILES)
