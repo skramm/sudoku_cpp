@@ -18,7 +18,7 @@ In case of any bug, thanks for mailing (or open an issue).
 1. Build with `$ make`
 2. Run with (for example) `$ ./sudoku -f samples/grid2.sud`
 
-### dependencies
+### Dependencies
 
 The "X cycles" algorithm relies on another code of mine: **udgcd** (UnDirected Graph Cycle Detection),
 available [here on Github](https://github.com/skramm/udgcd). This library itself depends on BGL
@@ -39,8 +39,8 @@ $ make runall
 
 ## 2 - Usage and options
 
-`$ sudoku [options] -f file`
-`$ sudoku [options] grid`
+`$ sudokus [options] -f file` <br>
+`$ sudokus [options] grid`
 
 ### 2.1 - Options:
 
@@ -89,7 +89,10 @@ So just consider this as some challenge to analyse and implement (some of) the t
 
 ## 4 - History
 
-* Latest (20201221)
+* 202307
+  * added `-p` option
+
+* 20201221
   * added `-c` option (checking)
   * extended logging options
   * fixed many bugs

@@ -3,7 +3,7 @@
     This file is part of sudoku_cpp.
     homepage: https://github.com/skramm/sudoku_cpp
 
-    Author & Copyright 2017 Sebastien Kramm
+    Author & Copyright 2017-2023 Sebastien Kramm
 
     Contact: firstname.lastname@univ-rouen.fr
 
@@ -369,7 +369,7 @@ Grid::loadFromFile( std::string fn )
 //----------------------------------------------------------------------------
 /// Build grid from a string
 /**
-Empty cells are assume to be '.'
+Empty cells can be '.' or '0'
 \return: false if length is not 81 characters, or if some invalid characters have been met
 \warning does not check if grid is valid!
 */
@@ -391,7 +391,7 @@ Grid::buildFromString( std::string in )
 				_data[li][col].SetValue( val-'0' );
 			else
 			{
-				if( val == '.' )
+				if( val == '.' || val == '0' )
 					_data[li][col].SetValue( 0 );
 				else
 				{
