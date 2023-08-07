@@ -60,7 +60,8 @@ enum En_LinkType
 	LT_Strong, LT_Weak
 };
 //----------------------------------------------------------------------------
-/// A link between two cells, also holds the second cell position
+/// A link between two cells, also holds the second cell position.
+/// A link may be "Strong" (S) or "Weak (W"), and has an orientation, either Row, Col, or Block
 struct Link
 {
 	pos_t p1, p2;

@@ -21,6 +21,15 @@ and README.md
 	#define DEBUG if(0) std::cout
 #endif
 
+#define ASSERT_1(a,b) \
+	if( !(a) ) \
+	{ \
+		std::cout << "assert failure, exiting...\n" \
+			<< "file:" << __FILE__ << " line:" << __LINE__ \
+			<< "\nexpression: \"" << #a << "\" value=" << (a) << "\n"; \
+		exit(1); \
+	}
+
 #define COUT(a) { if( g_data.Verbose ) std::cout << a << '\n'; }
 
 #define PRINT_MAIN_IDX( o ) \

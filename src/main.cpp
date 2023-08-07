@@ -62,6 +62,7 @@ int main( int argc, const char** argv )
 			<< "\n sudoku [-s] [-v] grid: read grid from command line\n"
 			<< "-switches:\n -s: save grid to file (human readable), and can be loaded with -f"
 			<< "\n -v: verbose\n -l: log steps"
+			<< "\n -c: enable checking of grid correctness after each step"
 			<< "\n -t: list implmented algorithms and stop"
 			<< "\n -p: stop after first cell found"
 			<< "\n-return value:\n "

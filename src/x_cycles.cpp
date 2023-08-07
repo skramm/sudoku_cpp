@@ -686,7 +686,7 @@ ExploreCycle( Cycle& cy, Grid& g, value_t val )
 		case CT_Discont_2SL: // Nice Loops Rule 2
 		{
 			COUT( "* Nice Loops Rule 2" );
-			assert( gct._idx != 0 );
+			ASSERT_1( gct._idx != 0, gct._idx );
 			const auto& link1 = cy.GetElem( gct._idx);
 			const auto& link2 = cy.GetElem( gct._idx+1 );
 			Cell& c = GetCommonCell( link1, link2, g );

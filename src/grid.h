@@ -40,6 +40,7 @@
 #include <cassert>
 #include <type_traits>
 
+#include "header.h"
 
 /// The values in the cells
 using value_t = uint8_t;
@@ -59,7 +60,7 @@ using cand_map_t=std::map<value_t,bool>;
 struct Cell;
 void LogStep( int level, const Cell& cell, std::string msg );
 
-
+/*
 #ifdef NDEBUG
 	#define ASSERT_1( a, b ) ;
 #else
@@ -72,7 +73,7 @@ void LogStep( int level, const Cell& cell, std::string msg );
 		} \
 	}
 #endif
-
+*/
 //----------------------------------------------------------------------------
 /// Holds some global vars
 struct GlobData
