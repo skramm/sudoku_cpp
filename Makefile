@@ -71,6 +71,7 @@ dot: $(SVG_FILES)
 	dot -Tsvg $< > $@
 
 dox: html/index.html
+	xdg-open html/index.html
 
 html/index.html: $(INPUT_FILES) $(HEADERS) doxyfile Makefile
 	doxygen doxyfile
@@ -79,6 +80,9 @@ html/index.html: $(INPUT_FILES) $(HEADERS) doxyfile Makefile
 show:
 	@echo "OBJ_FILES=$(OBJ_FILES)"
 	@echo "HEADERS=$(HEADERS)"
+
+cleanall: clean
+	@rm sudokus
 
 clean:
 	-rm obj/*.o

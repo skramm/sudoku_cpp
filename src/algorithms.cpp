@@ -109,7 +109,7 @@ AddToCandidateCount( std::map<value_t,index_t>& m_count, const Cell& cell )
 //----------------------------------------------------------------------------
 /// Counts the number of times each candidate is present in a given row/block/col
 std::map<value_t,index_t>
-CoundCandidates( Grid& g, EN_ORIENTATION orient, index_t idx )
+CountCandidates( Grid& g, EN_ORIENTATION orient, index_t idx )
 {
 	View_1Dim_nc v1d = g.GetView( orient, idx );
 
@@ -142,7 +142,7 @@ PointingPairsTriples( Grid& g, EN_ORIENTATION orient )
 			DEBUG << " block=" << (int)b+1 << '\n';
 			const Cell& first = v1d.GetCell(b*3); // get first cell of block
 			auto bl_idx = GetBlockIndex( first.GetPos() );
-			auto cc1 = CoundCandidates( g, OR_BLK, bl_idx ); // number of candidates in that block
+			auto cc1 = CountCandidates( g, OR_BLK, bl_idx ); // number of candidates in that block
 			std::map<value_t,index_t> cc2;
 			for( index_t c=0; c<3; c++ )  // count candidates in the 3 cells of that block limit
 				AddToCandidateCount( cc2, v1d.GetCell( b*3+c ) );
@@ -282,7 +282,7 @@ SearchSingleCand( Grid& g, EN_ORIENTATION orient )
 		PRINT_MAIN_IDX(orient);
 		View_1Dim_nc v1d = g.GetView( orient, idx );
 
-		auto cand_count = CoundCandidates( g, orient, idx );
+		auto cand_count = CountCandidates( g, orient, idx );
 
 		for( index_t val=1; val<10; val++ )  // analyse results
 		{
