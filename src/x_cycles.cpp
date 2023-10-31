@@ -190,6 +190,7 @@ FindStrongLinks( value_t val, const Grid& g )
 struct GraphNode
 {
 	pos_t pos;
+	index_t col;
 };
 /// Edge datatype
 struct GraphEdge
@@ -227,29 +228,10 @@ class NodeWriter
 		template <class Vertex>
 		void operator()( std::ostream &out, const Vertex& v ) const
 		{
-			out << " [label=\"" << _v1[v] << "\"]";
+			out << " [label=\"" << _v1[v] << "\",pos=\"" << (int)_v1[v].second << "," << -(int)_v1[v].first << "!\"]";
 		}
 	private:
 		T1 _v1;
-};
-//-------------------------------------------------------------------
-/// A functor class used to printout the properties of the nodes
-template<typename T1,typename TCOL,typename TROW>
-class NodeWriter3
-{
-	public:
-		NodeWriter3(T1 v1, TCOL vcol, TROW vrow)
-			: _v1(v1), _vcol(vcol), _vrow(vrow)
-		{}
-		template <class Vertex>
-		void operator()( std::ostream &out, const Vertex& v ) const
-		{
-			out << " [label=\"" << _v1[v] << "\",pos=\"" << _vcol[v] << "," << _vrow[v] << "\"]\n";
-		}
-	private:
-		T1 _v1;
-		TCOL _vcol;
-		TROW _vrow;
 };
 //-------------------------------------------------------------------
 /// Helper function to printout nodes in the graph, used by boost::write_graphviz()
@@ -259,15 +241,6 @@ NodeWriter<T1>
 make_node_writer( T1 v1 )
 {
 	return NodeWriter<T1>(v1);
-}
-//-------------------------------------------------------------------
-/// Helper function to printout nodes in the graph, used by boost::write_graphviz()
-template<typename T1,typename TCOL,typename TROW>
-inline
-NodeWriter3<T1,TCOL,TROW>
-make_node_writer3( T1 v1, TCOL vcol, TROW vrow )
-{
-	return NodeWriter3<T1,TCOL,TROW>(v1,vcol,vrow);
 }
 //-------------------------------------------------------------------
 /// Helper function to printout edges in the graph, used by boost::write_graphviz()
@@ -486,11 +459,7 @@ FindCycles(
 	boost::write_graphviz(
 		file,
 		graph,
-		make_node_writer3(
-			boost::get( &GraphNode::pos, graph ),
-			boost::get( &(GraphNode::pos).first, graph ),
-			boost::get( &GraphNode::pos.second, graph )
-		),
+		make_node_writer( boost::get( &GraphNode::pos, graph ) ),
 		make_edge_writer( boost::get( &GraphEdge::link_type, graph ), boost::get( &GraphEdge::link_orient, graph ) )
 	);
 #endif
@@ -718,7 +687,7 @@ ExploreCycle( Cycle& cy, Grid& g, value_t val )
 		case CT_Discont_2SL: // Nice Loops Rule 2
 		{
 			COUT( "* Nice Loops Rule 2" );
-			ASSERT_1( gct._idx != 0, gct._idx );
+//			ASSERT_1( gct._idx != 0, gct._idx );
 			const auto& link1 = cy.GetElem( gct._idx);
 			const auto& link2 = cy.GetElem( gct._idx+1 );
 			Cell& c = GetCommonCell( link1, link2, g );

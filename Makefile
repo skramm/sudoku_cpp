@@ -3,7 +3,8 @@
 .PHONY=program test runall
 
 DOT_FILES=$(wildcard out/*.dot)
-SVG_FILES = $(patsubst %.dot,%.svg,$(DOT_FILES))
+SVG_FILES = $(patsubst out/%.dot,out/svg/%_dot.svg,$(DOT_FILES))
+SVG_FILES += $(patsubst out/%.dot,out/svg/%_neato.svg,$(DOT_FILES))
 
 INPUT_FILES=$(wildcard src/*.cpp)
 OBJ_FILES = $(patsubst src/%.cpp,obj/%.o,$(INPUT_FILES))
@@ -67,8 +68,13 @@ obj/%.o: src/%.cpp $(HEADERS) Makefile
 dot: $(SVG_FILES)
 	@echo done $<
 
-%.svg: %.dot
+out/svg/%_dot.svg: out/%.dot
+	mkdir -p out/svg/
 	dot -Tsvg $< > $@
+
+out/svg/%_neato.svg: out/%.dot
+	mkdir -p out/svg/
+	neato -Tsvg $< > $@
 
 dox: html/index.html
 	xdg-open html/index.html
