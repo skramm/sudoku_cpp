@@ -571,7 +571,7 @@ SearchTriplesPattern( const std::vector<Pos_vcand>& v_cand )
 	COUT( "v_cand size=" << v_cand.size() );
 	for( index_t i=0; i<v_cand.size(); i++ )
 	{
-		COUT( "i=" << (int)i << " cand=" << v_cand[i] );
+		COUT( "i=" << (int)i << ": " << v_cand[i] );
 //		std::cout << "* main pos=" << i << " size=" << v_cand[i].values.size() << '\n';
 		if( v_cand[i]._values.size() == 3 )  // if 3 candidates (useful for patterns A,B,C)
 		{

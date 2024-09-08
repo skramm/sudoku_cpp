@@ -87,7 +87,7 @@ struct Pos_vcand
 	{}
 	friend std::ostream& operator << ( std::ostream& s, const Pos_vcand& pvc )
 	{
-		s << "Pos_vcand: idx=" << (int)pvc.pos_index << ", values=";
+		s << "idx=" << (int)pvc.pos_index << ", values=";
 		for( auto v: pvc._values)
 			s << (int)v << '-';
 		s << ' ';
