@@ -75,6 +75,10 @@ dox: html/index.html
 html/index.html: $(INPUT_FILES) $(HEADERS) doxyfile Makefile
 	doxygen doxyfile
 
+# needs sudo
+install:
+	cp sudokus /usr/local/bin
+
 
 show:
 	@echo "OBJ_FILES=$(OBJ_FILES)"

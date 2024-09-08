@@ -357,10 +357,12 @@ SearchNakedPairs( Grid& g, EN_ORIENTATION orient )
 			}
 		}
 		assert( v_pos.size() <= 2 );
-		if( v_pos.size() == 2 )
+		if( v_pos.size() == 2 )             // found naked pair !
 		{
+			if( g_data.Verbose )
+				std::cout << "  -found naked pair (" << (int)v_cand_1[0] << ','  << (int)v_cand_1[1]  << ")\n";
 			uint8_t Nb(0);
-			for( index_t j=0; j<9; j++ ) // for each cell in the view
+			for( index_t j=0; j<9; j++ ) // for each cell in the view (row, col, or block)
 			{
 				Cell& cell = v1d.GetCell(j);
 				bool dontremove( false );

@@ -16,7 +16,11 @@ In case of any bug, thanks for mailing (or open an issue).
 ## 1 - Instructions
 
 1. Build with `$ make`
-2. Run with (for example) `$ ./sudoku -f samples/grid2.sud`
+2. Run with (for example) `$ ./sudokus -f samples/grid2.sud`
+
+You can install on your (Debian based) machine with `$ make install`
+<br>
+(or just copy the file `sudokus` to `/usr/local/bin` or any location in the path)
 
 ### Dependencies
 
