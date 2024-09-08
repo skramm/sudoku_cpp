@@ -3,7 +3,7 @@
     This file is part of sudoku_cpp.
     homepage: https://github.com/skramm/sudoku_cpp
 
-    Author & Copyright 2017 Sebastien Kramm
+    Author & Copyright 2017-2023 Sebastien Kramm
 
     Contact: firstname.lastname@univ-rouen.fr
 
