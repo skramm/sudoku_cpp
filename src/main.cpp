@@ -153,6 +153,10 @@ int main( int argc, const char** argv )
 				std::cout << i+1 << ": " << GetString( static_cast<EN_ALGO>(i) ) << '\n';
 			return 0;
 		}
+		if( arg == "-x" )
+		{
+			g_data.useColors = true;
+		}
 	}
 
 	if( !hasFileFlag && nbFlags+1 < argc )
@@ -188,7 +192,7 @@ int main( int argc, const char** argv )
     auto ret = RV_success;
     if( grid.Solve() )
 	{
-		cout << "-solved with " << g_data.NbSteps << " steps\n";
+		cout << "-solved with " << g_data.nbSteps << " steps\n";
 		if( saveGridToFile )
 		{
 			grid.saveToFile( "grid_solved.sud" );
@@ -196,7 +200,7 @@ int main( int argc, const char** argv )
 	}
 	else
 	{
-		cout << "failure, used " << g_data.NbSteps << " steps\n";
+		cout << "failure, used " << g_data.nbSteps << " steps\n";
 		grid.PrintCandidates( cout, "final" );
 		ret = RV_solvingFailure;
 	}

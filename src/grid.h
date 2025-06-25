@@ -84,9 +84,11 @@ struct GlobData
 #else
 	bool Verbose  = false;
 #endif
-	int  NbSteps  = 0;
+	int  nbSteps  = 0;
 	bool doChecking = false;
 	bool stopAfterFirstFound = false;
+
+	bool useColors = false;
 };
 extern GlobData g_data;
 
@@ -595,6 +597,7 @@ class Grid
 		bool ProcessAlgorithm( EN_ALGO );
 
 	private:
+		std::pair<int,int> lastFound;
 		std::array<std::array<Cell,9>,9> _data;
 
 		Viewtable  BuildViewtable() const;

@@ -44,9 +44,9 @@ GlobData g_data;
 void
 LogStep( int level, const Cell& cell, std::string msg )
 {
-	++g_data.NbSteps;
+	++g_data.nbSteps;
 	if( level <= g_data.LogSteps )
-		std::cout << "*** step " << g_data.NbSteps << ": CELL " << cell.GetPos() << ": " << msg << '\n';
+		std::cout << "*** step " << g_data.nbSteps << ": CELL " << cell.GetPos() << ": " << msg << '\n';
 }
 //----------------------------------------------------------------------------
 /// \todo 20201115: is this used somewhere ???
@@ -141,7 +141,13 @@ operator << ( std::ostream& s, const Grid& g )
 			if( g._data[i][j].GetValue() == 0 )
 				s << ' ';
 			else
+			{
+				if( g_data.useColors && g.lastFound.first == i && g.lastFound.second == j )
+					s << "\033[91m"; // RED
 				s << (char)('0' + g._data[i][j].GetValue());
+				if( g_data.useColors && g.lastFound.first == i && g.lastFound.second == j )
+					s << "\033[0m"; // reset color
+			}
 			s << " |";
 			if( !((j+1)%3) && j!=8 )
 				s << '|';
